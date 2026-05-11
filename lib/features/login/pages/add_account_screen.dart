@@ -1,0 +1,413 @@
+import 'dart:developer';
+
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:hugeicons/hugeicons.dart';
+import '../../../shared/widgets/loaders/loading_widget.dart';
+import '../../../core/services/odoo_session_manager.dart';
+import '../../../core/services/session_service.dart';
+import '../../../shared/widgets/snackbars/custom_snackbar.dart';
+import 'login_layout.dart'
+    show LoginLayout, LoginTextField, LoginButton, LoginErrorDisplay;
+
+class AddAccountScreen extends StatefulWidget {
+  const AddAccountScreen({super.key});
+
+  @override
+  State<AddAccountScreen> createState() => _AddAccountScreenState();
+}
+
+class _AddAccountScreenState extends State<AddAccountScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _emailFocus = FocusNode();
+  final _passwordFocus = FocusNode();
+
+  bool _obscurePassword = true;
+  bool _isLoading = false;
+  bool _shouldValidate = false;
+  bool _emailHasError = false;
+  bool _passwordHasError = false;
+  String? _inlineError;
+  String? _errorMessage;
+
+  String? _serverUrl;
+  String? _database;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCurrentSessionInfo();
+
+    // Auto-focus email field
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        FocusScope.of(context).requestFocus(_emailFocus);
+      }
+    });
+  }
+
+  void _loadCurrentSessionInfo() {
+    final sessionService = SessionService.instance;
+    final currentSession = sessionService.currentSession;
+
+    if (currentSession != null) {
+      setState(() {
+        _serverUrl = currentSession.serverUrl;
+        _database = currentSession.database;
+      });
+      debugPrint(
+        '[AddAccountScreen] Using current session - URL: $_serverUrl, DB: $_database',
+      );
+    } else {
+      debugPrint('[AddAccountScreen] No current session found');
+    }
+  }
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    _emailFocus.dispose();
+    _passwordFocus.dispose();
+    super.dispose();
+  }
+
+  Future<void> _addAccount() async {
+
+    log("hhhhh==================>");
+
+
+
+    if (_serverUrl == null || _database == null) {
+      setState(() {
+        _errorMessage = 'No active session found. Please login first.';
+        _isLoading = false;
+      });
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      debugPrint('[AddAccountScreen] Adding new account to same server');
+
+
+      // Authenticate with the new credentials
+      final newSession = await OdooSessionManager.authenticate(
+        serverUrl: _serverUrl!,
+        database: _database!,
+        username: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
+
+      if (newSession == null) {
+        debugPrint('[AddAccountScreen] Authentication failed');
+        setState(() {
+          _errorMessage =
+              'Authentication failed. Please check your credentials.';
+          _isLoading = false;
+        });
+        return;
+      }
+
+      // Store the new account and switch to it
+      final sessionService = SessionService.instance;
+      await sessionService.storeAccount(newSession, _passwordController.text);
+
+      // Switch to the newly added account
+      await sessionService.switchToAccount(newSession);
+
+      debugPrint(
+        '[AddAccountScreen] New account added and switched to successfully',
+      );
+
+      if (!mounted) return;
+
+      // Navigate to main app like the switch account flow does
+      // Navigator.pushAndRemoveUntil(
+      //   context,
+      //   MaterialPageRoute(builder: (context) => const AppEntryPoint()),
+      //   (route) => false,
+      // );
+
+      // Show success message after navigation using post-frame callback
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (context.mounted) {
+          CustomSnackbar.showSuccess(
+            context,
+            'Account added and switched successfully',
+          );
+        }
+      });
+    } catch (e) {
+      debugPrint('[AddAccountScreen] Error adding account: $e');
+      setState(() {
+        _errorMessage = 'Failed to add account: ${e.toString()}';
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Sync inlineError with _errorMessage (same pattern as credentials screen)
+    if (_errorMessage != _inlineError) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        setState(() {
+          _inlineError = _errorMessage;
+        });
+      });
+    }
+
+    return LoginLayout(
+      title: 'Add Account',
+      subtitle: 'Add another account to the same server',
+      backButton: Positioned(
+        top: 24,
+        left: 0,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () => Navigator.of(context).pop(),
+            borderRadius: BorderRadius.circular(32),
+            child: Container(
+              height: 64,
+              width: 64,
+              alignment: Alignment.center,
+              child: const HugeIcon(
+               icon:  HugeIcons.strokeRoundedArrowLeft01,
+                color: Colors.white,
+                size: 24,
+              ),
+            ),
+          ),
+        ),
+      ),
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Server Info Card
+            // Container(
+            //   padding: const EdgeInsets.all(16),
+            //   decoration: BoxDecoration(
+            //     color: Colors.white.withOpacity(0.1),
+            //     borderRadius: BorderRadius.circular(12),
+            //     border: Border.all(
+            //       color: Colors.white.withOpacity(0.2),
+            //       width: 1,
+            //     ),
+            //   ),
+            //   child: Column(
+            //     crossAxisAlignment: CrossAxisAlignment.start,
+            //     children: [
+            //       Row(
+            //         children: [
+            //           Icon(
+            //             HugeIcons.strokeRoundedServerStack03,
+            //             color: Colors.white70,
+            //             size: 16,
+            //           ),
+            //           const SizedBox(width: 8),
+            //           Text(
+            //             'Server',
+            //             style: GoogleFonts.manrope(
+            //               fontSize: 12,
+            //               fontWeight: FontWeight.w500,
+            //               color: Colors.white70,
+            //             ),
+            //           ),
+            //         ],
+            //       ),
+            //       const SizedBox(height: 4),
+            //       Text(
+            //         _serverUrl ?? 'Loading...',
+            //         style: GoogleFonts.manrope(
+            //           fontSize: 14,
+            //           fontWeight: FontWeight.w600,
+            //           color: Colors.white,
+            //         ),
+            //       ),
+            //       const SizedBox(height: 12),
+            //       Row(
+            //         children: [
+            //           Icon(
+            //             HugeIcons.strokeRoundedDatabase,
+            //             color: Colors.white70,
+            //             size: 16,
+            //           ),
+            //           const SizedBox(width: 8),
+            //           Text(
+            //             'Database',
+            //             style: GoogleFonts.manrope(
+            //               fontSize: 12,
+            //               fontWeight: FontWeight.w500,
+            //               color: Colors.white70,
+            //             ),
+            //           ),
+            //         ],
+            //       ),
+            //       const SizedBox(height: 4),
+            //       Text(
+            //         _database ?? 'Loading...',
+            //         style: GoogleFonts.manrope(
+            //           fontSize: 14,
+            //           fontWeight: FontWeight.w600,
+            //           color: Colors.white,
+            //         ),
+            //       ),
+            //     ],
+            //   ),
+            // ),
+            // const SizedBox(height: 24),
+
+            // Email Field
+            LoginTextField(
+              controller: _emailController,
+              hint: 'Email',
+              prefixIcon: HugeIcon(icon: HugeIcons.strokeRoundedMail01,size: 20,),
+              keyboardType: TextInputType.emailAddress,
+              enabled: !_isLoading,
+              focusNode: _emailFocus,
+              hasError: _emailHasError,
+              autovalidateMode: _shouldValidate
+                  ? AutovalidateMode.onUserInteraction
+                  : AutovalidateMode.disabled,
+              validator: (value) {
+                if (!_shouldValidate) return null;
+                if (value == null || value.isEmpty) {
+                  return 'Email is required';
+                }
+                return null;
+              },
+              onChanged: (val) {
+                setState(() {
+                  _emailHasError = val.isEmpty;
+                  if (_inlineError != null) {
+                    _inlineError = null;
+                  }
+                });
+              },
+            ),
+            const SizedBox(height: 16),
+
+            // Password Field
+            LoginTextField(
+              controller: _passwordController,
+              hint: 'Password',
+              prefixIcon: HugeIcon(icon: HugeIcons.strokeRoundedLockPassword,size: 20,),
+              obscureText: _obscurePassword,
+              enabled: !_isLoading,
+              focusNode: _passwordFocus,
+              hasError: _passwordHasError,
+              autovalidateMode: _shouldValidate
+                  ? AutovalidateMode.onUserInteraction
+                  : AutovalidateMode.disabled,
+              validator: (value) {
+                if (!_shouldValidate) return null;
+                if (value == null || value.isEmpty) {
+                  return 'Password is required';
+                }
+                if (value.isEmpty) {
+                  return 'Password must be at least 1 character';
+                }
+                return null;
+              },
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _obscurePassword
+                      ? Icons.visibility_off_outlined
+                      : Icons.visibility_outlined,
+                  color: Colors.black54,
+                  size: 20,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _obscurePassword = !_obscurePassword;
+                  });
+                },
+              ),
+              onChanged: (val) {
+                setState(() {
+                  _passwordHasError = val.isEmpty || val.isEmpty;
+                  if (_inlineError != null) {
+                    _inlineError = null;
+                  }
+                });
+              },
+            ),
+            SizedBox(height: _inlineError != null ? 16 : 0),
+
+            // Error display
+            LoginErrorDisplay(error: _inlineError),
+
+            // Add Account Button
+            LoginButton(
+              text: 'Add Account',
+              isLoading: _isLoading,
+              loadingWidget: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    'Adding Account',
+                    style: GoogleFonts.manrope(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const LoadingWidget(
+                    color: Colors.white,
+                    size: 28,
+                    variant: LoadingVariant.staggeredDots,
+                  ),
+                ],
+              ),
+              onPressed: _isLoading
+                  ? null
+                  : () async {
+                      FocusScope.of(context).unfocus();
+                      setState(() {
+                        _shouldValidate = true;
+                      });
+
+                      final formValid =
+                          _formKey.currentState?.validate() ?? false;
+                      setState(() {
+                        _emailHasError = _emailController.text.isEmpty;
+                        final pwd = _passwordController.text;
+                        _passwordHasError = pwd.isEmpty || pwd.isEmpty;
+                        _inlineError = null;
+                      });
+
+                      if (!formValid) {
+                        await HapticFeedback.lightImpact();
+                        return;
+                      }
+
+                      await _addAccount();
+
+                      // Handle error feedback with haptic response (same as credentials screen)
+                      if (!mounted) return;
+                      if (_errorMessage != null) {
+                        await HapticFeedback.heavyImpact();
+                        setState(() {
+                          _inlineError = _errorMessage;
+                        });
+                      }
+                    },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
