@@ -11,6 +11,8 @@ import 'features/example_field_delay/providers/example_field_delay_provider.dart
 import 'features/login/providers/login_provider.dart';
 import 'features/profile/providers/profile_provider.dart';
 
+import 'features/dashboard/provider/check_in_provider.dart';
+import 'features/dashboard/provider/task_stats_provider.dart';
 import 'features/review/services/review_service.dart';
 import 'features/settings/providers/settings_provider.dart';
 import 'features/splash/splash_screen.dart';
@@ -24,6 +26,8 @@ void main() {
 
   runApp(MultiProvider(
     providers: [
+      ChangeNotifierProvider(create: (_) => CheckInProvider()),
+      ChangeNotifierProvider(create: (_) => TaskStatsProvider()),
       ChangeNotifierProvider(create: (_) => SettingsProvider()),
       ChangeNotifierProvider(create: (_) => ThemeProvider()),
       ChangeNotifierProvider(create: (_) => ProfileProvider()),

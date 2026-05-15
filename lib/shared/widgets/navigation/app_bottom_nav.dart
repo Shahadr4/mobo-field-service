@@ -4,13 +4,11 @@ import 'package:hugeicons/hugeicons.dart';
 class AppBottomNav extends StatelessWidget {
   final int currentIndex;
   final ValueChanged<int> onTabSelected;
-  final VoidCallback onScanPressed;
 
   const AppBottomNav({
     super.key,
     required this.currentIndex,
     required this.onTabSelected,
-    required this.onScanPressed,
   });
 
   @override
@@ -40,62 +38,38 @@ class AppBottomNav extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _NavItem(
-                label: 'Operations',
+                label: 'Dashboard',
                 icon: HugeIcons.strokeRoundedPackage,
                 isActive: currentIndex == 0,
                 onTap: () => onTabSelected(0),
               ),
-              const SizedBox(width: 80), // Space for FAB
               _NavItem(
-                label: 'Count Inventory',
-                icon: HugeIcons.strokeRoundedTask01,
+                label: 'Task',
+                icon: HugeIcons.strokeRoundedPackage,
+                isActive: currentIndex == 1,
+                onTap: () => onTabSelected(1),
+              ),
+              _NavItem(
+                label: 'Employee',
+                icon: HugeIcons.strokeRoundedPackage,
                 isActive: currentIndex == 2,
                 onTap: () => onTabSelected(2),
+              ),
+              _NavItem(
+                label: 'Map',
+                icon: HugeIcons.strokeRoundedPackage,
+                isActive: currentIndex == 3,
+                onTap: () => onTabSelected(3),
+              ),
+              _NavItem(
+                label: 'Work sheet',
+                icon: HugeIcons.strokeRoundedTask01,
+                isActive: currentIndex == 4,
+                onTap: () => onTabSelected(4),
               ),
             ],
           ),
 
-          // Center Scan button with Halo
-          Positioned(
-            top: -40,
-            left: 0,
-            right: 0,
-            child: Center(
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  // White Halo
-                  Container(
-                    height: 90,
-                    width: 90,
-                    decoration: BoxDecoration(
-                      color: theme.scaffoldBackgroundColor,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  // Red FAB
-                  GestureDetector(
-                    onTap: onScanPressed,
-                    child: Container(
-                      height: 72,
-                      width: 72,
-                      decoration: BoxDecoration(
-                        color: primary,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Center(
-                        child: Icon(
-                          Icons.qr_code_scanner,
-                          color: Colors.white,
-                          size: 32,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
         ],
       ),
     );

@@ -21,6 +21,20 @@ class ProfileProvider extends ChangeNotifier {
 
   StreamSubscription<List<ConnectivityResult>>? _connectivitySub;
 
+
+  String getGreeting() {
+    final currentTime = DateTime.now();
+    final hour = currentTime.hour;
+
+    if (hour >= 5 && hour < 12) {
+      return 'Good Morning';
+    } else if (hour >= 12 && hour < 18) {
+      return 'Good Afternoon';
+    } else {
+      return 'Good Evening';
+    }
+  }
+
   static const String _cacheKeyUser = 'user_profile';
   static const String _cacheKeyUserWriteDate = 'user_profile_write_date';
   static const String _cacheKeyPendingUserUpdates =
@@ -65,6 +79,7 @@ class ProfileProvider extends ChangeNotifier {
     });
     return out;
   }
+
 
   String? _partnerMobileFieldNameCache;
   Future<String?> _getPartnerMobileFieldName() async {

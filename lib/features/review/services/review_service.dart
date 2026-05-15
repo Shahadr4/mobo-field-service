@@ -1,22 +1,28 @@
 import 'package:in_app_review/in_app_review.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:flutter/material.dart';
 import '../../../core/const/keys/global_keys.dart';
+import '../../../shared/widgets/snackbars/custom_snackbar.dart';
+import 'package:flutter/material.dart';
+
 import '../widget/rating_dialog.dart';
 
 class ReviewService {
   static final ReviewService _instance = ReviewService._internal();
+
   factory ReviewService() => _instance;
+
   ReviewService._internal();
 
   final InAppReview _inAppReview = InAppReview.instance;
 
+  // Keys for SharedPreferences
   static const String _keyOpenCount = 'review_open_count';
   static const String _keyEventCount = 'review_event_count';
   static const String _keyFirstOpenDate = 'review_first_open_date';
-  static const String _keyNextAllowedDate = 'review_next_allowed_date';
+  static const String _keyLastRequestDate = 'review_last_request_date';
   static const String _keyNeverAskAgain = 'review_never_ask_again';
+  static const String _keyFeedbackGiven = 'review_feedback_given';
 
   // Thresholds
   static const int _thresholdOpens = 5;
@@ -30,7 +36,10 @@ class ReviewService {
 
     // 1. First Open Date
     if (!prefs.containsKey(_keyFirstOpenDate)) {
-      await prefs.setInt(_keyFirstOpenDate, DateTime.now().millisecondsSinceEpoch);
+      await prefs.setInt(
+        _keyFirstOpenDate,
+        DateTime.now().millisecondsSinceEpoch,
+      );
     }
 
     // 2. Increment Open Count
@@ -48,20 +57,14 @@ class ReviewService {
     await prefs.setInt(_keyEventCount, currentEvents);
   }
 
-  Future<void> _checkAndRequestReview(SharedPreferences prefs, [BuildContext? context]) async {
+  Future<void> _checkAndRequestReview(
+      SharedPreferences prefs, [
+        BuildContext? context,
+      ]) async {
     if (_wasRequestedThisRun) return;
 
     if (prefs.getBool(_keyNeverAskAgain) ?? false) {
       return;
-    }
-
-    // Check if we are past the next allowed date
-    int? nextAllowedEpoch = prefs.getInt(_keyNextAllowedDate);
-    if (nextAllowedEpoch != null) {
-      final nextAllowedDate = DateTime.fromMillisecondsSinceEpoch(nextAllowedEpoch);
-      if (DateTime.now().isBefore(nextAllowedDate)) {
-        return;
-      }
     }
 
     if (await _inAppReview.isAvailable()) {
@@ -82,7 +85,9 @@ class ReviewService {
       // Criteria 3: N days usage
       int? firstOpenEpoch = prefs.getInt(_keyFirstOpenDate);
       if (firstOpenEpoch != null) {
-        final firstOpenDate = DateTime.fromMillisecondsSinceEpoch(firstOpenEpoch);
+        final firstOpenDate = DateTime.fromMillisecondsSinceEpoch(
+          firstOpenEpoch,
+        );
         final diff = DateTime.now().difference(firstOpenDate).inDays;
         if (diff >= _thresholdDays) {
           shouldRequest = true;
@@ -90,24 +95,30 @@ class ReviewService {
       }
 
       if (shouldRequest) {
+        int? lastRequestEpoch = prefs.getInt(_keyLastRequestDate);
+        if (lastRequestEpoch != null) {
+          final lastRequest = DateTime.fromMillisecondsSinceEpoch(
+            lastRequestEpoch,
+          );
+          final daysSinceLastRequest = DateTime.now()
+              .difference(lastRequest)
+              .inDays;
+          int waitDays = (prefs.getBool(_keyFeedbackGiven) ?? false) ? 180 : 30;
+
+          if (daysSinceLastRequest < waitDays) return;
+        }
+
         if (context != null && context.mounted) {
           _wasRequestedThisRun = true;
-
+          await prefs.setBool(_keyFeedbackGiven, false);
+          await prefs.setInt(
+            _keyLastRequestDate,
+            DateTime.now().millisecondsSinceEpoch,
+          );
           CustomRatingDialog.show(context);
-        } else {
-          /// If no context, we just wait or skip for now to avoid showing dialog on transition screen
         }
-      } else {
       }
-    } else {
     }
-  }
-
-  /// Postpone the review dialog by a specific duration
-  Future<void> postponeReview(Duration duration) async {
-    final prefs = await SharedPreferences.getInstance();
-    final nextAllowedDate = DateTime.now().add(duration);
-    await prefs.setInt(_keyNextAllowedDate, nextAllowedDate.millisecondsSinceEpoch);
   }
 
   /// Track app open and show dialog if criteria met
@@ -119,17 +130,13 @@ class ReviewService {
   /// Force a review request. If the native dialog is suppressed by Google Play
   /// (due to quotas), it will fall back to opening the Store Listing directly.
   Future<void> forceRequestReview() async {
-    /// Update next allowed date to enforce cooldown period
-    await postponeReview(const Duration(days: 30));
-
-    /// Show a small snackbar so the user knows the code is working
-    scaffoldMessengerKey.currentState?.showSnackBar(
-      SnackBar(
-        content: const Text('🔄 Requesting Google Play review...'),
-        duration: const Duration(seconds: 2),
-        backgroundColor: Colors.blue[700],
-      ),
-    );
+    // Show a small snackbar so the user knows the code is working
+    if (navigatorKey.currentContext != null) {
+      CustomSnackbar.showInfo(
+        navigatorKey.currentContext!,
+        'Requesting Google Play review...',
+      );
+    }
 
     try {
       if (await _inAppReview.isAvailable()) {
@@ -149,8 +156,7 @@ class ReviewService {
   Future<void> openStoreListing() async {
     try {
       await _inAppReview.openStoreListing();
-    } catch (e) {
-    }
+    } catch (e) {}
   }
 
   /// Send email feedback for low ratings (1-3 stars)
@@ -158,25 +164,27 @@ class ReviewService {
     try {
       final Uri emailLaunchUri = Uri(
         scheme: 'mailto',
-        path: 'cybroplay@gmail.com', /// Updated support email
+        path: 'cybroplay@gmail.com', // Updated support email
         query: encodeQueryParameters(<String, String>{
-          'subject': 'Feedback for  Mobo Barcode (${rating.toInt()} Stars)',
-          'body': 'Rating: ${rating.toInt()}/5\n\nComment:\n$comment\n\n---\nSent from Mobo Barcode '
+          'subject':
+          'Feedback for mobo Sales for Odoo (${rating.toInt()} Stars)',
+          'body':
+          'Rating: ${rating.toInt()}/5\n\nComment:\n$comment\n\n---\nSent from mobo Sales for Odoo',
         }),
       );
 
       if (await canLaunchUrl(emailLaunchUri)) {
         await launchUrl(emailLaunchUri);
-      } else {
-      }
-    } catch (e) {
-    }
+      } else {}
+    } catch (e) {}
   }
 
   String? encodeQueryParameters(Map<String, String> params) {
     return params.entries
-        .map((MapEntry<String, String> e) =>
-    '${Uri.encodeComponent(e.key)}=${Uri.encodeComponent(e.value)}')
+        .map(
+          (MapEntry<String, String> e) =>
+      '${Uri.encodeComponent(e.key)}=${Uri.encodeComponent(e.value)}',
+    )
         .join('&');
   }
 
@@ -186,41 +194,14 @@ class ReviewService {
     await prefs.setBool(_keyNeverAskAgain, true);
   }
 
-  /// Debug method to print current review tracking statistics
-    Future<void> printReviewStats() async {
+  /// Mark that user gave feedback (1-3 stars) to trigger 6-month cooldown
+  Future<void> markFeedbackGiven() async {
     final prefs = await SharedPreferences.getInstance();
-
-    int openCount = prefs.getInt(_keyOpenCount) ?? 0;
-    int eventCount = prefs.getInt(_keyEventCount) ?? 0;
-    int? firstOpenEpoch = prefs.getInt(_keyFirstOpenDate);
-    int? nextAllowedEpoch = prefs.getInt(_keyNextAllowedDate);
-
-    print("====== Review Stats ======");
-    print("Open Count: $openCount");
-    print("Event Count: $eventCount");
-
-    if (firstOpenEpoch != null) {
-      final firstOpenDate =
-      DateTime.fromMillisecondsSinceEpoch(firstOpenEpoch);
-      final daysSinceFirst =
-          DateTime.now().difference(firstOpenDate).inDays;
-
-      print("First Open Date: $firstOpenDate");
-      print("Days Since First Open: $daysSinceFirst");
-    } else {
-      print("First Open Date: Not set");
-    }
-
-    if (nextAllowedEpoch != null) {
-      final nextAllowedDate =
-      DateTime.fromMillisecondsSinceEpoch(nextAllowedEpoch);
-
-      print("Next Allowed Date: $nextAllowedDate");
-    } else {
-      print("Next Allowed Date: Not set");
-    }
-
-    print("==========================");
+    await prefs.setBool(_keyFeedbackGiven, true);
+    await prefs.setInt(
+      _keyLastRequestDate,
+      DateTime.now().millisecondsSinceEpoch,
+    );
   }
 
   /// Reset all review tracking data (useful for testing)
@@ -229,7 +210,8 @@ class ReviewService {
     await prefs.remove(_keyOpenCount);
     await prefs.remove(_keyEventCount);
     await prefs.remove(_keyFirstOpenDate);
-    await prefs.remove(_keyNextAllowedDate);
+    await prefs.remove(_keyLastRequestDate);
     await prefs.remove(_keyNeverAskAgain);
+    await prefs.remove(_keyFeedbackGiven);
   }
 }

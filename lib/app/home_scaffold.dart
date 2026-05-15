@@ -1,6 +1,5 @@
-import 'dart:developer';
+import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:shimmer/shimmer.dart';
@@ -10,9 +9,11 @@ import '../core/services/odoo_session_manager.dart';
 import '../core/services/connectivity_service.dart';
 
 
+import '../features/dashboard/pages/dashboard_screen.dart';
+import '../features/dashboard/provider/check_in_provider.dart';
+import '../features/dashboard/provider/task_stats_provider.dart';
 import '../features/homescreen.dart';
 import '../features/review/services/review_service.dart';
-import '../shared/widgets/connection_status_banner.dart';
 
 import '../features/profile/pages/profile_screen.dart';
 import '../features/profile/providers/profile_provider.dart';
@@ -22,11 +23,6 @@ import '../features/company/providers/company_provider.dart';
 import '../features/company/widgets/company_selector_widget.dart';
 import '../shared/widgets/navigation/app_bottom_nav.dart';
 import '../shared/widgets/snackbars/custom_snackbar.dart';
-// Providers for refreshing data after company switch
-
-import '../core/providers/home_tab_provider.dart';
-
-import '../shared/widgets/empty_state.dart';
 
 class HomeScaffold extends StatefulWidget {
   const HomeScaffold({super.key});
@@ -57,7 +53,6 @@ class _HomeScaffoldState extends State<HomeScaffold>
     });
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await ReviewService().checkAndShowRating(context);
-      await ReviewService().printReviewStats();
     });
 
     // Ensure ProfileProvider fetches user data on app start
@@ -110,33 +105,19 @@ class _HomeScaffoldState extends State<HomeScaffold>
       debugPrint('[HomeScaffold] Error validating session: $e');
     }
   }
-  int _index = 1;
+  int _index = 0;
 
-  String get _title {
-    switch (_index) {
-      case 0:
-        return 'Operations';
-      case 1:
-        return 'Scan QR Code';
-      case 2:
-        return 'Count Inventory';
-      default:
-        return '';
-    }
-  }
+  static const List<String> _titles = [
+    'Dashboard', 'Task', 'Employee', 'Map', 'Work sheet',
+  ];
 
-  Widget get _body {
-    switch (_index) {
-      case 0:
-        return const Homescreen();
-      case 1:
-        return const Homescreen();
-      case 2:
-        return const Homescreen();
-      default:
-        return const SizedBox.shrink();
-    }
-  }
+  final List<Widget> _screens = const [
+    DashboardScreen(),
+    Homescreen(),
+    Homescreen(),
+    Homescreen(),
+    Homescreen(),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -151,27 +132,30 @@ class _HomeScaffoldState extends State<HomeScaffold>
         elevation: 0,
         automaticallyImplyLeading: false,
         title: Text(
-          _title,
+          _titles[_index],
           style: TextStyle(
             color: isDark ? Colors.white : Colors.black,
             fontWeight: FontWeight.bold,
             fontSize: 16,
           ),
         ),
-        actions:_index == 1 ? [] : _buildProfileActions(context),
+        actions: _buildProfileActions(context),
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         foregroundColor: isDark ? Colors.white : Theme.of(context).primaryColor,
         centerTitle: false,
         surfaceTintColor: Colors.transparent,
       ),
 
-      body:_body,
+      body: IndexedStack(
+        index: _index,
+        children: _screens,
+      ),
       bottomNavigationBar: SafeArea(
         top: false,
         child: AppBottomNav(
           currentIndex: _index,
           onTabSelected: (i) => setState(() => _index = i),
-          onScanPressed: () => setState(() => _index = 1),
+
         ),
       ),
 
@@ -191,31 +175,22 @@ class _HomeScaffoldState extends State<HomeScaffold>
       onCompanyChanged: () async {
         if (!mounted) return;
 
-        final provider = context.read<CompanyProvider>();
-        final companyName =
-            provider.selectedCompany?['name']?.toString() ?? 'company';
+        final companyName = context.read<CompanyProvider>()
+                .selectedCompany?['name']?.toString() ??
+            'company';
 
+        final checkIn = context.read<CheckInProvider>();
+        final taskStats = context.read<TaskStatsProvider>();
 
-        try {
-          // Optional: show loading indicator
+        // Clear stale data immediately — shimmer shows while fresh data loads
+        checkIn.reset();
+        taskStats.reset();
 
+        // Trigger fresh load (IndexedStack keeps DashboardScreen alive, initState won't re-fire)
+        unawaited(Future.wait([checkIn.init(), taskStats.fetch()]));
 
-          if (!mounted) return;
-
-          CustomSnackbar.showSuccess(
-            context,
-            'Switched to $companyName',
-          );
-        } catch (e) {
-          if (!mounted) return;
-
-          CustomSnackbar.showError(
-            context,
-            'Failed to switch company',
-          );
-        } finally {
-
-        }
+        if (!mounted) return;
+        CustomSnackbar.showSuccess(context, 'Switched to $companyName');
       },
     ),
       Container(

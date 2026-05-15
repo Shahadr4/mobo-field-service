@@ -13,6 +13,8 @@ import '../../../core/services/odoo_session_manager.dart';
 import '../../../core/services/biometric_context_service.dart';
 import '../../../shared/widgets/snackbars/custom_snackbar.dart';
 import '../../company/providers/company_provider.dart';
+import '../../dashboard/provider/check_in_provider.dart';
+import '../../dashboard/provider/task_stats_provider.dart';
 import '../../login/pages/credentials_screen.dart';
 import '../../../core/routing/page_transition.dart';
 import '../../../app/home_scaffold.dart';
@@ -669,6 +671,9 @@ class SwitchAccountWidget extends StatelessWidget {
         sessionService.updateSession(fixedSession);
 
         if (context.mounted) {
+          context.read<CheckInProvider>().reset();
+          context.read<TaskStatsProvider>().reset();
+
           Navigator.pop(context);
           Navigator.pushAndRemoveUntil(
             context,
