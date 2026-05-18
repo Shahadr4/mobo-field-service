@@ -78,21 +78,22 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
-      body: SizedBox.expand(
-        child: FittedBox(
-          fit: BoxFit.cover,
-          child: SizedBox(
-            width: _controller.value.isInitialized
-                ? _controller.value.size.width
-                : 1,
-            height: _controller.value.isInitialized
-                ? _controller.value.size.height
-                : 1,
-            child: VideoPlayer(_controller),
-          ),
-        ),
-      ),
+     // backgroundColor: Colors.black,
+      // body: SizedBox.expand(
+      //   child: FittedBox(
+      //     fit: BoxFit.cover,
+      //     child: SizedBox(
+      //       width: _controller.value.isInitialized
+      //           ? _controller.value.size.width
+      //           : 1,
+      //       height: _controller.value.isInitialized
+      //           ? _controller.value.size.height
+      //           : 1,
+      //       child: VideoPlayer(_controller),
+      //     ),
+      //   ),
+      // ),
+      body: Center(child: Text("Splash screen"),),
     );
   }
 }

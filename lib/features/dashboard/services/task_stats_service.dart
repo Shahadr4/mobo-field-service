@@ -84,7 +84,7 @@ class TaskStatsService {
 
   Future<int> _count(List<dynamic> domain) async {
     try {
-      final result = await OdooSessionManager.safeCallKw({
+      final result = await OdooSessionManager.callKwWithCompany({
         'model': 'project.task',
         'method': 'search_count',
         'args': [domain],

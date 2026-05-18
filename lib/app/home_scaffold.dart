@@ -108,7 +108,7 @@ class _HomeScaffoldState extends State<HomeScaffold>
   int _index = 0;
 
   static const List<String> _titles = [
-    'Dashboard', 'Task', 'Employee', 'Map', 'Work sheet',
+    'Dashboard', 'Task', 'Employee', 'Map', 'Time sheet',
   ];
 
   final List<Widget> _screens = const [

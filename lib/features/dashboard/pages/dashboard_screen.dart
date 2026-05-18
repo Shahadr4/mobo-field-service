@@ -9,6 +9,7 @@ import '../widget/greeting_card_shimmer.dart';
 import '../widget/greeting_card_widget.dart';
 import '../widget/task_stats_grid.dart';
 import '../widget/task_stats_shimmer.dart';
+import '../widget/timer_widget.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -61,11 +62,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ? const GreetingCardShimmer()
                   : GreetingCardWidget(profileProvider: profileProvider),
               const SizedBox(height: 16),
+
               const CheckInWidget(),
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
               isProfileLoading
                   ? const TaskStatsShimmer()
                   : const TaskStatsGrid(),
+              const SizedBox(height: 16),
+              const TimerWidget(),
+              const SizedBox(height: 20),
+
               // Extra padding so content clears the bottom nav
               const SizedBox(height: 20),
             ],

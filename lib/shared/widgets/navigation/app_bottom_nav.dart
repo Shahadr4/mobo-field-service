@@ -62,7 +62,7 @@ class AppBottomNav extends StatelessWidget {
                 onTap: () => onTabSelected(3),
               ),
               _NavItem(
-                label: 'Work sheet',
+                label: 'Timesheet',
                 icon: HugeIcons.strokeRoundedTask01,
                 isActive: currentIndex == 4,
                 onTap: () => onTabSelected(4),
