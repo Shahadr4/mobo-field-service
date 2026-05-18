@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mobo_feild_service/core/const/app_colors.dart';
 
 import '../model/task_model.dart';
+import '../pages/task_detail_screen.dart';
 
 class TaskCard extends StatelessWidget {
   final TaskModel task;
@@ -28,7 +29,14 @@ class TaskCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final stageColor = _stageColor(task.stageName);
 
-    return Container(
+    return GestureDetector(
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => TaskDetailScreen(task: task),
+        ),
+      ),
+      child: Container(
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E2028) : Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -123,6 +131,8 @@ class TaskCard extends StatelessWidget {
           ],
         ),
       ),
+      ),
     );
   }
 }
+
