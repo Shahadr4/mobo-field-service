@@ -157,17 +157,7 @@ class _TimerWidgetState extends State<TimerWidget>
             },
           ),
           const SizedBox(height: 12),
-          _WorkManagementCard(
-            isDark: isDark,
-            icon: HugeIcons.strokeRoundedClipboard,
-            iconColor: const Color(0xFF3B82F6),
-            title: 'View Tasks',
-            subtitle: 'View and manage all your assigned tasks',
-            loading: false,
-            onTap: () {
-              // TODO: Implement View Tasks
-            },
-          ),
+
         ],
       );
     } else {

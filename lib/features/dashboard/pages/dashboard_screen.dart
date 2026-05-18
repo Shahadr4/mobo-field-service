@@ -9,7 +9,9 @@ import '../widget/greeting_card_shimmer.dart';
 import '../widget/greeting_card_widget.dart';
 import '../widget/task_stats_grid.dart';
 import '../widget/task_stats_shimmer.dart';
+import '../provider/dashboard_task_provider.dart';
 import '../widget/timer_widget.dart';
+import '../widget/dashboard_task_tabs.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -40,6 +42,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     await Future.wait([
       context.read<CheckInProvider>().refresh(),
       context.read<TaskStatsProvider>().refresh(),
+      context.read<DashboardTaskProvider>().refresh(),
     ]);
   }
 
@@ -61,18 +64,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
               isProfileLoading
                   ? const GreetingCardShimmer()
                   : GreetingCardWidget(profileProvider: profileProvider),
-              const SizedBox(height: 16),
-
+              const SizedBox(height: 18),
               const CheckInWidget(),
-              const SizedBox(height: 16),
+              const SizedBox(height: 18),
+              const DashboardTaskTabs(),
+              const SizedBox(height: 10),
               isProfileLoading
                   ? const TaskStatsShimmer()
                   : const TaskStatsGrid(),
               const SizedBox(height: 16),
               const TimerWidget(),
-              const SizedBox(height: 20),
-
-              // Extra padding so content clears the bottom nav
               const SizedBox(height: 20),
             ],
           ),

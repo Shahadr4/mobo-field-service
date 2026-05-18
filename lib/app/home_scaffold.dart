@@ -11,8 +11,10 @@ import '../core/services/connectivity_service.dart';
 
 import '../features/dashboard/pages/dashboard_screen.dart';
 import '../features/dashboard/provider/check_in_provider.dart';
+import '../features/dashboard/provider/dashboard_task_provider.dart';
 import '../features/dashboard/provider/task_stats_provider.dart';
 import '../features/homescreen.dart';
+import '../features/tasks/pages/task_list_screen.dart';
 import '../features/review/services/review_service.dart';
 
 import '../features/profile/pages/profile_screen.dart';
@@ -113,7 +115,7 @@ class _HomeScaffoldState extends State<HomeScaffold>
 
   final List<Widget> _screens = const [
     DashboardScreen(),
-    Homescreen(),
+    TaskListScreen(),
     Homescreen(),
     Homescreen(),
     Homescreen(),
@@ -181,10 +183,12 @@ class _HomeScaffoldState extends State<HomeScaffold>
 
         final checkIn = context.read<CheckInProvider>();
         final taskStats = context.read<TaskStatsProvider>();
+        final dashTasks = context.read<DashboardTaskProvider>();
 
         // Clear stale data immediately — shimmer shows while fresh data loads
         checkIn.reset();
         taskStats.reset();
+        dashTasks.refresh();
 
         // Trigger fresh load (IndexedStack keeps DashboardScreen alive, initState won't re-fire)
         unawaited(Future.wait([checkIn.init(), taskStats.fetch()]));

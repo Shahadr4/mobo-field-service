@@ -3,7 +3,6 @@ import '../../../core/services/odoo_session_manager.dart';
 import '../model/project_item_model.dart';
 
 class TimesheetService {
-  // ── Fetch FSM tasks ───────────────────────────────────────────────────────
 
   Future<List<ProjectItem>> fetchProjects() async {
     final session = await OdooSessionManager.getCurrentSession();
@@ -41,41 +40,31 @@ class TimesheetService {
     }
   }
 
-  // ── Start: create analytic line + timer.timer directly ───────────────────
-  //
-  // We bypass project.task.action_timer_start because it is guarded by
-  // display_timesheet_timer (requires allow_timesheets + analytic_account_active
-  // + user has employee), which may silently do nothing via RPC.
-  // Instead we replicate what _create_record_to_start_timer + _create_timer do.
 
-  Future<int?> startTimer(int taskId) async {
+  Future<int?> startTimer(int taskId) => _manualStart(taskId);
+
+  Future<int?> _manualStart(int taskId) async {
     try {
       final session = await OdooSessionManager.getCurrentSession();
       if (session == null) return null;
 
-      // Resolve project_id for this task
       final tasks = await OdooSessionManager.callKwWithCompany({
         'model': 'project.task',
         'method': 'search_read',
         'args': [
-          [
-            ['id', '=', taskId]
-          ]
+          [['id', '=', taskId]]
         ],
-        'kwargs': {
-          'fields': ['id', 'project_id'],
-          'limit': 1,
-        },
+        'kwargs': {'fields': ['id', 'project_id'], 'limit': 1},
       });
       if (tasks is! List || tasks.isEmpty) return null;
 
       final projectRaw = tasks[0]['project_id'];
-      final projectId = projectRaw is List ? (projectRaw[0] as num).toInt() : null;
+      final projectId =
+          projectRaw is List ? (projectRaw[0] as num).toInt() : null;
       if (projectId == null) return null;
 
       final today = DateTime.now().toIso8601String().substring(0, 10);
 
-      // Step 1 — create account.analytic.line (timesheet record)
       final timesheetId = await OdooSessionManager.callKwWithCompany({
         'model': 'account.analytic.line',
         'method': 'create',
@@ -94,12 +83,12 @@ class TimesheetService {
       if (timesheetId == null) return null;
       final tsId = (timesheetId as num).toInt();
 
-      // Step 2 — create timer.timer and start it
-      // res_model/res_id point to the analytic line
-      // parent_res_model/parent_res_id point to the task (for user_timer_id lookup)
+      // timer_start must be UTC in 'YYYY-MM-DD HH:MM:SS' format (no T, no Z)
       final dt = DateTime.now().toUtc();
-      final now =
-          '${dt.year.toString().padLeft(4, '0')}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}:${dt.second.toString().padLeft(2, '0')}';
+      String pad(int n) => n.toString().padLeft(2, '0');
+      final now = '${dt.year}-${pad(dt.month)}-${pad(dt.day)} '
+          '${pad(dt.hour)}:${pad(dt.minute)}:${pad(dt.second)}';
+
       await OdooSessionManager.callKwWithCompany({
         'model': 'timer.timer',
         'method': 'create',
@@ -116,15 +105,15 @@ class TimesheetService {
         'kwargs': {},
       });
 
-      log('[TimesheetService] ▶ timer started task=$taskId timesheet=$tsId');
+      log('[TimesheetService] ▶ manual start task=$taskId timesheet=$tsId');
       return tsId;
     } catch (e) {
-      log('[TimesheetService] ⚠️ startTimer error: $e');
+      log('[TimesheetService] ⚠️ _manualStart error: $e');
       return null;
     }
   }
 
-  // ── Stop: clear timer + write unit_amount on analytic line ───────────────
+  // ── Stop: call action_timer_stop → wizard → action_save_timesheet ─────────
 
   Future<bool> stopTimer({
     required int taskId,
@@ -136,48 +125,43 @@ class TimesheetService {
       final session = await OdooSessionManager.getCurrentSession();
       if (session == null) return false;
 
-      // Find the timer.timer record for this task + user
+      log('[TimesheetService] stopping task=$taskId timesheet=$timesheetId elapsed=${elapsed.inSeconds}s');
+
+      final realId = timesheetId < 0 ? -timesheetId : timesheetId;
+      final unitAmount = elapsed.inSeconds / 3600.0;
+
+      // Step 1 — find and clear the timer.timer record directly
+      // (action_timer_stop opens a wizard in the web UI, doesn't stop via RPC cleanly)
       final timers = await OdooSessionManager.callKwWithCompany({
         'model': 'timer.timer',
         'method': 'search_read',
         'args': [
           [
             ['res_model', '=', 'account.analytic.line'],
-            ['res_id', '=', timesheetId],
+            ['res_id', '=', realId],
             ['user_id', '=', session.userId],
           ]
         ],
-        'kwargs': {
-          'fields': ['id'],
-          'limit': 1,
-        },
+        'kwargs': {'fields': ['id'], 'limit': 1},
       });
 
       if (timers is List && timers.isNotEmpty) {
         final timerId = (timers[0]['id'] as num).toInt();
-        // Clear the timer (stops the running indicator in backend)
         await OdooSessionManager.callKwWithCompany({
           'model': 'timer.timer',
-          'method': 'write',
-          'args': [
-            [timerId],
-            {'timer_start': false, 'timer_pause': false}
-          ],
+          'method': 'unlink',
+          'args': [[timerId]],
           'kwargs': {},
         });
-        log('[TimesheetService] ⏹ timer cleared id=$timerId');
+        log('[TimesheetService] ⏹ timer.timer unlinked id=$timerId');
       }
 
-      // Send exact elapsed seconds as fractional hours
-      final unitAmount = elapsed.inSeconds / 3600.0;
-
-      log("unit time  ===. $unitAmount");
-      // Write unit_amount + description directly on the analytic line
+      // Step 2 — write unit_amount + description on the analytic line
       await OdooSessionManager.callKwWithCompany({
         'model': 'account.analytic.line',
         'method': 'write',
         'args': [
-          [timesheetId],
+          [realId],
           {
             'unit_amount': unitAmount,
             'name': description.isEmpty ? '/' : description,
@@ -186,8 +170,7 @@ class TimesheetService {
         'kwargs': {},
       });
 
-      log('[TimesheetService] ✅ timesheet saved id=$timesheetId '
-          'elapsed=${elapsed.inSeconds}s unitAmount=$unitAmount');
+      log('[TimesheetService] ✅ saved id=$realId elapsed=${elapsed.inSeconds}s unitAmount=$unitAmount');
       return true;
     } catch (e) {
       log('[TimesheetService] ⚠️ stopTimer error: $e');
@@ -205,21 +188,20 @@ class TimesheetService {
       final session = await OdooSessionManager.getCurrentSession();
       if (session == null) return;
 
-      // Stop and unlink the timer.timer record
+      final realId = timesheetId < 0 ? -timesheetId : timesheetId;
+
+      // Unlink the timer.timer record
       final timers = await OdooSessionManager.callKwWithCompany({
         'model': 'timer.timer',
         'method': 'search_read',
         'args': [
           [
             ['res_model', '=', 'account.analytic.line'],
-            ['res_id', '=', timesheetId],
+            ['res_id', '=', realId],
             ['user_id', '=', session.userId],
           ]
         ],
-        'kwargs': {
-          'fields': ['id'],
-          'limit': 1,
-        },
+        'kwargs': {'fields': ['id'], 'limit': 1},
       });
 
       if (timers is List && timers.isNotEmpty) {
@@ -227,26 +209,22 @@ class TimesheetService {
         await OdooSessionManager.callKwWithCompany({
           'model': 'timer.timer',
           'method': 'unlink',
-          'args': [
-            [timerId]
-          ],
+          'args': [[timerId]],
           'kwargs': {},
         });
       }
 
-      // Delete the analytic line — nothing to keep
+      // Delete the analytic line
       await OdooSessionManager.callKwWithCompany({
         'model': 'account.analytic.line',
         'method': 'unlink',
-        'args': [
-          [timesheetId]
-        ],
+        'args': [[realId]],
         'kwargs': {},
       });
 
-      log('[TimesheetService]  cancelled timesheet=$timesheetId task=$taskId');
+      log('[TimesheetService] cancelled timesheet=$realId task=$taskId');
     } catch (e) {
-      log('[TimesheetService]  cancelTimer error: $e');
+      log('[TimesheetService] cancelTimer error: $e');
     }
   }
 }
