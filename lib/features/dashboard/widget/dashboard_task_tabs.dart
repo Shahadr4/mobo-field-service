@@ -8,6 +8,8 @@ import 'package:shimmer/shimmer.dart';
 import '../model/dashboard_task_model.dart';
 import '../provider/dashboard_task_provider.dart';
 import '../services/location_map_service.dart';
+import '../../tasks/services/task_service.dart';
+import '../../tasks/pages/task_detail_screen.dart';
 
 class DashboardTaskTabs extends StatelessWidget {
   const DashboardTaskTabs({super.key});
@@ -305,6 +307,7 @@ class _DashboardTaskCard extends StatefulWidget {
 class _DashboardTaskCardState extends State<_DashboardTaskCard> {
   MapTileInfo? _tileInfo;
   bool _mapLoading = true;
+  bool _navLoading = false;
 
   @override
   void initState() {
@@ -315,6 +318,19 @@ class _DashboardTaskCardState extends State<_DashboardTaskCard> {
   Future<void> _loadMap() async {
     final info = await LocationMapService.getTileInfo(widget.task.partnerAddress);
     if (mounted) setState(() { _tileInfo = info; _mapLoading = false; });
+  }
+
+  Future<void> _navigateToDetail() async {
+    if (_navLoading) return;
+    setState(() => _navLoading = true);
+    final task = await TaskService().fetchTaskById(widget.task.id);
+    if (!mounted) return;
+    setState(() => _navLoading = false);
+    if (task != null) {
+      Navigator.push(context, MaterialPageRoute(
+        builder: (_) => TaskDetailScreen(task: task),
+      ));
+    }
   }
 
 
@@ -337,11 +353,15 @@ class _DashboardTaskCardState extends State<_DashboardTaskCard> {
 
 
 
-    return SizedBox(
-      width: 180,
-      height: 300,
-      child: Container(
-        margin: EdgeInsets.only(bottom: 10),
+    return GestureDetector(
+      onTap: _navigateToDetail,
+      child: SizedBox(
+        width: 180,
+        height: 300,
+        child: Stack(
+        children: [
+          Container(
+        margin: const EdgeInsets.only(bottom: 10),
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF1E2028) : Colors.white,
           borderRadius: BorderRadius.circular(16),
@@ -477,6 +497,29 @@ class _DashboardTaskCardState extends State<_DashboardTaskCard> {
             ),
             ),
           ],
+        ),
+          ),
+          // Loading overlay while fetching task detail
+          if (_navLoading)
+            Positioned.fill(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  color: Colors.black.withValues(alpha: 0.35),
+                  child: const Center(
+                    child: SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.5,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
         ),
       ),
     );

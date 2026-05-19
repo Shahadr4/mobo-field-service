@@ -17,6 +17,8 @@ class TaskModel {
   final String description;
   final double allocatedHours;
   final double effectiveHours;
+  final String tagNames;
+  final bool underWarranty;
 
   const TaskModel({
     required this.id,
@@ -37,6 +39,8 @@ class TaskModel {
     required this.description,
     required this.allocatedHours,
     required this.effectiveHours,
+    required this.tagNames,
+    required this.underWarranty,
   });
 
   String get partnerAddress {
@@ -80,10 +84,13 @@ class TaskModel {
     }
 
     String fmt12(DateTime dt) {
-      final h = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
-      final m = dt.minute.toString().padLeft(2, '0');
+      final months = ['Jan','Feb','Mar','Apr','May','Jun',
+                      'Jul','Aug','Sep','Oct','Nov','Dec'];
+      final date   = '${months[dt.month - 1]} ${dt.day}, ${dt.year}';
+      final h      = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
+      final m      = dt.minute.toString().padLeft(2, '0');
       final period = dt.hour < 12 ? 'AM' : 'PM';
-      return '$h:$m $period';
+      return '$date  $h:$m $period';
     }
 
     final beginDt = parseOdooDt(map['planned_date_begin']);
@@ -108,6 +115,8 @@ class TaskModel {
       description: map['description'] is String ? map['description'] : '',
       allocatedHours: (map['allocated_hours'] as num?)?.toDouble() ?? 0.0,
       effectiveHours: (map['effective_hours'] as num?)?.toDouble() ?? 0.0,
+      tagNames: map['tag_names']?.toString() ?? '',
+      underWarranty: map['under_warranty'] == true,
     );
   }
 }
