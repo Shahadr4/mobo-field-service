@@ -24,8 +24,8 @@ class TaskPillTab extends StatelessWidget {
         decoration: BoxDecoration(
           color: selected
               ? (isDark ? Colors.white : Colors.black)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(10),
+              : Colors.white,
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: selected
                 ? Colors.transparent

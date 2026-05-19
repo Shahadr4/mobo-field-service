@@ -67,6 +67,20 @@ class TaskCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
+                if (task.priority > 0) ...[
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: List.generate(
+                      task.priority,
+                      (index) => const Icon(
+                        Icons.star_rounded,
+                        size: 16,
+                        color: Color(0xFFFFB800),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                ],
                 if (task.stageName.isNotEmpty)
                   Container(
                     padding: const EdgeInsets.symmetric(
@@ -90,44 +104,22 @@ class TaskCard extends StatelessWidget {
                     color: isDark ? Colors.white38 : Colors.black38),
               ],
             ),
-            const SizedBox(height: 10),
-            if (task.assigneeName.isNotEmpty)
+            const SizedBox(height: 6),
+            if (task.partnerName.isNotEmpty)
+              Text(task.partnerName,
+                  style: TextStyle(fontSize: 13, color: isDark ? Colors.white60 : Colors.black54)),
+            if (task.partnerName.isNotEmpty) const SizedBox(height: 4),
+            if (task.scheduledStart.isNotEmpty || task.scheduledEnd.isNotEmpty)
               Text(
-                task.assigneeName,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: isDark ? Colors.white60 : Colors.black54,
-                ),
+                [
+                  if (task.scheduledStart.isNotEmpty) task.scheduledStart,
+                  if (task.scheduledEnd.isNotEmpty) task.scheduledEnd,
+                ].join('  →  '),
+                style: TextStyle(fontSize: 13, color: isDark ? Colors.white60 : Colors.black54),
               ),
-            if (task.assigneeName.isNotEmpty) const SizedBox(height: 4),
-            if (task.projectName.isNotEmpty)
-              Text(
-                task.projectName,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: isDark ? Colors.white60 : Colors.black54,
-                ),
-              ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Created Date',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: isDark ? Colors.white38 : Colors.black38,
-                  ),
-                ),
-                Text(
-                  task.createDate,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: isDark ? Colors.white54 : Colors.black54,
-                  ),
-                ),
-              ],
-            ),
+            if (task.scheduledStart.isNotEmpty || task.scheduledEnd.isNotEmpty)
+              const SizedBox(height: 4),
+
           ],
         ),
       ),
@@ -135,4 +127,5 @@ class TaskCard extends StatelessWidget {
     );
   }
 }
+
 

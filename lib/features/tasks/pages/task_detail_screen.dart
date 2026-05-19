@@ -25,6 +25,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
   late TaskModel _task;
   bool _isLoading = false;
   int _tabIndex = 0;
+  int _refreshKey = 0;
 
   @override
   void initState() {
@@ -38,6 +39,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
     if (mounted) {
       setState(() {
         if (fresh != null) _task = fresh;
+        _refreshKey++;
         _isLoading = false;
       });
     }
@@ -58,7 +60,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
   Widget build(BuildContext context) {
     final isDark     = Theme.of(context).brightness == Brightness.dark;
     final stageColor = _stageColor(_task.stageName);
-    final pageBg     = isDark ? const Color(0xFF13151C) : Colors.white;
+    final pageBg     = isDark ? const Color(0xFF13151C) : const Color(0xFFF4F6FA);
     final cardBg     = isDark ? const Color(0xFF1E2028) : Colors.white;
     final shadow     = BoxShadow(
       color: Colors.black.withValues(alpha: isDark ? 0.22 : 0.07),
@@ -66,10 +68,13 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
       offset: const Offset(0, 4),
     );
 
+    // Bottom sheet height: 2 rows × 48 + remaining row 60 + safe area bottom
+    final bottomSheetH = 48.0 + 48.0 + 60.0 + MediaQuery.of(context).padding.bottom;
+
     return Scaffold(
-      backgroundColor: pageBg,
+
       appBar: AppBar(
-        backgroundColor: cardBg,
+
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
@@ -106,30 +111,20 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
           : TaskHoursBottomSheet(task: _task, isDark: isDark),
       body: _isLoading
           ? TaskDetailShimmer(isDark: isDark)
-          : LayoutBuilder(
-              builder: (context, constraints) {
-                // Fixed height for tab card = available body height
-                // minus top padding, info card (~190), tabs row (~44), spacings, bottom sheet (~160)
-                final tabHeight = constraints.maxHeight -
-                    MediaQuery.of(context).padding.top -
-                    16 - // top padding
-                    190 - // info card approx
-                    16 - // gap
-                    44 - // pill tabs row
-                    12 - // gap
-                    160; // bottom sheet clearance
-
-                final safeTabHeight = tabHeight.clamp(200.0, double.infinity);
-
-                return RefreshIndicator(
-                  onRefresh: () async => _refresh(),
-                  color: primaryColor,
-                  child: SingleChildScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+          : RefreshIndicator(
+              onRefresh: _refresh,
+              color: primaryColor,
+              child: Column(
+              children: [
+                // ── Scrollable top section ───────────────────────
+                SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Info card
                         TaskInfoCard(
                           task: _task,
                           isDark: isDark,
@@ -141,7 +136,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                         Row(
                           children: [
                             TaskPillTab(
-                              label: 'Information',
+                              label: 'Info',
                               selected: _tabIndex == 0,
                               isDark: isDark,
                               onTap: () => setState(() => _tabIndex = 0),
@@ -162,32 +157,36 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                             ),
                           ],
                         ),
-                        const SizedBox(height: 15),
-
-                        // Tab content card — fixed height, scrolls internally
-                        SizedBox(
-                          height: safeTabHeight,
-                          child: Container(
-                            width: double.infinity,
-                            clipBehavior: Clip.antiAlias,
-                            decoration: BoxDecoration(
-                              color: cardBg,
-                              borderRadius: BorderRadius.circular(14),
-                              boxShadow: [shadow],
-                            ),
-                            child: _tabIndex == 0
-                                ? InfoContent(task: _task, isDark: isDark)
-                                : _tabIndex == 1
-                                    ? TimesheetContent(task: _task, isDark: isDark)
-                                    : SubtasksContent(task: _task, isDark: isDark),
-                          ),
-                        ),
+                        const SizedBox(height: 12),
                       ],
                     ),
                   ),
-                );
-              },
+                ),
+
+                // ── Tab content — fills all remaining space ───────
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(
+                        16, 0, 16, bottomSheetH + 12),
+                    child: Container(
+                      width: double.infinity,
+                      clipBehavior: Clip.antiAlias,
+                      decoration: BoxDecoration(
+                        color: cardBg,
+                        borderRadius: BorderRadius.circular(14),
+                        boxShadow: [shadow],
+                      ),
+                      child: _tabIndex == 0
+                          ? InfoContent(key: ValueKey(_refreshKey), task: _task, isDark: isDark)
+                          : _tabIndex == 1
+                              ? TimesheetContent(key: ValueKey('ts$_refreshKey'), task: _task, isDark: isDark)
+                              : SubtasksContent(key: ValueKey('sub$_refreshKey'), task: _task, isDark: isDark),
+                    ),
+                  ),
+                ),
+              ],
             ),
+          ),
     );
   }
 }

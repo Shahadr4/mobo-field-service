@@ -5,6 +5,7 @@ import 'package:hugeicons/hugeicons.dart';
 import 'package:shimmer/shimmer.dart';
 import 'package:provider/provider.dart';
 
+import '../core/const/app_colors.dart';
 import '../core/services/odoo_session_manager.dart';
 import '../core/services/connectivity_service.dart';
 
@@ -15,6 +16,7 @@ import '../features/dashboard/provider/dashboard_task_provider.dart';
 import '../features/dashboard/provider/task_stats_provider.dart';
 import '../features/homescreen.dart';
 import '../features/tasks/pages/task_list_screen.dart';
+import '../features/tasks/pages/create_task_screen.dart';
 import '../features/review/services/review_service.dart';
 
 import '../features/profile/pages/profile_screen.dart';
@@ -152,12 +154,28 @@ class _HomeScaffoldState extends State<HomeScaffold>
         index: _index,
         children: _screens,
       ),
+      floatingActionButton: _index == 1
+          ? FloatingActionButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const CreateTaskScreen(),
+                  ),
+                );
+              },
+              backgroundColor: primaryColor,
+              foregroundColor: Colors.white,
+              elevation: 4,
+              shape: const CircleBorder(),
+              child: const Icon(Icons.add_rounded, size: 28),
+            )
+          : null,
       bottomNavigationBar: SafeArea(
         top: false,
         child: AppBottomNav(
           currentIndex: _index,
           onTabSelected: (i) => setState(() => _index = i),
-
         ),
       ),
 

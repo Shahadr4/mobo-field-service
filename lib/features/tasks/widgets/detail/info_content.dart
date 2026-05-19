@@ -97,7 +97,7 @@ class InfoContent extends StatelessWidget {
     }
 
     return SingleChildScrollView(
-      physics: const ClampingScrollPhysics(),
+      physics: const AlwaysScrollableScrollPhysics(),
       child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

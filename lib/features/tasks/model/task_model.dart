@@ -17,6 +17,7 @@ class TaskModel {
   final String description;
   final double allocatedHours;
   final double effectiveHours;
+  final double remainingHours;
   final String tagNames;
   final bool underWarranty;
 
@@ -39,6 +40,7 @@ class TaskModel {
     required this.description,
     required this.allocatedHours,
     required this.effectiveHours,
+      required this.remainingHours,
     required this.tagNames,
     required this.underWarranty,
   });
@@ -50,7 +52,6 @@ class TaskModel {
     return parts.join(', ');
   }
 
-  double get remainingHours => (allocatedHours - effectiveHours).clamp(0, double.infinity);
 
   factory TaskModel.fromMap(Map<String, dynamic> map) {
     String rel(dynamic v) {
@@ -59,17 +60,6 @@ class TaskModel {
       return v.toString();
     }
 
-    String assignees(dynamic v) {
-      if (v == false || v == null) return '';
-      if (v is List) {
-        return v
-            .whereType<List>()
-            .map((e) => e.length >= 2 ? e[1].toString() : '')
-            .where((s) => s.isNotEmpty)
-            .join(', ');
-      }
-      return '';
-    }
 
     String parseDate(dynamic v) {
       if (v == false || v == null) return '';
@@ -101,7 +91,7 @@ class TaskModel {
       name: map['name']?.toString() ?? '',
       projectName: rel(map['project_id']),
       stageName: rel(map['stage_id']),
-      assigneeName: assignees(map['user_ids']),
+      assigneeName: map['user_names']?.toString() ?? '',
       createDate: parseDate(map['create_date']),
       partnerName: rel(map['partner_id']),
       partnerStreet: map['partner_street']?.toString() ?? '',
@@ -115,6 +105,7 @@ class TaskModel {
       description: map['description'] is String ? map['description'] : '',
       allocatedHours: (map['allocated_hours'] as num?)?.toDouble() ?? 0.0,
       effectiveHours: (map['effective_hours'] as num?)?.toDouble() ?? 0.0,
+        remainingHours: (map['remaining_hours'] as num?)?.toDouble() ?? 0.0,
       tagNames: map['tag_names']?.toString() ?? '',
       underWarranty: map['under_warranty'] == true,
     );

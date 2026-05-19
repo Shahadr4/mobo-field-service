@@ -15,8 +15,6 @@ class TaskHoursBottomSheet extends StatelessWidget {
     final bg         = isDark ? const Color(0xFF1E2028) :  primaryColor.withAlpha(10);
     final labelColor = isDark ? Colors.white54 : Colors.black;
     final valueColor = isDark ? Colors.white : Colors.black;
-    final divColor   = isDark ? const Color(0xFF2A2D36) : const Color(0xFFEEEEEE);
-
     return Container(
       decoration: BoxDecoration(
         color: bg,

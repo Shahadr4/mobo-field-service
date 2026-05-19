@@ -104,6 +104,12 @@ class _TabChip extends StatelessWidget {
               ? Colors.black
               : (isDark ? const Color(0xFF2A2D36) : const Color(0xFFF5F5F7)),
           borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: selected
+                ? Colors.transparent
+                : (isDark ? Colors.white24 : const Color(0xFFCCCCCC)),
+            width: 1.2,
+          ),
         ),
         child: Text(
           label,
@@ -402,7 +408,6 @@ class _DashboardTaskCardState extends State<_DashboardTaskCard> {
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                             decoration: BoxDecoration(
                               color: stageColor.withValues(alpha: 0.12),
-                              border: Border.all(color: stageColor, width: 1),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(
