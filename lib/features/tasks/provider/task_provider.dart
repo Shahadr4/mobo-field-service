@@ -167,4 +167,12 @@ class TaskProvider extends ChangeNotifier {
     _currentPage   = 1;
     await fetchTasks();
   }
+
+  void updateTaskInMemory(TaskModel updatedTask) {
+    final index = _tasks.indexWhere((t) => t.id == updatedTask.id);
+    if (index != -1) {
+      _tasks[index] = updatedTask;
+      notifyListeners();
+    }
+  }
 }

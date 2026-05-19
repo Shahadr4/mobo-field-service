@@ -20,6 +20,13 @@ class TaskModel {
   final double remainingHours;
   final String tagNames;
   final bool underWarranty;
+  final int? projectId;
+  final int? stageId;
+  final int? partnerId;
+  final List<int> assigneeIds;
+  final List<int> tagIds;
+  final DateTime? plannedDateBegin;
+  final DateTime? plannedDateEnd;
 
   const TaskModel({
     required this.id,
@@ -40,10 +47,79 @@ class TaskModel {
     required this.description,
     required this.allocatedHours,
     required this.effectiveHours,
-      required this.remainingHours,
+    required this.remainingHours,
     required this.tagNames,
     required this.underWarranty,
+    this.projectId,
+    this.stageId,
+    this.partnerId,
+    this.assigneeIds = const [],
+    this.tagIds = const [],
+    this.plannedDateBegin,
+    this.plannedDateEnd,
   });
+
+  TaskModel copyWith({
+    int? id,
+    String? name,
+    String? projectName,
+    String? stageName,
+    String? assigneeName,
+    String? createDate,
+    String? partnerName,
+    String? partnerStreet,
+    String? partnerCity,
+    String? partnerCountry,
+    String? partnerPhone,
+    String? scheduledStart,
+    String? scheduledEnd,
+    String? deadline,
+    int? priority,
+    String? description,
+    double? allocatedHours,
+    double? effectiveHours,
+    double? remainingHours,
+    String? tagNames,
+    bool? underWarranty,
+    int? projectId,
+    int? stageId,
+    int? partnerId,
+    List<int>? assigneeIds,
+    List<int>? tagIds,
+    DateTime? plannedDateBegin,
+    DateTime? plannedDateEnd,
+  }) {
+    return TaskModel(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      projectName: projectName ?? this.projectName,
+      stageName: stageName ?? this.stageName,
+      assigneeName: assigneeName ?? this.assigneeName,
+      createDate: createDate ?? this.createDate,
+      partnerName: partnerName ?? this.partnerName,
+      partnerStreet: partnerStreet ?? this.partnerStreet,
+      partnerCity: partnerCity ?? this.partnerCity,
+      partnerCountry: partnerCountry ?? this.partnerCountry,
+      partnerPhone: partnerPhone ?? this.partnerPhone,
+      scheduledStart: scheduledStart ?? this.scheduledStart,
+      scheduledEnd: scheduledEnd ?? this.scheduledEnd,
+      deadline: deadline ?? this.deadline,
+      priority: priority ?? this.priority,
+      description: description ?? this.description,
+      allocatedHours: allocatedHours ?? this.allocatedHours,
+      effectiveHours: effectiveHours ?? this.effectiveHours,
+      remainingHours: remainingHours ?? this.remainingHours,
+      tagNames: tagNames ?? this.tagNames,
+      underWarranty: underWarranty ?? this.underWarranty,
+      projectId: projectId ?? this.projectId,
+      stageId: stageId ?? this.stageId,
+      partnerId: partnerId ?? this.partnerId,
+      assigneeIds: assigneeIds ?? this.assigneeIds,
+      tagIds: tagIds ?? this.tagIds,
+      plannedDateBegin: plannedDateBegin ?? this.plannedDateBegin,
+      plannedDateEnd: plannedDateEnd ?? this.plannedDateEnd,
+    );
+  }
 
   String get partnerAddress {
     final parts = [partnerStreet, partnerCity, partnerCountry]
@@ -83,6 +159,19 @@ class TaskModel {
       return '$date  $h:$m $period';
     }
 
+    int? rawId(dynamic v) {
+      if (v is List && v.isNotEmpty) return (v[0] as num).toInt();
+      if (v is num) return v.toInt();
+      return null;
+    }
+
+    List<int> rawList(dynamic v) {
+      if (v is List) {
+        return v.whereType<num>().map((e) => e.toInt()).toList();
+      }
+      return [];
+    }
+
     final beginDt = parseOdooDt(map['planned_date_begin']);
     final deadlineDt = parseOdooDt(map['date_deadline']);
 
@@ -105,9 +194,16 @@ class TaskModel {
       description: map['description'] is String ? map['description'] : '',
       allocatedHours: (map['allocated_hours'] as num?)?.toDouble() ?? 0.0,
       effectiveHours: (map['effective_hours'] as num?)?.toDouble() ?? 0.0,
-        remainingHours: (map['remaining_hours'] as num?)?.toDouble() ?? 0.0,
+      remainingHours: (map['remaining_hours'] as num?)?.toDouble() ?? 0.0,
       tagNames: map['tag_names']?.toString() ?? '',
       underWarranty: map['under_warranty'] == true,
+      projectId: rawId(map['project_id']),
+      stageId: rawId(map['stage_id']),
+      partnerId: rawId(map['partner_id']),
+      assigneeIds: rawList(map['user_ids']),
+      tagIds: rawList(map['tag_ids']),
+      plannedDateBegin: beginDt,
+      plannedDateEnd: deadlineDt,
     );
   }
 }

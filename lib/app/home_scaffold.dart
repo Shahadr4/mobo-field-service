@@ -17,6 +17,7 @@ import '../features/dashboard/provider/task_stats_provider.dart';
 import '../features/homescreen.dart';
 import '../features/tasks/pages/task_list_screen.dart';
 import '../features/tasks/pages/create_task_screen.dart';
+import '../features/tasks/provider/task_provider.dart';
 import '../features/review/services/review_service.dart';
 
 import '../features/profile/pages/profile_screen.dart';
@@ -156,13 +157,16 @@ class _HomeScaffoldState extends State<HomeScaffold>
       ),
       floatingActionButton: _index == 1
           ? FloatingActionButton(
-              onPressed: () {
-                Navigator.push(
+              onPressed: () async {
+                final created = await Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (_) => const CreateTaskScreen(),
                   ),
                 );
+                if (created == true && context.mounted) {
+                  context.read<TaskProvider>().refresh();
+                }
               },
               backgroundColor: primaryColor,
               foregroundColor: Colors.white,

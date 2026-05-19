@@ -748,13 +748,18 @@ class TaskService {
     List<int> tagIds = const [],
     int? worksheetTemplateId,
     String? description,
+    int priority = 0,
   }) async {
     try {
+      String fmtDt(DateTime d) =>
+          '${d.year}-${d.month.toString().padLeft(2,'0')}-${d.day.toString().padLeft(2,'0')} ${d.hour.toString().padLeft(2,'0')}:${d.minute.toString().padLeft(2,'0')}:00';
+
       final vals = <String, dynamic>{
         'name': name,
         'project_id': projectId,
         'is_fsm': true,
       };
+      if (priority > 0) vals['priority'] = priority.toString();
       if (description != null && description.isNotEmpty) vals['description'] = description;
       if (stageId != null) vals['stage_id'] = stageId;
       if (plannedDateEnd != null) {
@@ -772,8 +777,6 @@ class TaskService {
         [6, 0, tagIds]
       ];
       if (worksheetTemplateId != null) vals['worksheet_template_id'] = worksheetTemplateId;
-      String fmtDt(DateTime d) =>
-          '${d.year}-${d.month.toString().padLeft(2,'0')}-${d.day.toString().padLeft(2,'0')} ${d.hour.toString().padLeft(2,'0')}:${d.minute.toString().padLeft(2,'0')}:00';
       if (plannedDateBegin != null) vals['planned_date_begin'] = fmtDt(plannedDateBegin);
 
       final result = await OdooSessionManager.callKwWithCompany({
@@ -787,6 +790,77 @@ class TaskService {
     } catch (e) {
       log('[TaskService] ⚠️ createTask error: $e');
       return null;
+    }
+  }
+
+  /// Updates an existing FSM task. Returns null on success, or an error message on failure.
+  Future<String?> updateTask({
+    required int taskId,
+    String? name,
+    int? projectId,
+    int? stageId,
+    List<int>? assigneeIds,
+    int? partnerId,
+    double? allocatedHours,
+    bool? underWarranty,
+    DateTime? plannedDateBegin,
+    DateTime? plannedDateEnd,
+    List<int>? tagIds,
+    int? worksheetTemplateId,
+    String? description,
+    int? priority,
+  }) async {
+    try {
+      String fmtDt(DateTime d) =>
+          '${d.year}-${d.month.toString().padLeft(2,'0')}-${d.day.toString().padLeft(2,'0')} ${d.hour.toString().padLeft(2,'0')}:${d.minute.toString().padLeft(2,'0')}:00';
+
+      final vals = <String, dynamic>{};
+      if (name != null) vals['name'] = name;
+      if (projectId != null) vals['project_id'] = projectId;
+      if (stageId != null) vals['stage_id'] = stageId;
+      if (description != null) vals['description'] = description;
+      if (priority != null) vals['priority'] = priority.toString();
+      if (plannedDateEnd != null) {
+        vals['date_deadline'] = '${plannedDateEnd.year}-${plannedDateEnd.month.toString().padLeft(2,'0')}-${plannedDateEnd.day.toString().padLeft(2,'0')}';
+      }
+      if (assigneeIds != null) {
+        vals['user_ids'] = [
+          [6, 0, assigneeIds]
+        ];
+      }
+      if (partnerId != null) vals['partner_id'] = partnerId;
+      if (allocatedHours != null) vals['allocated_hours'] = allocatedHours;
+      if (underWarranty != null) vals['under_warranty'] = underWarranty;
+      if (tagIds != null) {
+        vals['tag_ids'] = [
+          [6, 0, tagIds]
+        ];
+      }
+      if (worksheetTemplateId != null) vals['worksheet_template_id'] = worksheetTemplateId;
+      if (plannedDateBegin != null) vals['planned_date_begin'] = fmtDt(plannedDateBegin);
+
+      if (vals.isEmpty) return null;
+
+      final result = await OdooSessionManager.callKwWithCompany({
+        'model': 'project.task',
+        'method': 'write',
+        'args': [
+          [taskId],
+          vals
+        ],
+        'kwargs': {},
+      });
+      log('[TaskService] updateTask result: $result');
+      if (result == true) return null;
+      return 'Failed to update task.';
+    } catch (e) {
+      log('[TaskService] ⚠️ updateTask error: $e');
+      final errStr = e.toString();
+      if (errStr.contains('planned start date must be before') ||
+          errStr.contains('planned_dates_check')) {
+        return 'The planned start date must be before the planned end date (which is registered as midnight in your Odoo database planning settings).';
+      }
+      return errStr;
     }
   }
 

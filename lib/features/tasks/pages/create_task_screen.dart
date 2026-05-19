@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:mobo_feild_service/core/const/app_colors.dart';
 
 import '../services/task_service.dart';
+import 'package:mobo_feild_service/shared/widgets/snackbars/custom_snackbar.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // CreateTaskScreen
@@ -613,8 +614,20 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     if (time == null || !mounted) return;
     final dt =
         DateTime(date.year, date.month, date.day, time.hour, time.minute);
+    if (isStart) {
+      if (_plannedEnd != null && dt.isAfter(_plannedEnd!)) {
+        CustomSnackbar.showWarning(context, 'Planned start date must be before planned end date.');
+        return;
+      }
+      setState(() => _plannedStart = dt);
+    } else {
+      if (_plannedStart != null && dt.isBefore(_plannedStart!)) {
+        CustomSnackbar.showWarning(context, 'Planned end date must be after planned start date.');
+        return;
+      }
+      setState(() => _plannedEnd = dt);
+    }
     setState(() {
-      if (isStart) { _plannedStart = dt; } else { _plannedEnd = dt; }
       _recalcHours();
     });
   }
@@ -655,15 +668,15 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
           ? (_selectedWorksheet!['id'] as num).toInt()
           : null,
       description:         _descriptionCtrl.text.trim(),
+      priority:            _priority,
     );
     if (!mounted) return;
     setState(() => _saving = false);
     if (id != null) {
+      CustomSnackbar.showSuccess(context, 'Task created successfully');
       Navigator.pop(context, true);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to create task. Please try again.')),
-      );
+      CustomSnackbar.showError(context, 'Failed to create task. Please try again.');
     }
   }
 

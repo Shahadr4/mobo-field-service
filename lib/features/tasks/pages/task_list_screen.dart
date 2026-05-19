@@ -21,10 +21,7 @@ class _TaskListScreenWrapper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => TaskProvider()..init(),
-      child: const _TaskListView(),
-    );
+    return const _TaskListView();
   }
 }
 

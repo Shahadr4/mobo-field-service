@@ -3,6 +3,8 @@ import 'package:mobo_feild_service/core/const/app_colors.dart';
 
 import '../model/task_model.dart';
 import '../pages/task_detail_screen.dart';
+import 'package:provider/provider.dart';
+import '../provider/task_provider.dart';
 
 class TaskCard extends StatelessWidget {
   final TaskModel task;
@@ -30,12 +32,19 @@ class TaskCard extends StatelessWidget {
     final stageColor = _stageColor(task.stageName);
 
     return GestureDetector(
-      onTap: () => Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => TaskDetailScreen(task: task),
-        ),
-      ),
+      onTap: () async {
+        final result = await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => TaskDetailScreen(task: task),
+          ),
+        );
+        if (result is TaskModel && context.mounted) {
+          context.read<TaskProvider>().updateTaskInMemory(result);
+        } else if (result == true && context.mounted) {
+          context.read<TaskProvider>().refresh();
+        }
+      },
       child: Container(
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E2028) : Colors.white,

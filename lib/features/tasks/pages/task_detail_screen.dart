@@ -3,6 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:mobo_feild_service/core/const/app_colors.dart';
 
 import '../model/task_model.dart';
+import 'edit_task_screen.dart';
+import 'package:provider/provider.dart';
+import '../provider/task_provider.dart';
 import '../services/task_service.dart';
 import '../widgets/detail/task_detail_shimmer.dart';
 import '../widgets/detail/task_hours_bottom_sheet.dart';
@@ -26,6 +29,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
   bool _isLoading = false;
   int _tabIndex = 0;
   int _refreshKey = 0;
+  bool _isUpdated = false;
 
   @override
   void initState() {
@@ -79,7 +83,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: GestureDetector(
-          onTap: () => Navigator.pop(context),
+          onTap: () => Navigator.pop(context, _isUpdated ? _task : null),
           child: Padding(
             padding: const EdgeInsets.all(14),
             child: Icon(Icons.arrow_back_ios_new_rounded,
@@ -96,11 +100,29 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
           ),
         ),
         actions: [
-          Padding(
+          IconButton(
             padding: const EdgeInsets.only(right: 20),
-            child: Icon(Icons.edit_outlined,
+            icon: Icon(Icons.edit_outlined,
                 size: 20,
                 color: isDark ? Colors.white54 : Colors.black54),
+            onPressed: () async {
+              final updated = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => EditTaskScreen(task: _task),
+                ),
+              );
+              if (updated is TaskModel) {
+                setState(() {
+                  _task = updated;
+                  _isUpdated = true;
+                });
+                if (mounted) {
+                  context.read<TaskProvider>().updateTaskInMemory(updated);
+                }
+                _refresh();
+              }
+            },
           ),
         ],
         systemOverlayStyle:
