@@ -47,6 +47,10 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
   DateTime? _plannedEnd;
   bool      _underWarranty = false;
 
+  // FSM feature flags (fetched from Odoo settings)
+  bool _showWorksheetSection = true;
+  bool _showWarrantySection  = true;
+
   bool _loadingMeta = true;
   bool _saving      = false;
 
@@ -234,15 +238,19 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
       _service.fetchWorksheetTemplates(),
       _service.fetchUsers(),
       _service.fetchTags(),
+      _service.fetchFsmSettings(),
     ]);
     if (!mounted) return;
+    final fsmSettings = results[4] as ({bool worksheetEnabled, bool warrantyEnabled});
     setState(() {
-      _projects    = results[0];
-      _stages      = [];
-      _worksheets  = results[1];
-      _users       = results[2];
-      _tags        = results[3];
-      _loadingMeta = false;
+      _projects               = results[0] as List<Map<String, dynamic>>;
+      _stages                 = [];
+      _worksheets             = results[1] as List<Map<String, dynamic>>;
+      _users                  = results[2] as List<Map<String, dynamic>>;
+      _tags                   = results[3] as List<Map<String, dynamic>>;
+      _showWorksheetSection   = fsmSettings.worksheetEnabled;
+      _showWarrantySection    = fsmSettings.warrantyEnabled;
+      _loadingMeta            = false;
     });
   }
 
@@ -815,38 +823,40 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                       title: 'Information',
                       children: [
                       _labeled(isDark, 'Priority', _priorityStars(isDark)),
-                      _gap(),
-                      _labeled(isDark, 'Worksheet Template',
-                          _typeaheadField(
-                            isDark: isDark,
-                            ctrl: _worksheetCtrl,
-                            focus: _worksheetFocus,
-                            link: _worksheetLink,
-                            hint: 'Search worksheet...',
-                            selected: _selectedWorksheet,
-                            onTap: _showWorksheetOverlay,
-                            onClear: () {
-                              setState(() => _selectedWorksheet = null);
-                              _worksheetCtrl.clear();
-                            },
-                            onChanged: (q) {
-                              _worksheetOverlay?.remove();
-                              _worksheetOverlay = null;
-                              _showSimpleOverlay(
-                                link: _worksheetLink,
-                                overlayRef: (e) => _worksheetOverlay = e,
-                                items: _filterList(_worksheets, q),
-                                onSelect: (item) {
-                                  setState(() => _selectedWorksheet = item);
-                                  _worksheetCtrl.text =
-                                      item['name']?.toString() ?? '';
-                                  _worksheetOverlay?.remove();
-                                  _worksheetOverlay = null;
-                                  _worksheetFocus.unfocus();
-                                },
-                              );
-                            },
-                          )),
+                      if (_showWorksheetSection) ...[
+                        _gap(),
+                        _labeled(isDark, 'Worksheet Template',
+                            _typeaheadField(
+                              isDark: isDark,
+                              ctrl: _worksheetCtrl,
+                              focus: _worksheetFocus,
+                              link: _worksheetLink,
+                              hint: 'Search worksheet...',
+                              selected: _selectedWorksheet,
+                              onTap: _showWorksheetOverlay,
+                              onClear: () {
+                                setState(() => _selectedWorksheet = null);
+                                _worksheetCtrl.clear();
+                              },
+                              onChanged: (q) {
+                                _worksheetOverlay?.remove();
+                                _worksheetOverlay = null;
+                                _showSimpleOverlay(
+                                  link: _worksheetLink,
+                                  overlayRef: (e) => _worksheetOverlay = e,
+                                  items: _filterList(_worksheets, q),
+                                  onSelect: (item) {
+                                    setState(() => _selectedWorksheet = item);
+                                    _worksheetCtrl.text =
+                                        item['name']?.toString() ?? '';
+                                    _worksheetOverlay?.remove();
+                                    _worksheetOverlay = null;
+                                    _worksheetFocus.unfocus();
+                                  },
+                                );
+                              },
+                            )),
+                      ],
                       _gap(),
                       _labeled(isDark, 'Customer',
                           _customerField(isDark)),
@@ -856,9 +866,11 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                               keyboardType: TextInputType.phone)),
                       _gap(),
                       _labeled(isDark, 'Tags', _tagsField(isDark)),
-                      _gap(),
-                      _labeled(
-                          isDark, 'Under Warranty', _warrantyField(isDark)),
+                      if (_showWarrantySection) ...[
+                        _gap(),
+                        _labeled(
+                            isDark, 'Under Warranty', _warrantyField(isDark)),
+                      ],
                     ]),
                     const SizedBox(height: 16),
 

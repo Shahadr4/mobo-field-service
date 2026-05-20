@@ -930,4 +930,56 @@ class TaskService {
       return [];
     }
   }
+
+  /// Fetches FSM feature flags from Odoo:
+  ///  - [worksheetEnabled]: whether "Worksheet Templates" is turned on
+  ///  - [warrantyEnabled]: whether "Under Warranty" field is enabled
+  ///
+  /// Uses `res.config.settings` get_values. Falls back to checking
+  /// field existence on `project.task` if the config call fails.
+  Future<({bool worksheetEnabled, bool warrantyEnabled})> fetchFsmSettings() async {
+    try {
+      // Primary approach: read from res.config.settings
+      final result = await OdooSessionManager.callKwWithCompany({
+        'model': 'res.config.settings',
+        'method': 'get_values',
+        'args': [],
+        'kwargs': {},
+      });
+
+      if (result is Map<String, dynamic>) {
+        final worksheetEnabled = result['group_fsm_worksheet'] == true;
+        final warrantyEnabled  = result['group_fsm_warranty']  == true;
+        log('[TaskService] fetchFsmSettings via get_values: worksheet=$worksheetEnabled, warranty=$warrantyEnabled');
+        return (worksheetEnabled: worksheetEnabled, warrantyEnabled: warrantyEnabled);
+      }
+    } catch (e) {
+      log('[TaskService] fetchFsmSettings get_values failed: $e — falling back to field check');
+    }
+
+    // Fallback: check if the fields exist on project.task
+    bool worksheetEnabled = false;
+    bool warrantyEnabled  = false;
+
+    try {
+      final fields = await OdooSessionManager.callKwWithCompany({
+        'model': 'project.task',
+        'method': 'fields_get',
+        'args': [['worksheet_template_id', 'under_warranty']],
+        'kwargs': {'attributes': ['string']},
+      });
+      if (fields is Map<String, dynamic>) {
+        worksheetEnabled = fields.containsKey('worksheet_template_id');
+        warrantyEnabled  = fields.containsKey('under_warranty');
+      }
+    } catch (e) {
+      log('[TaskService] fetchFsmSettings fallback field check failed: $e');
+      // If all else fails, default to showing both (safe/visible)
+      worksheetEnabled = true;
+      warrantyEnabled  = true;
+    }
+
+    log('[TaskService] fetchFsmSettings via field check: worksheet=$worksheetEnabled, warranty=$warrantyEnabled');
+    return (worksheetEnabled: worksheetEnabled, warrantyEnabled: warrantyEnabled);
+  }
 }

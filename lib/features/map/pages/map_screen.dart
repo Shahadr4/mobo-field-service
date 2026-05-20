@@ -90,6 +90,26 @@ class _MapScreenState extends State<MapScreen>
   Widget build(BuildContext context) {
     return Consumer<MapProvider>(
       builder: (context, provider, _) {
+        if (provider.state == MapLoadState.loaded && provider.pendingJumpTaskId != null) {
+          final taskId = provider.pendingJumpTaskId!;
+          final matches = provider.tasks.where((t) => t.id == taskId);
+          if (matches.isNotEmpty) {
+            final task = matches.first;
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) {
+                provider.setPendingJumpTaskId(null);
+                _jumpToTask(task, provider);
+              }
+            });
+          } else {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) {
+                provider.setPendingJumpTaskId(null);
+              }
+            });
+          }
+        }
+
         switch (provider.state) {
           case MapLoadState.idle:
           case MapLoadState.loading:

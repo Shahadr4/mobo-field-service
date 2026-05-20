@@ -229,4 +229,21 @@ class MapProvider extends ChangeNotifier {
     _viewMode = MapViewMode.map;
     load();
   }
+
+  int _activeHomeTab = 0;
+  int get activeHomeTab => _activeHomeTab;
+
+  void setActiveHomeTab(int index) {
+    if (_activeHomeTab == index) return;
+    _activeHomeTab = index;
+    notifyListeners();
+  }
+
+  int? _pendingJumpTaskId;
+  int? get pendingJumpTaskId => _pendingJumpTaskId;
+
+  void setPendingJumpTaskId(int? id) {
+    _pendingJumpTaskId = id;
+    notifyListeners();
+  }
 }

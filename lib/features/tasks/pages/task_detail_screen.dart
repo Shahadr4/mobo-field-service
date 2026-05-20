@@ -15,6 +15,7 @@ import '../widgets/detail/subtasks_content.dart';
 import '../widgets/detail/info_content.dart';
 import '../widgets/detail/timesheet_content.dart';
 import 'package:mobo_feild_service/shared/widgets/snackbars/custom_snackbar.dart';
+import '../../map/provider/map_provider.dart';
 
 class TaskDetailScreen extends StatefulWidget {
   final TaskModel task;
@@ -32,10 +33,23 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
   int _refreshKey = 0;
   bool _isUpdated = false;
 
+  // FSM feature flags
+  bool _showWarrantySection = true;
+
   @override
   void initState() {
     super.initState();
     _task = widget.task;
+    _fetchFsmSettings();
+  }
+
+  Future<void> _fetchFsmSettings() async {
+    final settings = await _service.fetchFsmSettings();
+    if (mounted) {
+      setState(() {
+        _showWarrantySection = settings.warrantyEnabled;
+      });
+    }
   }
 
   Future<void> _refresh() async {
@@ -109,6 +123,13 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
     }
   }
 
+  void _handleLocation() {
+    final mapProvider = Provider.of<MapProvider>(context, listen: false);
+    mapProvider.setActiveHomeTab(3); // Switch to Map tab
+    mapProvider.setPendingJumpTaskId(_task.id); // Queue the task ID to jump to
+    Navigator.pop(context); // Close the detail screen
+  }
+
   Future<void> _handleSignReport() async {
     CustomSnackbar.showInfo(context, 'Sign report feature coming soon');
   }
@@ -158,6 +179,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
           ),
         ),
         actions: [
+
           IconButton(
             padding: EdgeInsets.zero,
             icon: Icon(
@@ -188,6 +210,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
             onMarkAsDone: _handleMarkAsDone,
             onSignReport: _handleSignReport,
             onSendReport: _handleSendReport,
+            onLocation: _handleLocation,
           ),
           const SizedBox(width: 8),
         ],
@@ -273,6 +296,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                                 key: ValueKey(_refreshKey),
                                 task: _task,
                                 isDark: isDark,
+                                showWarrantySection: _showWarrantySection,
                               )
                             : _tabIndex == 1
                             ? TimesheetContent(
@@ -295,7 +319,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
   }
 }
 
-enum _TaskAction { signReport, sendReport, markAsDone }
+enum _TaskAction { signReport, sendReport, markAsDone, location }
 
 class _TaskActionMenu extends StatelessWidget {
   final TaskModel task;
@@ -303,6 +327,7 @@ class _TaskActionMenu extends StatelessWidget {
   final VoidCallback onMarkAsDone;
   final VoidCallback onSignReport;
   final VoidCallback onSendReport;
+  final VoidCallback onLocation;
 
   const _TaskActionMenu({
     required this.task,
@@ -310,6 +335,7 @@ class _TaskActionMenu extends StatelessWidget {
     required this.onMarkAsDone,
     required this.onSignReport,
     required this.onSendReport,
+    required this.onLocation,
   });
 
   @override
@@ -326,10 +352,6 @@ class _TaskActionMenu extends StatelessWidget {
         !task.hasTemplateAncestor &&
         !task.hasProjectTemplate;
 
-    if (!showSignReport && !showSendReport && !showMarkAsDone) {
-      return const SizedBox.shrink();
-    }
-
     return PopupMenuButton<_TaskAction>(
       color: Colors.white,
       icon: Icon(
@@ -345,6 +367,8 @@ class _TaskActionMenu extends StatelessWidget {
             onSendReport();
           case _TaskAction.markAsDone:
             onMarkAsDone();
+          case _TaskAction.location:
+            onLocation();
         }
       },
       itemBuilder: (_) => [
@@ -353,7 +377,6 @@ class _TaskActionMenu extends StatelessWidget {
             value: _TaskAction.signReport,
             child: Row(
               children: [
-
                 Text('Sign Report'),
               ],
             ),
@@ -363,7 +386,7 @@ class _TaskActionMenu extends StatelessWidget {
             value: _TaskAction.sendReport,
             child: Row(
               children: [
-                               Text('Send Report'),
+                Text('Send Report'),
               ],
             ),
           ),
@@ -372,10 +395,18 @@ class _TaskActionMenu extends StatelessWidget {
             value: _TaskAction.markAsDone,
             child: Row(
               children: [
-                             Text('Mark as Done'),
+                Text('Mark as Done'),
               ],
             ),
           ),
+        const PopupMenuItem(
+          value: _TaskAction.location,
+          child: Row(
+            children: [
+              Text('Location'),
+            ],
+          ),
+        ),
       ],
     );
   }

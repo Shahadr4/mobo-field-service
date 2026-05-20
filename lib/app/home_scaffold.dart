@@ -16,6 +16,7 @@ import '../features/dashboard/provider/dashboard_task_provider.dart';
 import '../features/dashboard/provider/task_stats_provider.dart';
 import '../features/homescreen.dart';
 import '../features/map/pages/map_screen.dart';
+import '../features/map/provider/map_provider.dart';
 import '../features/tasks/pages/task_list_screen.dart';
 import '../features/tasks/pages/create_task_screen.dart';
 import '../features/tasks/provider/task_provider.dart';
@@ -132,62 +133,62 @@ class _HomeScaffoldState extends State<HomeScaffold>
 
   Widget _buildScreenWithAppBar(Widget screen) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Scaffold(
-      appBar: AppBar(
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        title: Text(
-          _titles[_index],
-          style: TextStyle(
-            color: isDark ? Colors.white : Colors.black,
-            fontWeight: FontWeight.bold,
-            fontSize: 16,
+    return Consumer<MapProvider>(
+      builder: (context, mapProvider, _) {
+        final activeIndex = mapProvider.activeHomeTab;
+        return Scaffold(
+          appBar: AppBar(
+            elevation: 0,
+            automaticallyImplyLeading: false,
+            title: Text(
+              _titles[activeIndex],
+              style: TextStyle(
+                color: isDark ? Colors.white : Colors.black,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
+            actions: _buildProfileActions(context),
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+            foregroundColor: isDark ? Colors.white : Theme.of(context).primaryColor,
+            centerTitle: false,
+            surfaceTintColor: Colors.transparent,
           ),
-        ),
-        actions: _buildProfileActions(context),
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        foregroundColor: isDark ? Colors.white : Theme.of(context).primaryColor,
-        centerTitle: false,
-        surfaceTintColor: Colors.transparent,
-      ),
 
-      body: IndexedStack(
-        index: _index,
-        children: _screens,
-      ),
-      floatingActionButton: _index == 1
-          ? FloatingActionButton(
-              onPressed: () async {
-                final provider = context.read<TaskProvider>();
-                final created = await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const CreateTaskScreen(),
-                  ),
-                );
-                if (created == true && mounted) {
-                  provider.refresh();
-                }
-              },
-              backgroundColor: primaryColor,
-              foregroundColor: Colors.white,
-              elevation: 4,
-              shape: const CircleBorder(),
-              child: const Icon(Icons.add_rounded, size: 28),
-            )
-          : null,
-      bottomNavigationBar: SafeArea(
-        top: false,
-        child: AppBottomNav(
-          currentIndex: _index,
-          onTabSelected: (i) => setState(() => _index = i),
-        ),
-      ),
-
-
-
-
-
+          body: IndexedStack(
+            index: activeIndex,
+            children: _screens,
+          ),
+          floatingActionButton: activeIndex == 1
+              ? FloatingActionButton(
+                  onPressed: () async {
+                    final provider = context.read<TaskProvider>();
+                    final created = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const CreateTaskScreen(),
+                      ),
+                    );
+                    if (created == true && mounted) {
+                      provider.refresh();
+                    }
+                  },
+                  backgroundColor: primaryColor,
+                  foregroundColor: Colors.white,
+                  elevation: 4,
+                  shape: const CircleBorder(),
+                  child: const Icon(Icons.add_rounded, size: 28),
+                )
+              : null,
+          bottomNavigationBar: SafeArea(
+            top: false,
+            child: AppBottomNav(
+              currentIndex: activeIndex,
+              onTabSelected: (i) => mapProvider.setActiveHomeTab(i),
+            ),
+          ),
+        );
+      },
     );
   }
 

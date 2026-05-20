@@ -38,7 +38,13 @@ String _fmtDate(String raw) {
 class InfoContent extends StatelessWidget {
   final TaskModel task;
   final bool isDark;
-  const InfoContent({super.key, required this.task, required this.isDark});
+  final bool showWarrantySection;
+  const InfoContent({
+    super.key,
+    required this.task,
+    required this.isDark,
+    this.showWarrantySection = true,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -69,7 +75,8 @@ class InfoContent extends StatelessWidget {
         _InfoRow('Created', createdFmt),
       if (allocFmt.isNotEmpty)
         _InfoRow('Allocated', allocFmt),
-      _InfoRow('Under Warranty', task.underWarranty ? 'Yes' : 'No'),
+      if (showWarrantySection)
+        _InfoRow('Under Warranty', task.underWarranty ? 'Yes' : 'No'),
       if (task.tagNames.isNotEmpty)
         _InfoRow('Tags', task.tagNames),
     ];
