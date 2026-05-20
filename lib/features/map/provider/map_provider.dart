@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:http/http.dart' as http;
 import 'package:latlong2/latlong.dart';
 
 import '../../dashboard/model/dashboard_task_model.dart';
@@ -28,6 +30,100 @@ class MapProvider extends ChangeNotifier {
   LatLng? get userLatLng => _userPosition != null
       ? LatLng(_userPosition!.latitude, _userPosition!.longitude)
       : null;
+
+  List<LatLng> _routePoints = [];
+  List<LatLng> get routePoints => _routePoints;
+
+  String _searchQuery = '';
+  String get searchQuery => _searchQuery;
+
+  int _currentPage = 1;
+  int get currentPage => _currentPage;
+
+  static const int _pageSize = 40;
+
+  List<DashboardTask> get filteredTasks {
+    if (_searchQuery.isEmpty) {
+      return _tasks;
+    }
+    final q = _searchQuery.toLowerCase();
+    return _tasks.where((t) {
+      return t.name.toLowerCase().contains(q) ||
+          t.partnerName.toLowerCase().contains(q) ||
+          t.partnerAddress.toLowerCase().contains(q) ||
+          t.projectName.toLowerCase().contains(q) ||
+          t.stageName.toLowerCase().contains(q);
+    }).toList();
+  }
+
+  int get totalPages {
+    final count = filteredTasks.length;
+    if (count == 0) return 1;
+    return (count / _pageSize).ceil();
+  }
+
+  String get paginationText {
+    final count = filteredTasks.length;
+    if (count == 0) return '0 / 0';
+    final from = (_currentPage - 1) * _pageSize + 1;
+    final to   = (_currentPage * _pageSize < count)
+        ? _currentPage * _pageSize
+        : count;
+    return '$from–$to / $count';
+  }
+
+  List<DashboardTask> get paginatedTasks {
+    final list = filteredTasks;
+    final startIndex = (_currentPage - 1) * _pageSize;
+    if (startIndex >= list.length) return [];
+    final endIndex = startIndex + _pageSize;
+    return list.sublist(
+      startIndex,
+      endIndex > list.length ? list.length : endIndex,
+    );
+  }
+
+  void setSearchQuery(String query) {
+    _searchQuery = query;
+    _currentPage = 1;
+    notifyListeners();
+  }
+
+  void setPage(int page) {
+    if (page < 1 || page > totalPages) return;
+    _currentPage = page;
+    notifyListeners();
+  }
+
+  Future<void> fetchRoute(LatLng destination) async {
+    final start = userLatLng;
+    if (start == null) return;
+
+    try {
+      final url = 'https://router.project-osrm.org/route/v1/driving/'
+          '${start.longitude},${start.latitude};'
+          '${destination.longitude},${destination.latitude}'
+          '?overview=full&geometries=geojson';
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['routes'] != null && data['routes'].isNotEmpty) {
+          final geometry = data['routes'][0]['geometry'];
+          final coordinates = geometry['coordinates'] as List;
+          _routePoints = coordinates
+              .map((c) => LatLng(
+                    (c[1] as num).toDouble(),
+                    (c[0] as num).toDouble(),
+                  ))
+              .toList();
+          notifyListeners();
+        }
+      }
+    } catch (_) {
+      _routePoints = [];
+      notifyListeners();
+    }
+  }
 
   List<DashboardTask> _tasks = [];
   List<DashboardTask> get tasks => _tasks;
@@ -114,6 +210,11 @@ class MapProvider extends ChangeNotifier {
 
   void selectCluster(TaskCluster? cluster) {
     _selectedCluster = cluster;
+    if (cluster != null) {
+      fetchRoute(cluster.position);
+    } else {
+      _routePoints = [];
+    }
     notifyListeners();
   }
 
@@ -121,6 +222,9 @@ class MapProvider extends ChangeNotifier {
     _state = MapLoadState.idle;
     _tasks = [];
     _selectedCluster = null;
+    _routePoints = [];
+    _searchQuery = '';
+    _currentPage = 1;
     _userPosition = null;
     _viewMode = MapViewMode.map;
     load();

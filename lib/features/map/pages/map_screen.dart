@@ -9,6 +9,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/const/app_colors.dart';
+import '../../../shared/widgets/pagination/pagination_controls.dart';
 import '../../dashboard/model/dashboard_task_model.dart';
 import '../../dashboard/services/location_map_service.dart';
 import '../../tasks/pages/task_detail_screen.dart';
@@ -25,6 +26,7 @@ class MapScreen extends StatefulWidget {
 class _MapScreenState extends State<MapScreen>
     with SingleTickerProviderStateMixin {
   final MapController _mapController = MapController();
+  final TextEditingController _searchController = TextEditingController();
   late final AnimationController _sheetAnim;
   late final Animation<Offset> _sheetSlide;
 
@@ -49,6 +51,7 @@ class _MapScreenState extends State<MapScreen>
   @override
   void dispose() {
     _sheetAnim.dispose();
+    _searchController.dispose();
     _mapController.dispose();
     super.dispose();
   }
@@ -223,6 +226,18 @@ class _MapScreenState extends State<MapScreen>
                 ),
               ],
             ),
+            if (provider.routePoints.isNotEmpty)
+              PolylineLayer(
+                polylines: [
+                  Polyline(
+                    points: provider.routePoints,
+                    color: primaryColor,
+                    strokeWidth: 4.5,
+                    strokeCap: StrokeCap.round,
+                    strokeJoin: StrokeJoin.round,
+                  ),
+                ],
+              ),
             MarkerLayer(
               markers: [
                 ...clusters.map((c) => _buildClusterPin(c, provider)),
@@ -278,7 +293,6 @@ class _MapScreenState extends State<MapScreen>
 
   Widget _buildListView(MapProvider provider) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final tasks = provider.tasks;
 
     return Column(
       children: [
@@ -289,44 +303,130 @@ class _MapScreenState extends State<MapScreen>
         ),
         const SizedBox(height: 8),
 
+        // Search bar
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+          child: Container(
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF1E2028) : Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: TextField(
+              controller: _searchController,
+              onChanged: provider.setSearchQuery,
+              style: TextStyle(color: isDark ? Colors.white : Colors.black87),
+              decoration: InputDecoration(
+                hintText: 'Search tasks by name, stage, customer...',
+                hintStyle: TextStyle(
+                  color: isDark ? Colors.white38 : Colors.black38,
+                  fontSize: 13,
+                ),
+                prefixIcon: Icon(
+                  Icons.search_rounded,
+                  color: isDark ? Colors.white38 : Colors.black38,
+                  size: 20,
+                ),
+                border: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                suffixIcon: _searchController.text.isNotEmpty
+                    ? GestureDetector(
+                        onTap: () {
+                          _searchController.clear();
+                          provider.setSearchQuery('');
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.all(10),
+                          child: Icon(
+                            Icons.clear_rounded,
+                            color: isDark ? Colors.white38 : Colors.black38,
+                            size: 18,
+                          ),
+                        ),
+                      )
+                    : null,
+              ),
+            ),
+          ),
+        ),
+
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+
+                  child: Center(
+                    child: PaginationControls(
+                      canGoToPreviousPage: provider.currentPage > 1,
+                      canGoToNextPage: provider.currentPage < provider.totalPages,
+                      onPreviousPage: () => provider.setPage(provider.currentPage - 1),
+                      onNextPage: () => provider.setPage(provider.currentPage + 1),
+                      paginationText: provider.paginationText,
+                      isDark: isDark,
+                      theme: Theme.of(context),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        const SizedBox(height: 4),
+
         // Task list
         Expanded(
-          child: tasks.isEmpty
+          child: provider.paginatedTasks.isEmpty
               ? Center(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.location_off_outlined,
-                          size: 56,
-                          color: isDark ? Colors.white24 : Colors.black26),
+                      Icon(
+                        provider.searchQuery.isNotEmpty
+                            ? Icons.search_off_rounded
+                            : Icons.location_off_outlined,
+                        size: 56,
+                        color: isDark ? Colors.white24 : Colors.black26,
+                      ),
                       const SizedBox(height: 12),
                       Text(
-                        'No tasks found',
+                        provider.searchQuery.isNotEmpty
+                            ? 'No results match your search'
+                            : 'No tasks found',
                         style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
                           color: isDark ? Colors.white38 : Colors.black45,
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'No tasks assigned to you have locations',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: isDark ? Colors.white24 : Colors.black38,
+                      if (provider.searchQuery.isEmpty) ...[
+                        const SizedBox(height: 4),
+                        Text(
+                          'No tasks assigned to you have locations',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: isDark ? Colors.white24 : Colors.black38,
+                          ),
                         ),
-                      ),
+                      ],
                     ],
                   ),
                 )
               : ListView.separated(
                   padding: const EdgeInsets.fromLTRB(12, 4, 12, 24),
-                  itemCount: tasks.length,
+                  itemCount: provider.paginatedTasks.length,
                   separatorBuilder: (_, i) => const SizedBox(height: 10),
                   itemBuilder: (context, i) => _ListTaskCard(
-                    task: tasks[i],
+                    task: provider.paginatedTasks[i],
                     isDark: isDark,
-                    onLocate: () => _jumpToTask(tasks[i], provider),
+                    onLocate: () => _jumpToTask(provider.paginatedTasks[i], provider),
                   ),
                 ),
         ),
@@ -337,7 +437,7 @@ class _MapScreenState extends State<MapScreen>
   // ── Top bar (shared between map & list view) ──────────────────────────────
 
   Widget _buildTopBar(MapProvider provider, bool isDark) {
-    final total = provider.tasks.length;
+    final total = provider.filteredTasks.length;
     final isMap = !provider.isListMode;
 
     return Container(
@@ -1646,7 +1746,7 @@ class _NavigateButton extends StatelessWidget {
           children: [
             Icon(Icons.navigation_rounded, size: 16),
             SizedBox(width: 4),
-            Text('Navigate',
+            Text('Open Map',
                 style: TextStyle(
                     fontWeight: FontWeight.w600, fontSize: 14)),
           ],
