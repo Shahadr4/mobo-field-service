@@ -18,6 +18,7 @@ import '../features/homescreen.dart';
 import '../features/tasks/pages/task_list_screen.dart';
 import '../features/tasks/pages/create_task_screen.dart';
 import '../features/tasks/provider/task_provider.dart';
+import '../features/employee/pages/employee_list_screen.dart';
 import '../features/review/services/review_service.dart';
 
 import '../features/profile/pages/profile_screen.dart';
@@ -39,7 +40,6 @@ class _HomeScaffoldState extends State<HomeScaffold>
     with WidgetsBindingObserver {
 
   bool _isStockUser = false;
-  bool _isLoadingSession = true;
 
   @override
   void initState() {
@@ -52,7 +52,6 @@ class _HomeScaffoldState extends State<HomeScaffold>
       if (mounted) {
         setState(() {
           _isStockUser = session?.isStockUser ?? false;
-          _isLoadingSession = false;
         });
       }
     });
@@ -119,7 +118,7 @@ class _HomeScaffoldState extends State<HomeScaffold>
   final List<Widget> _screens = const [
     DashboardScreen(),
     TaskListScreen(),
-    Homescreen(),
+    AssigneeListScreen(),
     Homescreen(),
     Homescreen(),
   ];
@@ -158,14 +157,15 @@ class _HomeScaffoldState extends State<HomeScaffold>
       floatingActionButton: _index == 1
           ? FloatingActionButton(
               onPressed: () async {
+                final provider = context.read<TaskProvider>();
                 final created = await Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (_) => const CreateTaskScreen(),
                   ),
                 );
-                if (created == true && context.mounted) {
-                  context.read<TaskProvider>().refresh();
+                if (created == true && mounted) {
+                  provider.refresh();
                 }
               },
               backgroundColor: primaryColor,
@@ -285,18 +285,15 @@ class _HomeScaffoldState extends State<HomeScaffold>
                               ),
                             )),
               ),
-              onPressed: () {
-                Navigator.push(
+              onPressed: () async {
+                final provider = context.read<ProfileProvider>();
+                await Navigator.push(
                   context,
                   dynamicRoute(context, const ProfileScreen()),
-                ).then((_) {
-                  // Refresh profile data after returning from profile screen
-                  if (mounted) {
-                    context.read<ProfileProvider>().fetchUserProfile(
-                      forceRefresh: true,
-                    );
-                  }
-                });
+                );
+                if (mounted) {
+                  provider.fetchUserProfile(forceRefresh: true);
+                }
               },
             );
           },

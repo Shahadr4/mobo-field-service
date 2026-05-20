@@ -101,7 +101,7 @@ class _TaskListViewState extends State<_TaskListView> {
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                   decoration: BoxDecoration(
                     color: isDark ? Colors.white : Colors.black87,
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     '${p.selectedFilters.length} active',

@@ -694,7 +694,7 @@ class TaskService {
   /// Returns list of [{'id': int, 'name': String}] customers/partners.
   Future<List<Map<String, dynamic>>> fetchCustomers({String search = ''}) async {
     try {
-      final domain = <dynamic>[['customer_rank', '>', 0]];
+      final domain = <dynamic>[];
       if (search.trim().isNotEmpty) domain.add(['name', 'ilike', search.trim()]);
       final result = await OdooSessionManager.callKwWithCompany({
         'model': 'res.partner',
@@ -702,6 +702,7 @@ class TaskService {
         'args': [domain],
         'kwargs': {'fields': ['id', 'name', 'phone'], 'order': 'name asc', 'limit': 100},
       });
+      log("result ==> ${domain}---> ${result.toString()}");
       if (result is! List) return [];
       return result.whereType<Map<String, dynamic>>().toList();
     } catch (e) {

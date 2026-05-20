@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 import '../model/project_item_model.dart';
 import '../provider/timesheet_provider.dart';
@@ -45,9 +46,68 @@ class TimesheetEntrySheet extends StatefulWidget {
 
 class _TimesheetEntrySheetState extends State<TimesheetEntrySheet> {
   final _descCtrl = TextEditingController();
+  final _speech = stt.SpeechToText();
+  bool _isListening = false;
+  bool _speechAvailable = false;
+  String _textBeforeSpeech = ''; // base text before current speech session
+
+  @override
+  void initState() {
+    super.initState();
+    _initSpeech();
+  }
+
+  Future<void> _initSpeech() async {
+    _speechAvailable = await _speech.initialize(
+      onError: (_) => setState(() => _isListening = false),
+      onStatus: (status) {
+        if (status == 'done' || status == 'notListening') {
+          setState(() => _isListening = false);
+        }
+      },
+    );
+    setState(() {});
+  }
+
+  Future<void> _toggleListening() async {
+    if (!_speechAvailable) {
+      CustomSnackbar.showError(context, 'Speech recognition not available on this device.');
+      return;
+    }
+    if (_isListening) {
+      await _speech.stop();
+      setState(() => _isListening = false);
+    } else {
+      _textBeforeSpeech = _descCtrl.text;
+      setState(() => _isListening = true);
+      await _speech.listen(
+        onResult: (result) {
+          final words = result.recognizedWords;
+          if (words.isNotEmpty) {
+            // Replace only the speech portion so interim results don't stack up
+            final base = _textBeforeSpeech;
+            _descCtrl.text = base.isEmpty ? words : '$base $words';
+            _descCtrl.selection = TextSelection.fromPosition(
+              TextPosition(offset: _descCtrl.text.length),
+            );
+            // On a final result, lock in the text as the new base
+            if (result.finalResult) {
+              _textBeforeSpeech = _descCtrl.text;
+            }
+          }
+        },
+        listenOptions: stt.SpeechListenOptions(
+          listenFor: const Duration(seconds: 30),
+          pauseFor: const Duration(seconds: 4),
+          localeId: 'en_US',
+        ),
+      );
+    }
+  }
 
   @override
   void dispose() {
+    _speech.stop();
     _descCtrl.dispose();
     super.dispose();
   }
@@ -130,29 +190,65 @@ class _TimesheetEntrySheetState extends State<TimesheetEntrySheet> {
             ),
             const SizedBox(height: 18),
             // Description field
-            TextField(
-              controller: _descCtrl,
-              maxLines: 4,
-              minLines: 4,
-              textInputAction: TextInputAction.newline,
-              style: const TextStyle(fontSize: 14, color: Colors.black87),
-              decoration: InputDecoration(
-                hintText: 'What did you work on?',
-                hintStyle:
-                    TextStyle(color: Colors.grey.shade400, fontSize: 14),
-                filled: true,
-                fillColor: const Color(0xFFF5F5F5),
-                contentPadding: const EdgeInsets.all(14),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
+            Stack(
+              children: [
+                TextField(
+                  controller: _descCtrl,
+                  maxLines: 4,
+                  minLines: 4,
+                  textInputAction: TextInputAction.newline,
+                  style: const TextStyle(fontSize: 14, color: Colors.black87),
+                  decoration: InputDecoration(
+                    hintText: _isListening ? 'Listening...' : 'What did you work on?',
+                    hintStyle: TextStyle(
+                      color: _isListening ? primaryColor : Colors.grey.shade400,
+                      fontSize: 14,
+                    ),
+                    filled: true,
+                    fillColor: _isListening
+                        ? primaryColor.withValues(alpha: 0.05)
+                        : const Color(0xFFF5F5F5),
+                    contentPadding: const EdgeInsets.fromLTRB(14, 14, 48, 14),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: _isListening
+                          ? const BorderSide(color: primaryColor, width: 1.5)
+                          : BorderSide.none,
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: primaryColor, width: 1.5),
+                    ),
+                  ),
                 ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide:
-                      const BorderSide(color: primaryColor, width: 1.5),
+                Positioned(
+                  right: 6,
+                  bottom: 6,
+                  child: GestureDetector(
+                    onTap: _toggleListening,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: _isListening
+                            ? primaryColor
+                            : primaryColor.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        _isListening ? Icons.mic : Icons.mic_none_rounded,
+                        size: 18,
+                        color: _isListening ? Colors.white : primaryColor,
+                      ),
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
             const SizedBox(height: 20),
             // Buttons

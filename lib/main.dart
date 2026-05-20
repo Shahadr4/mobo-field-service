@@ -11,6 +11,7 @@ import 'features/example_field_delay/providers/example_field_delay_provider.dart
 import 'features/login/providers/login_provider.dart';
 import 'features/profile/providers/profile_provider.dart';
 import 'features/tasks/provider/task_provider.dart';
+import 'features/employee/provider/employee_provider.dart';
 
 import 'features/dashboard/provider/timesheet_provider.dart';
 import 'features/dashboard/provider/check_in_provider.dart';
@@ -38,7 +39,7 @@ void main() {
       ChangeNotifierProvider(create: (_) => ThemeProvider()),
       ChangeNotifierProvider(create: (_) => ProfileProvider()),
       ChangeNotifierProvider(create: (_) => LogoutViewModel()),
-
+      ChangeNotifierProvider(create: (_) => AssigneeProvider()),
       ChangeNotifierProvider(create: (_) => ExampleFieldDelayProvider()),
       ChangeNotifierProvider<LoginProvider>(
         create: (_) => LoginProvider(),
