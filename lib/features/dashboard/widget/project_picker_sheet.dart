@@ -14,8 +14,8 @@ class ProjectPickerSheet extends StatefulWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => ChangeNotifierProvider(
-        create: (_) => TimesheetProvider()..fetchTasks(),
+      builder: (_) => ChangeNotifierProvider.value(
+        value: Provider.of<TimesheetProvider>(context, listen: false),
         child: const ProjectPickerSheet(),
       ),
     );
@@ -27,6 +27,16 @@ class ProjectPickerSheet extends StatefulWidget {
 
 class _ProjectPickerSheetState extends State<ProjectPickerSheet> {
   final _searchCtrl = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<TimesheetProvider>().fetchTasks();
+      }
+    });
+  }
 
   @override
   void dispose() {

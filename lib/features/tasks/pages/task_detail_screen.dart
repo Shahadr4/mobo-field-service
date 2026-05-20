@@ -76,9 +76,8 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
     final bottomSheetH = 48.0 + 48.0 + 60.0 + MediaQuery.of(context).padding.bottom;
 
     return Scaffold(
-
+      backgroundColor: pageBg,
       appBar: AppBar(
-
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
@@ -136,79 +135,77 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
           : RefreshIndicator(
               onRefresh: _refresh,
               color: primaryColor,
-              child: Column(
-              children: [
-                // ── Scrollable top section ───────────────────────
-                SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Info card
-                        TaskInfoCard(
-                          task: _task,
-                          isDark: isDark,
-                          stageColor: stageColor,
-                        ),
-                        const SizedBox(height: 16),
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Info card
+                          TaskInfoCard(
+                            task: _task,
+                            isDark: isDark,
+                            stageColor: stageColor,
+                          ),
+                          const SizedBox(height: 16),
 
-                        // Pill tabs
-                        Row(
-                          children: [
-                            TaskPillTab(
-                              label: 'Info',
-                              selected: _tabIndex == 0,
-                              isDark: isDark,
-                              onTap: () => setState(() => _tabIndex = 0),
-                            ),
-                            const SizedBox(width: 10),
-                            TaskPillTab(
-                              label: 'Timesheet',
-                              selected: _tabIndex == 1,
-                              isDark: isDark,
-                              onTap: () => setState(() => _tabIndex = 1),
-                            ),
-                            const SizedBox(width: 10),
-                            TaskPillTab(
-                              label: 'Subtasks',
-                              selected: _tabIndex == 2,
-                              isDark: isDark,
-                              onTap: () => setState(() => _tabIndex = 2),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                      ],
-                    ),
-                  ),
-                ),
-
-                // ── Tab content — fills all remaining space ───────
-                Expanded(
-                  child: Padding(
-                    padding: EdgeInsets.fromLTRB(
-                        16, 0, 16, bottomSheetH + 12),
-                    child: Container(
-                      width: double.infinity,
-                      clipBehavior: Clip.antiAlias,
-                      decoration: BoxDecoration(
-                        color: cardBg,
-                        borderRadius: BorderRadius.circular(14),
-                        boxShadow: [shadow],
+                          // Pill tabs
+                          Row(
+                            children: [
+                              TaskPillTab(
+                                label: 'Info',
+                                selected: _tabIndex == 0,
+                                isDark: isDark,
+                                onTap: () => setState(() => _tabIndex = 0),
+                              ),
+                              const SizedBox(width: 10),
+                              TaskPillTab(
+                                label: 'Timesheet',
+                                selected: _tabIndex == 1,
+                                isDark: isDark,
+                                onTap: () => setState(() => _tabIndex = 1),
+                              ),
+                              const SizedBox(width: 10),
+                              TaskPillTab(
+                                label: 'Subtasks',
+                                selected: _tabIndex == 2,
+                                isDark: isDark,
+                                onTap: () => setState(() => _tabIndex = 2),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                        ],
                       ),
-                      child: _tabIndex == 0
-                          ? InfoContent(key: ValueKey(_refreshKey), task: _task, isDark: isDark)
-                          : _tabIndex == 1
-                              ? TimesheetContent(key: ValueKey('ts$_refreshKey'), task: _task, isDark: isDark)
-                              : SubtasksContent(key: ValueKey('sub$_refreshKey'), task: _task, isDark: isDark),
                     ),
-                  ),
+
+                    // ── Tab content ───────
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(
+                          16, 0, 16, bottomSheetH + 16),
+                      child: Container(
+                        width: double.infinity,
+                        clipBehavior: Clip.antiAlias,
+                        decoration: BoxDecoration(
+                          color: cardBg,
+                          borderRadius: BorderRadius.circular(14),
+                          boxShadow: [shadow],
+                        ),
+                        child: _tabIndex == 0
+                            ? InfoContent(key: ValueKey(_refreshKey), task: _task, isDark: isDark)
+                            : _tabIndex == 1
+                                ? TimesheetContent(key: ValueKey('ts$_refreshKey'), task: _task, isDark: isDark)
+                                : SubtasksContent(key: ValueKey('sub$_refreshKey'), task: _task, isDark: isDark),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
-          ),
     );
   }
 }

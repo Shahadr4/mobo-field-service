@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../model/project_item_model.dart';
 import '../services/timesheet_service.dart';
@@ -44,6 +45,89 @@ class TimesheetProvider extends ChangeNotifier {
     } finally {
       _isLoading = false;
       notifyListeners();
+    }
+  }
+
+  // ── Global Active Timer State ──────────────────────────────────────────────
+  int? _activeTaskId;
+  int? _activeTimesheetId;
+  Duration _activeElapsed = Duration.zero;
+  bool _isTimerRunning = false;
+  bool _isTimerPaused = false;
+  ProjectItem? _activeTask;
+  Timer? _globalTicker;
+
+  int? get activeTaskId => _activeTaskId;
+  int? get activeTimesheetId => _activeTimesheetId;
+  Duration get activeElapsed => _activeElapsed;
+  bool get isTimerRunning => _isTimerRunning;
+  bool get isTimerPaused => _isTimerPaused;
+  ProjectItem? get activeTask => _activeTask;
+
+  void startGlobalTimer(ProjectItem task, int timesheetId) {
+    _globalTicker?.cancel();
+    _activeTaskId = task.id;
+    _activeTimesheetId = timesheetId;
+    _activeElapsed = Duration.zero;
+    _isTimerRunning = true;
+    _isTimerPaused = false;
+    _activeTask = task;
+
+    _globalTicker = Timer.periodic(const Duration(seconds: 1), (_) {
+      _activeElapsed += const Duration(seconds: 1);
+      notifyListeners();
+    });
+    notifyListeners();
+  }
+
+  void pauseGlobalTimer() {
+    _globalTicker?.cancel();
+    _isTimerPaused = true;
+    notifyListeners();
+  }
+
+  void resumeGlobalTimer() {
+    _globalTicker?.cancel();
+    _isTimerPaused = false;
+    _globalTicker = Timer.periodic(const Duration(seconds: 1), (_) {
+      _activeElapsed += const Duration(seconds: 1);
+      notifyListeners();
+    });
+    notifyListeners();
+  }
+
+  void clearGlobalTimer() {
+    _globalTicker?.cancel();
+    _activeTaskId = null;
+    _activeTimesheetId = null;
+    _activeElapsed = Duration.zero;
+    _isTimerRunning = false;
+    _isTimerPaused = false;
+    _activeTask = null;
+    notifyListeners();
+  }
+
+  Future<void> autoStopAndSaveRunningTimer() async {
+    if (_activeTaskId == null || _activeTimesheetId == null) return;
+
+    final taskId = _activeTaskId!;
+    final timesheetId = _activeTimesheetId!;
+    final elapsed = _activeElapsed;
+    final taskName = _activeTask?.name ?? 'Task';
+
+    clearGlobalTimer();
+
+    try {
+      await _service.stopTimer(
+        taskId: taskId,
+        timesheetId: timesheetId,
+        elapsed: elapsed,
+        description: 'Completed: $taskName',
+      );
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error in autoStopAndSaveRunningTimer: $e');
+      }
     }
   }
 
@@ -94,5 +178,11 @@ class TimesheetProvider extends ChangeNotifier {
     _error = null;
     _isLoading = false;
     _isSubmitting = false;
+  }
+
+  @override
+  void dispose() {
+    _globalTicker?.cancel();
+    super.dispose();
   }
 }

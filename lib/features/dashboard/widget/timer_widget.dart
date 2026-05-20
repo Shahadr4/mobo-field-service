@@ -1,16 +1,17 @@
 import 'dart:async';
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:hugeicons/hugeicons.dart';
+import 'package:provider/provider.dart';
 import 'package:mobo_feild_service/core/const/app_colors.dart';
 
 import '../model/project_item_model.dart';
 import '../services/timesheet_service.dart';
+import '../provider/timesheet_provider.dart';
 import '../../../shared/widgets/snackbars/custom_snackbar.dart';
 import 'project_picker_sheet.dart';
 import 'timesheet_entry_sheet.dart';
-
-enum _TimerState { idle, starting, running, paused, stopping }
 
 class TimerWidget extends StatefulWidget {
   const TimerWidget({super.key});
@@ -21,13 +22,8 @@ class TimerWidget extends StatefulWidget {
 
 class _TimerWidgetState extends State<TimerWidget>
     with SingleTickerProviderStateMixin {
-  _TimerState _state = _TimerState.idle;
-  Duration _elapsed = Duration.zero;
-  Timer? _ticker;
-  ProjectItem? _task;
-  int? _timesheetId;
+  bool _isStarting = false;
   final _service = TimesheetService();
-
   late AnimationController _pulseCtrl;
 
   @override
@@ -39,59 +35,50 @@ class _TimerWidgetState extends State<TimerWidget>
     )..repeat(reverse: true);
   }
 
-  Future<void> _onStart() async {
+  @override
+  void dispose() {
+    _pulseCtrl.dispose();
+    super.dispose();
+  }
+
+  Future<void> _onStart(TimesheetProvider timerProv) async {
     final task = await ProjectPickerSheet.show(context);
     if (task == null || !mounted) return;
 
-    setState(() => _state = _TimerState.starting);
+    setState(() => _isStarting = true);
+
+    if (timerProv.isTimerRunning) {
+      await timerProv.autoStopAndSaveRunningTimer();
+    }
 
     final timesheetId = await _service.startTimer(task.id);
     if (!mounted) return;
 
     if (timesheetId == null) {
-      setState(() => _state = _TimerState.idle);
+      setState(() => _isStarting = false);
       CustomSnackbar.showError(
           context, 'Could not start timer. Please try again.');
       return;
     }
 
-    _ticker?.cancel();
-    _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
-      setState(() => _elapsed += const Duration(seconds: 1));
-    });
-
-    setState(() {
-      _task = task;
-      _timesheetId = timesheetId;
-      _elapsed = Duration.zero;
-      _state = _TimerState.running;
-    });
+    timerProv.startGlobalTimer(task, timesheetId);
+    setState(() => _isStarting = false);
   }
 
-  void _onPause() {
-    _ticker?.cancel();
-    setState(() => _state = _TimerState.paused);
+  void _onPause(TimesheetProvider timerProv) {
+    timerProv.pauseGlobalTimer();
   }
 
-  void _onResume() {
-    _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
-      setState(() => _elapsed += const Duration(seconds: 1));
-    });
-    setState(() => _state = _TimerState.running);
+  void _onResume(TimesheetProvider timerProv) {
+    timerProv.resumeGlobalTimer();
   }
 
-  Future<void> _onStop() async {
-    _ticker?.cancel();
-    final task = _task!;
-    final timesheetId = _timesheetId!;
-    final elapsed = _elapsed;
+  Future<void> _onStop(TimesheetProvider timerProv) async {
+    final task = timerProv.activeTask!;
+    final timesheetId = timerProv.activeTimesheetId!;
+    final elapsed = timerProv.activeElapsed;
 
-    setState(() {
-      _state = _TimerState.idle;
-      _elapsed = Duration.zero;
-      _task = null;
-      _timesheetId = null;
-    });
+    timerProv.clearGlobalTimer();
 
     if (!mounted) return;
 
@@ -103,27 +90,20 @@ class _TimerWidgetState extends State<TimerWidget>
     );
   }
 
-  @override
-  void dispose() {
-    _ticker?.cancel();
-    _pulseCtrl.dispose();
-    super.dispose();
-  }
-
-  String get _formatted {
-    final h = _elapsed.inHours.toString().padLeft(2, '0');
-    final m = (_elapsed.inMinutes % 60).toString().padLeft(2, '0');
-    final s = (_elapsed.inSeconds % 60).toString().padLeft(2, '0');
+  String _formatted(Duration duration) {
+    final h = duration.inHours.toString().padLeft(2, '0');
+    final m = (duration.inMinutes % 60).toString().padLeft(2, '0');
+    final s = (duration.inSeconds % 60).toString().padLeft(2, '0');
     return '$h:$m:$s';
   }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final timerProv = context.watch<TimesheetProvider>();
 
-    Widget content;
-    if (_state == _TimerState.idle || _state == _TimerState.starting) {
-      content = Column(
+    if (!timerProv.isTimerRunning) {
+      return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
@@ -141,8 +121,8 @@ class _TimerWidgetState extends State<TimerWidget>
             iconColor: primaryColor,
             title: 'Start Timer',
             subtitle: 'Start tracking time for your current project or task',
-            loading: _state == _TimerState.starting,
-            onTap: _onStart,
+            loading: _isStarting,
+            onTap: () => _onStart(timerProv),
           ),
           const SizedBox(height: 12),
           _WorkManagementCard(
@@ -153,61 +133,60 @@ class _TimerWidgetState extends State<TimerWidget>
             subtitle: 'Manually record hours you worked earlier',
             loading: false,
             onTap: () {
-              // TODO: Implement Log Hours
+              // Log Hours placeholder
             },
           ),
           const SizedBox(height: 12),
-
-        ],
-      );
-    } else {
-      content = Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Work Management',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: isDark ? Colors.white : Colors.black87,
-            ),
-          ),
-          const SizedBox(height: 14),
-          _ProjectOverviewCard(
-            isDark: isDark,
-            state: _state,
-            task: _task,
-            formatted: _formatted,
-            pulseCtrl: _pulseCtrl,
-            onPause: _onPause,
-            onResume: _onResume,
-            onStop: _onStop,
-          ),
-          const SizedBox(height: 12),
-          _WorkManagementCard(
-            isDark: isDark,
-            icon: HugeIcons.strokeRoundedClipboard,
-            iconColor: const Color(0xFFF59E0B),
-            title: 'Log Hours',
-            subtitle: 'Manually record hours you worked earlier',
-            loading: false,
-            onTap: () {},
-          ),
-          const SizedBox(height: 12),
-          _WorkManagementCard(
-            isDark: isDark,
-            icon: HugeIcons.strokeRoundedClipboard,
-            iconColor: const Color(0xFF3B82F6),
-            title: 'View Tasks',
-            subtitle: 'View and manage all your assigned tasks',
-            loading: false,
-            onTap: () {},
-          ),
         ],
       );
     }
 
-    return content;
+    final isRunning = !timerProv.isTimerPaused;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Work Management',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: isDark ? Colors.white : Colors.black87,
+          ),
+        ),
+        const SizedBox(height: 14),
+        _ProjectOverviewCard(
+          isDark: isDark,
+          isRunning: isRunning,
+          task: timerProv.activeTask,
+          formatted: _formatted(timerProv.activeElapsed),
+          pulseCtrl: _pulseCtrl,
+          onPause: () => _onPause(timerProv),
+          onResume: () => _onResume(timerProv),
+          onStop: () => _onStop(timerProv),
+        ),
+        const SizedBox(height: 12),
+        _WorkManagementCard(
+          isDark: isDark,
+          icon: HugeIcons.strokeRoundedClipboard,
+          iconColor: const Color(0xFFF59E0B),
+          title: 'Log Hours',
+          subtitle: 'Manually record hours you worked earlier',
+          loading: false,
+          onTap: () {},
+        ),
+        const SizedBox(height: 12),
+        _WorkManagementCard(
+          isDark: isDark,
+          icon: HugeIcons.strokeRoundedClipboard,
+          iconColor: const Color(0xFF3B82F6),
+          title: 'View Tasks',
+          subtitle: 'View and manage all your assigned tasks',
+          loading: false,
+          onTap: () {},
+        ),
+      ],
+    );
   }
 }
 
@@ -307,7 +286,7 @@ class _WorkManagementCard extends StatelessWidget {
 
 class _ProjectOverviewCard extends StatelessWidget {
   final bool isDark;
-  final _TimerState state;
+  final bool isRunning;
   final ProjectItem? task;
   final String formatted;
   final AnimationController pulseCtrl;
@@ -317,7 +296,7 @@ class _ProjectOverviewCard extends StatelessWidget {
 
   const _ProjectOverviewCard({
     required this.isDark,
-    required this.state,
+    required this.isRunning,
     required this.task,
     required this.formatted,
     required this.pulseCtrl,
@@ -328,12 +307,9 @@ class _ProjectOverviewCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isRunning = state == _TimerState.running;
-    final isStopping = state == _TimerState.stopping;
-
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF1E2028) : Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -375,11 +351,7 @@ class _ProjectOverviewCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      isStopping
-                          ? 'Saving…'
-                          : isRunning
-                              ? 'Running Timer'
-                              : 'Timer Paused',
+                      isRunning ? 'Running Timer' : 'Timer Paused',
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w400,
@@ -443,7 +415,7 @@ class _ProjectOverviewCard extends StatelessWidget {
                     ),
                   ),
                 )
-              else if (state == _TimerState.paused)
+              else
                 Container(
                   padding: const EdgeInsets.symmetric(
                       horizontal: 10, vertical: 5),
@@ -467,28 +439,18 @@ class _ProjectOverviewCard extends StatelessWidget {
           const SizedBox(height: 24),
 
           Center(
-            child: isStopping
-                ? const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 8),
-                    child: SizedBox(
-                      width: 32,
-                      height: 32,
-                      child: CircularProgressIndicator(
-                          color: primaryColor, strokeWidth: 2.5),
-                    ),
-                  )
-                : Text(
-                    formatted,
-                    style: TextStyle(
-                      fontSize: 46,
-                      fontWeight: FontWeight.w800,
-                      color: isRunning
-                          ? primaryColor
-                          : const Color(0xFFF59E0B),
-                      fontFeatures: const [FontFeature.tabularFigures()],
-                      letterSpacing: 3,
-                    ),
-                  ),
+            child: Text(
+              formatted,
+              style: TextStyle(
+                fontSize: 46,
+                fontWeight: FontWeight.w800,
+                color: isRunning
+                    ? primaryColor
+                    : const Color(0xFFF59E0B),
+                fontFeatures: const [FontFeature.tabularFigures()],
+                letterSpacing: 3,
+              ),
+            ),
           ),
 
           const SizedBox(height: 8),
@@ -513,9 +475,7 @@ class _ProjectOverviewCard extends StatelessWidget {
             children: [
               Expanded(
                 child: OutlinedButton(
-                  onPressed: isStopping
-                      ? null
-                      : (isRunning ? _onPause : _onResume),
+                  onPressed: isRunning ? onPause : onResume,
                   style: OutlinedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     side: BorderSide(color: primaryColor, width: 1.5),
@@ -536,7 +496,7 @@ class _ProjectOverviewCard extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: ElevatedButton(
-                  onPressed: isStopping ? null : _onStop,
+                  onPressed: onStop,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: primaryColor,
                     foregroundColor: Colors.white,
@@ -561,8 +521,4 @@ class _ProjectOverviewCard extends StatelessWidget {
       ),
     );
   }
-
-  void _onPause() => onPause();
-  void _onResume() => onResume();
-  void _onStop() => onStop();
 }

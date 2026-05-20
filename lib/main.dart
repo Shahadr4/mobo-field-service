@@ -12,6 +12,7 @@ import 'features/login/providers/login_provider.dart';
 import 'features/profile/providers/profile_provider.dart';
 import 'features/tasks/provider/task_provider.dart';
 
+import 'features/dashboard/provider/timesheet_provider.dart';
 import 'features/dashboard/provider/check_in_provider.dart';
 import 'features/dashboard/provider/dashboard_task_provider.dart';
 import 'features/dashboard/provider/task_stats_provider.dart';
@@ -28,6 +29,7 @@ void main() {
 
   runApp(MultiProvider(
     providers: [
+      ChangeNotifierProvider(create: (_) => TimesheetProvider()),
       ChangeNotifierProvider(create: (_) => CheckInProvider()),
       ChangeNotifierProvider(create: (_) => TaskStatsProvider()),
       ChangeNotifierProvider(create: (_) => TaskProvider()..init()),
