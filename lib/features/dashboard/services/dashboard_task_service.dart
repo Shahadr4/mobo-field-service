@@ -159,6 +159,245 @@ class DashboardTaskService {
     }
   }
 
+  /// Same as fetchByTab('Nearby') but accepts an already-fetched [pos]
+  /// so GPS is not requested a second time.
+  Future<List<DashboardTask>> fetchNearbyWithPosition(Position pos) async {
+    final session = await OdooSessionManager.getCurrentSession();
+    if (session == null) return [];
+
+    final base = <dynamic>[
+      ['is_fsm', '=', true],
+      ['project_id', '!=', false],
+      ['has_template_ancestor', '=', false],
+      ['display_in_project', '=', true],
+      ['partner_id', '!=', false],
+    ];
+
+    try {
+      final result = await OdooSessionManager.callKwWithCompany({
+        'model': 'project.task',
+        'method': 'search_read',
+        'args': [base],
+        'kwargs': {
+          'fields': [
+            'id', 'name', 'project_id', 'stage_id', 'user_ids',
+            'partner_id', 'date_deadline', 'planned_date_begin', 'priority',
+          ],
+          'order': 'name asc',
+        },
+      });
+
+      if (result is! List) return [];
+      final tasks = result.whereType<Map<String, dynamic>>().toList();
+
+      final partnerIds = tasks
+          .map((t) => t['partner_id'])
+          .where((v) => v is List && v.isNotEmpty)
+          .map((v) => (v as List)[0] as int)
+          .toSet()
+          .toList();
+
+      final Map<int, Map<String, dynamic>> partnerMap = {};
+      if (partnerIds.isNotEmpty) {
+        final partners = await OdooSessionManager.callKwWithCompany({
+          'model': 'res.partner',
+          'method': 'search_read',
+          'args': [
+            [['id', 'in', partnerIds]]
+          ],
+          'kwargs': {
+            'fields': ['id', 'street', 'city', 'country_id', 'partner_latitude', 'partner_longitude'],
+          },
+        });
+        if (partners is List) {
+          for (final p in partners.whereType<Map<String, dynamic>>()) {
+            final id = (p['id'] as num).toInt();
+            final countryRaw = p['country_id'];
+            partnerMap[id] = {
+              'street': p['street'] is String ? p['street'] : '',
+              'city': p['city'] is String ? p['city'] : '',
+              'country': countryRaw is List && countryRaw.length >= 2
+                  ? countryRaw[1].toString()
+                  : '',
+              'lat': (p['partner_latitude'] as num?)?.toDouble() ?? 0.0,
+              'lng': (p['partner_longitude'] as num?)?.toDouble() ?? 0.0,
+            };
+          }
+        }
+      }
+
+      var parsed = tasks.map((t) {
+        final partnerRaw = t['partner_id'];
+        if (partnerRaw is List && partnerRaw.isNotEmpty) {
+          final pid = (partnerRaw[0] as num).toInt();
+          final addr = partnerMap[pid];
+          if (addr != null) {
+            t['partner_street']  = addr['street'];
+            t['partner_city']    = addr['city'];
+            t['partner_country'] = addr['country'];
+            t['partner_lat']     = addr['lat'];
+            t['partner_lng']     = addr['lng'];
+          }
+        }
+        return DashboardTask.fromMap(t);
+      }).toList();
+
+      // Filter using the provided position — no extra GPS call
+      parsed = await _filterNearbyWithPos(parsed, pos);
+      return parsed;
+    } catch (e) {
+      log('[DashboardTaskService] ⚠️ fetchNearbyWithPosition error: $e');
+      return [];
+    }
+  }
+
+  Future<List<DashboardTask>> fetchMyTasksWithPosition(Position pos) async {
+    final session = await OdooSessionManager.getCurrentSession();
+    if (session == null) return [];
+    final userId = session.userId;
+
+    final base = <dynamic>[
+      ['is_fsm', '=', true],
+      ['project_id', '!=', false],
+      ['has_template_ancestor', '=', false],
+      ['display_in_project', '=', true],
+      ['partner_id', '!=', false],
+      ['user_ids', 'in', [userId]],
+    ];
+
+    try {
+      final result = await OdooSessionManager.callKwWithCompany({
+        'model': 'project.task',
+        'method': 'search_read',
+        'args': [base],
+        'kwargs': {
+          'fields': [
+            'id', 'name', 'project_id', 'stage_id', 'user_ids',
+            'partner_id', 'date_deadline', 'planned_date_begin', 'priority',
+          ],
+          'order': 'name asc',
+        },
+      });
+
+      if (result is! List) return [];
+      final tasks = result.whereType<Map<String, dynamic>>().toList();
+
+      final partnerIds = tasks
+          .map((t) => t['partner_id'])
+          .where((v) => v is List && v.isNotEmpty)
+          .map((v) => (v as List)[0] as int)
+          .toSet()
+          .toList();
+
+      final Map<int, Map<String, dynamic>> partnerMap = {};
+      if (partnerIds.isNotEmpty) {
+        final partners = await OdooSessionManager.callKwWithCompany({
+          'model': 'res.partner',
+          'method': 'search_read',
+          'args': [
+            [['id', 'in', partnerIds]]
+          ],
+          'kwargs': {
+            'fields': ['id', 'street', 'city', 'country_id', 'partner_latitude', 'partner_longitude'],
+          },
+        });
+        if (partners is List) {
+          for (final p in partners.whereType<Map<String, dynamic>>()) {
+            final id = (p['id'] as num).toInt();
+            final countryRaw = p['country_id'];
+            partnerMap[id] = {
+              'street': p['street'] is String ? p['street'] : '',
+              'city': p['city'] is String ? p['city'] : '',
+              'country': countryRaw is List && countryRaw.length >= 2
+                  ? countryRaw[1].toString()
+                  : '',
+              'lat': (p['partner_latitude'] as num?)?.toDouble() ?? 0.0,
+              'lng': (p['partner_longitude'] as num?)?.toDouble() ?? 0.0,
+            };
+          }
+        }
+      }
+
+      var parsed = tasks.map((t) {
+        final partnerRaw = t['partner_id'];
+        if (partnerRaw is List && partnerRaw.isNotEmpty) {
+          final pid = (partnerRaw[0] as num).toInt();
+          final addr = partnerMap[pid];
+          if (addr != null) {
+            t['partner_street']  = addr['street'];
+            t['partner_city']    = addr['city'];
+            t['partner_country'] = addr['country'];
+            t['partner_lat']     = addr['lat'];
+            t['partner_lng']     = addr['lng'];
+          }
+        }
+        return DashboardTask.fromMap(t);
+      }).toList();
+
+      final resolvedTasks = <DashboardTask>[];
+      for (final task in parsed) {
+        double lat = task.partnerLat;
+        double lng = task.partnerLng;
+
+        if (lat == 0.0 && lng == 0.0) {
+          if (task.partnerAddress.trim().isEmpty) {
+            continue;
+          }
+          final geo = await _geocodeAddress(task.partnerAddress);
+          if (geo == null) {
+            continue;
+          }
+          lat = geo.$1;
+          lng = geo.$2;
+        }
+        resolvedTasks.add(task.withCoords(lat, lng));
+      }
+
+      return resolvedTasks;
+    } catch (e) {
+      log('[DashboardTaskService] ⚠️ fetchMyTasksWithPosition error: $e');
+      return [];
+    }
+  }
+
+  Future<List<DashboardTask>> _filterNearbyWithPos(
+      List<DashboardTask> tasks, Position pos) async {
+    log('[Nearby] Total tasks with partner: ${tasks.length}');
+    log('[Nearby] Device position: lat=${pos.latitude}, lng=${pos.longitude}');
+
+    final nearby = <DashboardTask>[];
+
+    for (final task in tasks) {
+      double lat = task.partnerLat;
+      double lng = task.partnerLng;
+
+      if (lat == 0.0 && lng == 0.0) {
+        if (task.partnerAddress.trim().isEmpty) {
+          log('[Nearby] SKIP "${task.name}" — no coords and no address');
+          continue;
+        }
+        final geo = await _geocodeAddress(task.partnerAddress);
+        if (geo == null) {
+          log('[Nearby] SKIP "${task.name}" — geocode failed for "${task.partnerAddress}"');
+          continue;
+        }
+        lat = geo.$1;
+        lng = geo.$2;
+        log('[Nearby] Geocoded "${task.partnerAddress}" → $lat,$lng');
+      }
+
+      final distKm = _haversineKm(pos.latitude, pos.longitude, lat, lng);
+      final within = distKm <= _nearbyRadiusKm;
+      log('[Nearby] "${task.name}" — dist=${distKm.toStringAsFixed(2)}km '
+          '— ${within ? "✅ INCLUDE" : "❌ too far"}');
+      // Always store resolved coords so the map can pin the task
+      if (within) nearby.add(task.withCoords(lat, lng));
+    }
+
+    log('[Nearby] Result: ${nearby.length} within ${_nearbyRadiusKm}km');
+    return nearby;
+  }
+
   Future<List<DashboardTask>> _filterNearby(List<DashboardTask> tasks) async {
     try {
       log('[Nearby] Total tasks with partner: ${tasks.length}');

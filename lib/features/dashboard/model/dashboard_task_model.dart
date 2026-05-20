@@ -92,6 +92,22 @@ class DashboardTask {
     );
   }
 
+  DashboardTask withCoords(double lat, double lng) => DashboardTask(
+        id: id,
+        name: name,
+        projectName: projectName,
+        stageName: stageName,
+        assigneeName: assigneeName,
+        partnerName: partnerName,
+        partnerAddress: partnerAddress,
+        deadline: deadline,
+        scheduledStart: scheduledStart,
+        scheduledEnd: scheduledEnd,
+        priority: priority,
+        partnerLat: lat,
+        partnerLng: lng,
+      );
+
   int? get daysRemaining {
     if (deadline.isEmpty) return null;
     final d = DateTime.tryParse(deadline);

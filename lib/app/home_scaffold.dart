@@ -15,6 +15,7 @@ import '../features/dashboard/provider/check_in_provider.dart';
 import '../features/dashboard/provider/dashboard_task_provider.dart';
 import '../features/dashboard/provider/task_stats_provider.dart';
 import '../features/homescreen.dart';
+import '../features/map/pages/map_screen.dart';
 import '../features/tasks/pages/task_list_screen.dart';
 import '../features/tasks/pages/create_task_screen.dart';
 import '../features/tasks/provider/task_provider.dart';
@@ -119,7 +120,7 @@ class _HomeScaffoldState extends State<HomeScaffold>
     DashboardScreen(),
     TaskListScreen(),
     AssigneeListScreen(),
-    Homescreen(),
+    MapScreen(),
     Homescreen(),
   ];
 
