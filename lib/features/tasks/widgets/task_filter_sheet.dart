@@ -320,10 +320,10 @@ class _FilterBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final divColor = isDark ? const Color(0xFF2A2D36) : const Color(0xFFF0F0F0);
 
-    // Build per-section active filter rows
-    final activeSections = _sections
-        .map((s) => (s.$1, s.$2.where((e) => selected.contains(e.$1)).toList()))
-        .where((s) => s.$2.isNotEmpty)
+    // All active filter items flattened across sections
+    final activeItems = _sections
+        .expand((s) => s.$2)
+        .where((e) => selected.contains(e.$1))
         .toList();
 
     return SingleChildScrollView(
@@ -331,8 +331,8 @@ class _FilterBody extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Active filters grouped by section
-          if (activeSections.isNotEmpty) ...[
+          // Active filters — flat list, no section headings
+          if (activeItems.isNotEmpty) ...[
             Text(
               'Active Filters',
               style: TextStyle(
@@ -343,31 +343,15 @@ class _FilterBody extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 10),
-            ...activeSections.expand((sec) {
-              final heading     = sec.$1;
-              final activeItems = sec.$2;
-              return [
-                Text(
-                  heading,
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.9,
-                    color: isDark ? Colors.white38 : Colors.black38,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: activeItems.map((e) => _ActiveFilterChip(
-                    label: e.$2,
-                    onRemove: () => onToggle(e.$1),
-                  )).toList(),
-                ),
-                const SizedBox(height: 12),
-              ];
-            }),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: activeItems.map((e) => _ActiveFilterChip(
+                label: e.$2,
+                onRemove: () => onToggle(e.$1),
+              )).toList(),
+            ),
+            const SizedBox(height: 12),
             Divider(height: 1, color: divColor),
             const SizedBox(height: 16),
           ],
@@ -473,7 +457,7 @@ class _FilterChip extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
           color: selected ? primaryColor : Colors.transparent,
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: selected
                 ? primaryColor

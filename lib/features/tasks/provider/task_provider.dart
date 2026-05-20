@@ -15,7 +15,7 @@ class TaskProvider extends ChangeNotifier {
   String?           _error;
   String            _search          = '';
   String            _selectedStage   = 'All';
-  Set<TaskFilterBy> _selectedFilters = {};
+  Set<TaskFilterBy> _selectedFilters = {TaskFilterBy.myTasks};
   TaskGroupBy       _groupBy         = TaskGroupBy.none;
   int               _currentPage     = 1;
   int               _totalCount      = 0;
@@ -146,6 +146,17 @@ class TaskProvider extends ChangeNotifier {
   Future<void> setFilters(Set<TaskFilterBy> filters) async {
     _selectedFilters = {...filters};
     _currentPage     = 1;
+    await fetchTasks();
+  }
+
+  /// Adds or removes [TaskFilterBy.myTasks] without touching other filters or groupBy.
+  Future<void> toggleMyTasks(bool enable) async {
+    if (enable) {
+      _selectedFilters.add(TaskFilterBy.myTasks);
+    } else {
+      _selectedFilters.remove(TaskFilterBy.myTasks);
+    }
+    _currentPage = 1;
     await fetchTasks();
   }
 

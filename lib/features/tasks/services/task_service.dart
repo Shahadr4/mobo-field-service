@@ -77,8 +77,8 @@ class TaskService {
     }
   }
 
-  /// OR-chains all per-filter expressions into a single domain fragment.
-  /// With N expressions, Odoo needs N-1 '|' operators prepended.
+  /// AND-chains all per-filter expressions into a single domain fragment.
+  /// With N expressions, Odoo needs N-1 '&' operators prepended.
   Future<List<dynamic>> _buildFilterDomain(
     Set<TaskFilterBy> filters,
     int userId,
@@ -103,12 +103,12 @@ class TaskService {
       return exprs.first;
     }
 
-    // Multiple filters — prepend (N-1) '|' operators then flatten all expressions
+    // Multiple filters — prepend (N-1) '&' operators then flatten all expressions
     final result = <dynamic>[
-      for (int i = 0; i < exprs.length - 1; i++) '|',
+      for (int i = 0; i < exprs.length - 1; i++) '&',
       ...exprs.expand((e) => e),
     ];
-    log('[TaskService] filter domain (OR of ${exprs.length}): $result');
+    log('[TaskService] filter domain (AND of ${exprs.length}): $result');
     return result;
   }
 
