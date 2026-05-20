@@ -323,7 +323,7 @@ class _MapScreenState extends State<MapScreen>
               onChanged: provider.setSearchQuery,
               style: TextStyle(color: isDark ? Colors.white : Colors.black87),
               decoration: InputDecoration(
-                hintText: 'Search tasks by name, stage, customer...',
+                hintText: 'Search tasks by name...',
                 hintStyle: TextStyle(
                   color: isDark ? Colors.white38 : Colors.black38,
                   fontSize: 13,
@@ -1159,21 +1159,6 @@ class _SingleTaskCardState extends State<_SingleTaskCard> {
                         isDark: isDark,
                         accent: _isOverdue(task.deadline),
                       ),
-                    if (task.scheduledStart.isNotEmpty)
-                      _InfoChip(
-                        icon: Icons.access_time_rounded,
-                        text: task.scheduledStart +
-                            (task.scheduledEnd.isNotEmpty
-                                ? ' – ${task.scheduledEnd}'
-                                : ''),
-                        isDark: isDark,
-                      ),
-                    if (task.partnerAddress.isNotEmpty)
-                      _InfoChip(
-                          icon: Icons.location_on_outlined,
-                          text: task.partnerAddress,
-                          isDark: isDark,
-                          maxLines: 1),
                   ],
                 ),
                 const SizedBox(height: 14),
@@ -1223,17 +1208,30 @@ class _ClusterSingleTaskSwiper extends StatefulWidget {
 
 class _ClusterSingleTaskSwiperState extends State<_ClusterSingleTaskSwiper> {
   late final PageController _pageController;
+  int _currentPage = 0;
 
   @override
   void initState() {
     super.initState();
     _pageController = PageController();
+    _pageController.addListener(_onPageChanged);
   }
 
   @override
   void dispose() {
+    _pageController.removeListener(_onPageChanged);
     _pageController.dispose();
     super.dispose();
+  }
+
+  void _onPageChanged() {
+    if (!mounted) return;
+    final page = _pageController.page?.round() ?? 0;
+    if (_currentPage != page) {
+      setState(() {
+        _currentPage = page;
+      });
+    }
   }
 
   @override
@@ -1241,10 +1239,44 @@ class _ClusterSingleTaskSwiperState extends State<_ClusterSingleTaskSwiper> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.cluster.position.latitude != widget.cluster.position.latitude ||
         oldWidget.cluster.position.longitude != widget.cluster.position.longitude) {
+      _currentPage = 0;
       if (_pageController.hasClients) {
         _pageController.jumpToPage(0);
       }
     }
+  }
+
+  double _calculateCardHeight(DashboardTask task) {
+    double height = 154.0; // Base height for margins, padding, buttons, and stage row with safety margins
+    
+    // Title height estimation
+    if (task.name.length > 28) {
+      height += 46.0; // 2 lines
+    } else {
+      height += 24.0; // 1 line
+    }
+
+    // Chips height estimation
+    int chipCount = 0;
+    if (task.partnerName.isNotEmpty) chipCount++;
+    if (task.deadline.isNotEmpty) chipCount++;
+    if (task.partnerAddress.isNotEmpty) chipCount++;
+    if (task.scheduledStart.isNotEmpty || task.scheduledEnd.isNotEmpty) {
+      // Long date/time chip takes up equivalent of 2 chips of space
+      chipCount += 2;
+    }
+
+    if (chipCount == 0) {
+      height += 0.0;
+    } else if (chipCount <= 2) {
+      height += 40.0;
+    } else if (chipCount <= 4) {
+      height += 80.0;
+    } else {
+      height += 120.0;
+    }
+
+    return height + 24.0; // Safe layout density buffer
   }
 
   @override
@@ -1260,21 +1292,35 @@ class _ClusterSingleTaskSwiperState extends State<_ClusterSingleTaskSwiper> {
       );
     }
 
+    final activeTask = tasks[_currentPage < tasks.length ? _currentPage : 0];
+    final activeHeight = _calculateCardHeight(activeTask);
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        SizedBox(
-          height: 240,
+        TweenAnimationBuilder<double>(
+          duration: const Duration(milliseconds: 240),
+          curve: Curves.easeInOutCubic,
+          tween: Tween<double>(begin: activeHeight, end: activeHeight),
+          builder: (context, height, child) {
+            return SizedBox(
+              height: height,
+              child: child,
+            );
+          },
           child: PageView.builder(
             controller: _pageController,
             itemCount: tasks.length,
             itemBuilder: (context, index) {
-              return _SingleTaskCard(
-                task: tasks[index],
-                isDark: widget.isDark,
-                onClose: widget.onClose,
-                index: index,
-                totalCount: tasks.length,
+              return Align(
+                alignment: Alignment.topCenter,
+                child: _SingleTaskCard(
+                  task: tasks[index],
+                  isDark: widget.isDark,
+                  onClose: widget.onClose,
+                  index: index,
+                  totalCount: tasks.length,
+                ),
               );
             },
           ),

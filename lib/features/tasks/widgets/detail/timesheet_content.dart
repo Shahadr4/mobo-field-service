@@ -361,29 +361,23 @@ class _TimesheetContentState extends State<TimesheetContent> {
                         TableCell(
                           child: Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
+
                               vertical: 12,
                             ),
-                            child: Align(
-                              alignment: Alignment.centerLeft,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 6,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+
+                              child: Text(
+                                durationStr,
+                                style: const TextStyle(
+
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
                                 ),
-                                decoration: BoxDecoration(
-                                  color: primaryColor,
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                child: Text(
-                                  durationStr,
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 14,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
+                                textAlign: TextAlign.center,
                               ),
                             ),
                           ),

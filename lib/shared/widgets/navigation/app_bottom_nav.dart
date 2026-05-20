@@ -39,31 +39,31 @@ class AppBottomNav extends StatelessWidget {
             children: [
               _NavItem(
                 label: 'Dashboard',
-                icon: HugeIcons.strokeRoundedPackage,
+                icon: HugeIcons.strokeRoundedHome01,
                 isActive: currentIndex == 0,
                 onTap: () => onTabSelected(0),
               ),
               _NavItem(
                 label: 'Task',
-                icon: HugeIcons.strokeRoundedPackage,
+                icon: HugeIcons.strokeRoundedClipboard,
                 isActive: currentIndex == 1,
                 onTap: () => onTabSelected(1),
               ),
               _NavItem(
                 label: 'Employee',
-                icon: HugeIcons.strokeRoundedPackage,
+                icon: HugeIcons.strokeRoundedUserGroup,
                 isActive: currentIndex == 2,
                 onTap: () => onTabSelected(2),
               ),
               _NavItem(
                 label: 'Map',
-                icon: HugeIcons.strokeRoundedPackage,
+                icon: HugeIcons.strokeRoundedLocation01,
                 isActive: currentIndex == 3,
                 onTap: () => onTabSelected(3),
               ),
               _NavItem(
                 label: 'Timesheet',
-                icon: HugeIcons.strokeRoundedTask01,
+                icon: HugeIcons.strokeRoundedClock01,
                 isActive: currentIndex == 4,
                 onTap: () => onTabSelected(4),
               ),
