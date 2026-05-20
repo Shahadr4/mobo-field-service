@@ -10,6 +10,7 @@ import 'package:mobo_feild_service/features/dashboard/services/timesheet_service
 import 'package:mobo_feild_service/features/dashboard/provider/timesheet_provider.dart';
 
 import '../../model/task_model.dart';
+import 'package:mobo_feild_service/shared/widgets/snackbars/custom_snackbar.dart';
 
 class TaskInfoCard extends StatefulWidget {
   final TaskModel task;
@@ -60,10 +61,7 @@ class _TaskInfoCardState extends State<TaskInfoCard>
 
     if (timesheetId == null) {
       setState(() => _isStarting = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Could not start timer. Please try again.')),
-      );
+      CustomSnackbar.showError(context, 'Could not start timer. Please try again.');
       return;
     }
 

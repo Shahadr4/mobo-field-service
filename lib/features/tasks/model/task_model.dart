@@ -20,6 +20,11 @@ class TaskModel {
   final double remainingHours;
   final String tagNames;
   final bool underWarranty;
+  final bool displaySendReport;
+  final bool displaySignReport;
+  final bool displayMarkAsDone;
+  final bool hasTemplateAncestor;
+  final bool hasProjectTemplate;
   final int? projectId;
   final int? stageId;
   final int? partnerId;
@@ -50,6 +55,11 @@ class TaskModel {
     required this.remainingHours,
     required this.tagNames,
     required this.underWarranty,
+    this.displaySendReport = false,
+    this.displaySignReport = false,
+    this.displayMarkAsDone = false,
+    this.hasTemplateAncestor = false,
+    this.hasProjectTemplate = false,
     this.projectId,
     this.stageId,
     this.partnerId,
@@ -81,6 +91,11 @@ class TaskModel {
     double? remainingHours,
     String? tagNames,
     bool? underWarranty,
+    bool? displaySendReport,
+    bool? displaySignReport,
+    bool? displayMarkAsDone,
+    bool? hasTemplateAncestor,
+    bool? hasProjectTemplate,
     int? projectId,
     int? stageId,
     int? partnerId,
@@ -111,6 +126,11 @@ class TaskModel {
       remainingHours: remainingHours ?? this.remainingHours,
       tagNames: tagNames ?? this.tagNames,
       underWarranty: underWarranty ?? this.underWarranty,
+      displaySendReport: displaySendReport ?? this.displaySendReport,
+      displaySignReport: displaySignReport ?? this.displaySignReport,
+      displayMarkAsDone: displayMarkAsDone ?? this.displayMarkAsDone,
+      hasTemplateAncestor: hasTemplateAncestor ?? this.hasTemplateAncestor,
+      hasProjectTemplate: hasProjectTemplate ?? this.hasProjectTemplate,
       projectId: projectId ?? this.projectId,
       stageId: stageId ?? this.stageId,
       partnerId: partnerId ?? this.partnerId,
@@ -197,6 +217,11 @@ class TaskModel {
       remainingHours: (map['remaining_hours'] as num?)?.toDouble() ?? 0.0,
       tagNames: map['tag_names']?.toString() ?? '',
       underWarranty: map['under_warranty'] == true,
+      displaySendReport: map['display_send_report_secondary'] == true,
+      displaySignReport: map['display_sign_report_secondary'] == true,
+      displayMarkAsDone: map['display_mark_as_done_secondary'] == true,
+      hasTemplateAncestor: map['has_template_ancestor'] == true,
+      hasProjectTemplate: map['has_project_template'] == true,
       projectId: rawId(map['project_id']),
       stageId: rawId(map['stage_id']),
       partnerId: rawId(map['partner_id']),

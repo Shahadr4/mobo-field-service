@@ -162,6 +162,9 @@ class TaskService {
               'planned_date_begin', 'date_deadline', 'create_date', 'priority',
               'description', 'allocated_hours', 'effective_hours',
               'remaining_hours', 'tag_ids', 'under_warranty',
+              'display_send_report_secondary', 'display_sign_report_secondary',
+              'display_mark_as_done_secondary', 'has_template_ancestor',
+              'has_project_template',
             ],
             'order': 'name asc',
             'limit': limit,
@@ -339,6 +342,11 @@ class TaskService {
             'remaining_hours',
             'tag_ids',
             'under_warranty',
+            'display_send_report_secondary',
+            'display_sign_report_secondary',
+            'display_mark_as_done_secondary',
+            'has_template_ancestor',
+            'has_project_template',
           ],
           'order': 'name asc',
           'limit': 200,
@@ -450,6 +458,9 @@ class TaskService {
             'planned_date_begin', 'date_deadline', 'create_date', 'priority',
             'description', 'allocated_hours', 'effective_hours',
             'remaining_hours', 'tag_ids', 'under_warranty',
+            'display_send_report_secondary', 'display_sign_report_secondary',
+            'display_mark_as_done_secondary', 'has_template_ancestor',
+            'has_project_template',
           ],
           'limit': 1,
         },
@@ -738,6 +749,7 @@ class TaskService {
     required String name,
     required int projectId,
     int? stageId,
+    int? parentId,
     String? deadline,
     List<int> assigneeIds = const [],
     int? partnerId,
@@ -759,6 +771,7 @@ class TaskService {
         'project_id': projectId,
         'is_fsm': true,
       };
+      if (parentId != null) vals['parent_id'] = parentId;
       if (priority > 0) vals['priority'] = priority.toString();
       if (description != null && description.isNotEmpty) vals['description'] = description;
       if (stageId != null) vals['stage_id'] = stageId;
@@ -861,6 +874,33 @@ class TaskService {
         return 'The planned start date must be before the planned end date (which is registered as midnight in your Odoo database planning settings).';
       }
       return errStr;
+    }
+  }
+
+  /// Calls action_fsm_validate (sets state = '1_done') then writes stage_id
+  /// to the first done/complete stage. Returns null on success or an error string.
+  Future<String?> markTaskAsDone(int taskId) async {
+    try {
+      // Step 1: call action_fsm_validate — sets state to '1_done'
+      await OdooSessionManager.callKwWithCompany({
+        'model': 'project.task',
+        'method': 'action_fsm_validate',
+        'args': [[taskId]],
+        'kwargs': {},
+      });
+
+      // Step 2: write state '1_done' via web_save (mirrors Odoo web client)
+      await OdooSessionManager.callKwWithCompany({
+        'model': 'project.task',
+        'method': 'web_save',
+        'args': [[taskId], {'state': '1_done'}],
+        'kwargs': {'specification': {}},
+      });
+      log('[TaskService] markTaskAsDone: task $taskId marked as done');
+      return null;
+    } catch (e) {
+      log('[TaskService] ⚠️ markTaskAsDone error: $e');
+      return e.toString();
     }
   }
 
