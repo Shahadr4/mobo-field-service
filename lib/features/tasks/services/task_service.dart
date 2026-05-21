@@ -118,6 +118,8 @@ class TaskService {
     Set<TaskFilterBy> filters = const {},
     int offset = 0,
     int limit  = 40,
+    bool includeWarranty  = false,
+    bool includeWorksheet = false,
   }) async {
     final session = await OdooSessionManager.getCurrentSession();
     if (session == null) return const TaskPageResult(tasks: [], total: 0);
@@ -157,15 +159,7 @@ class TaskService {
           'method': 'search_read',
           'args': [domain],
           'kwargs': {
-            'fields': [
-              'id', 'name', 'project_id', 'stage_id', 'user_ids', 'partner_id',
-              'planned_date_begin', 'date_deadline', 'create_date', 'priority',
-              'description', 'allocated_hours', 'effective_hours',
-              'remaining_hours', 'tag_ids', 'under_warranty',
-              'display_send_report_secondary', 'display_sign_report_secondary',
-              'display_mark_as_done_secondary', 'has_template_ancestor',
-              'has_project_template',
-            ],
+
             'order': 'name asc',
             'limit': limit,
             'offset': offset,
@@ -173,8 +167,10 @@ class TaskService {
         }),
       ]);
 
+
       final total  = (futures[0] as num?)?.toInt() ?? 0;
       final result = futures[1];
+      log("result ---> ${result[0]}");
 
       if (result is! List) return TaskPageResult(tasks: [], total: total);
 
@@ -341,7 +337,6 @@ class TaskService {
             'effective_hours',
             'remaining_hours',
             'tag_ids',
-            'under_warranty',
             'display_send_report_secondary',
             'display_sign_report_secondary',
             'display_mark_as_done_secondary',
@@ -444,8 +439,13 @@ class TaskService {
     }
   }
 
-  Future<TaskModel?> fetchTaskById(int id) async {
+  Future<TaskModel?> fetchTaskById(
+    int id, {
+    bool includeWarranty = false,
+    bool includeWorksheet = false,
+  }) async {
     try {
+
       final result = await OdooSessionManager.callKwWithCompany({
         'model': 'project.task',
         'method': 'search_read',
@@ -453,15 +453,7 @@ class TaskService {
           [['id', '=', id]]
         ],
         'kwargs': {
-          'fields': [
-            'id', 'name', 'project_id', 'stage_id', 'user_ids', 'partner_id',
-            'planned_date_begin', 'date_deadline', 'create_date', 'priority',
-            'description', 'allocated_hours', 'effective_hours',
-            'remaining_hours', 'tag_ids', 'under_warranty',
-            'display_send_report_secondary', 'display_sign_report_secondary',
-            'display_mark_as_done_secondary', 'has_template_ancestor',
-            'has_project_template',
-          ],
+
           'limit': 1,
         },
       });
@@ -938,48 +930,49 @@ class TaskService {
   /// Uses `res.config.settings` get_values. Falls back to checking
   /// field existence on `project.task` if the config call fails.
   Future<({bool worksheetEnabled, bool warrantyEnabled})> fetchFsmSettings() async {
+    bool worksheetEnabled = false;
+    bool warrantyEnabled  = false;
+
+    // Step 1: probe only the two specific fields — if the module isn't installed
+    // Odoo omits the field from the response rather than erroring.
     try {
-      // Primary approach: read from res.config.settings
+      final fields = await OdooSessionManager.callKwWithCompany({
+        'model': 'project.task',
+        'method': 'fields_get',
+        'args': [['under_warranty', 'worksheet_template_id']],
+        'kwargs': {'attributes': ['string', 'type']},
+      });
+      if (fields is Map<String, dynamic>) {
+        worksheetEnabled = fields.containsKey('worksheet_template_id');
+        warrantyEnabled  = fields.containsKey('under_warranty');
+        log('[TaskService] fetchFsmSettings field check: worksheet=$worksheetEnabled, warranty=$warrantyEnabled');
+        return (worksheetEnabled: worksheetEnabled, warrantyEnabled: warrantyEnabled);
+      }
+    } catch (e) {
+      log('[TaskService] fetchFsmSettings field check failed: $e');
+    }
+
+    // Step 2: fallback — check res.config.settings with known key variants
+    try {
       final result = await OdooSessionManager.callKwWithCompany({
         'model': 'res.config.settings',
         'method': 'get_values',
         'args': [],
         'kwargs': {},
       });
-
       if (result is Map<String, dynamic>) {
-        final worksheetEnabled = result['group_fsm_worksheet'] == true;
-        final warrantyEnabled  = result['group_fsm_warranty']  == true;
-        log('[TaskService] fetchFsmSettings via get_values: worksheet=$worksheetEnabled, warranty=$warrantyEnabled');
-        return (worksheetEnabled: worksheetEnabled, warrantyEnabled: warrantyEnabled);
+        // Try multiple key variants used across Odoo versions
+        worksheetEnabled = result['group_worksheet']      == true ||
+                           result['group_fsm_worksheet']  == true ||
+                           result['module_worksheet']     == true;
+        warrantyEnabled  = result['group_fsm_warranty']   == true ||
+                           result['module_fsm_warranty']  == true;
+        log('[TaskService] fetchFsmSettings get_values: worksheet=$worksheetEnabled, warranty=$warrantyEnabled');
       }
     } catch (e) {
-      log('[TaskService] fetchFsmSettings get_values failed: $e — falling back to field check');
+      log('[TaskService] fetchFsmSettings get_values failed: $e');
     }
 
-    // Fallback: check if the fields exist on project.task
-    bool worksheetEnabled = false;
-    bool warrantyEnabled  = false;
-
-    try {
-      final fields = await OdooSessionManager.callKwWithCompany({
-        'model': 'project.task',
-        'method': 'fields_get',
-        'args': [['worksheet_template_id', 'under_warranty']],
-        'kwargs': {'attributes': ['string']},
-      });
-      if (fields is Map<String, dynamic>) {
-        worksheetEnabled = fields.containsKey('worksheet_template_id');
-        warrantyEnabled  = fields.containsKey('under_warranty');
-      }
-    } catch (e) {
-      log('[TaskService] fetchFsmSettings fallback field check failed: $e');
-      // If all else fails, default to showing both (safe/visible)
-      worksheetEnabled = true;
-      warrantyEnabled  = true;
-    }
-
-    log('[TaskService] fetchFsmSettings via field check: worksheet=$worksheetEnabled, warranty=$warrantyEnabled');
     return (worksheetEnabled: worksheetEnabled, warrantyEnabled: warrantyEnabled);
   }
 }

@@ -111,8 +111,6 @@ class _HomeScaffoldState extends State<HomeScaffold>
       debugPrint('[HomeScaffold] Error validating session: $e');
     }
   }
-  int _index = 0;
-
   static const List<String> _titles = [
     'Dashboard', 'Task', 'Employee', 'Map', 'Time sheet',
   ];
@@ -176,16 +174,14 @@ class _HomeScaffoldState extends State<HomeScaffold>
                   backgroundColor: primaryColor,
                   foregroundColor: Colors.white,
                   elevation: 4,
-                  shape: const CircleBorder(),
                   child: const Icon(Icons.add_rounded, size: 28),
                 )
-              : null,
-          bottomNavigationBar: SafeArea(
-            top: false,
-            child: AppBottomNav(
-              currentIndex: activeIndex,
-              onTabSelected: (i) => mapProvider.setActiveHomeTab(i),
-            ),
+              : activeIndex == 4
+                  ? const _TimesheetFab()
+                  : null,
+          bottomNavigationBar: AppBottomNav(
+            currentIndex: activeIndex,
+            onTabSelected: (i) => mapProvider.setActiveHomeTab(i),
           ),
         );
       },
@@ -302,5 +298,133 @@ class _HomeScaffoldState extends State<HomeScaffold>
         ),
       ),
     ];
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Timesheet expandable FAB
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _TimesheetFab extends StatefulWidget {
+  const _TimesheetFab();
+
+  @override
+  State<_TimesheetFab> createState() => _TimesheetFabState();
+}
+
+class _TimesheetFabState extends State<_TimesheetFab> {
+  bool _open = false;
+
+  void _toggle() => setState(() => _open = !_open);
+
+  void _close() => setState(() => _open = false);
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        // Option buttons
+        if (_open) ...[
+          _FabOption(
+            label: 'Timer Recording',
+            icon: Icons.play_arrow_rounded,
+            isDark: isDark,
+            onTap: () {
+              _close();
+            },
+          ),
+          const SizedBox(height: 12),
+          _FabOption(
+            label: 'Manual Recording',
+            icon: Icons.edit_note_rounded,
+            isDark: isDark,
+            onTap: () {
+              _close();
+            },
+          ),
+          const SizedBox(height: 16),
+        ],
+
+        // Main FAB
+        FloatingActionButton(
+          onPressed: _toggle,
+          backgroundColor: primaryColor,
+          foregroundColor: Colors.white,
+          elevation: 4,
+          child: const Icon(Icons.add_rounded, size: 28),
+        ),
+      ],
+    );
+  }
+}
+
+class _FabOption extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool isDark;
+  final VoidCallback onTap;
+
+  const _FabOption({
+    required this.label,
+    required this.icon,
+    required this.isDark,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Label pill
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF2A2D36) : Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.1),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: isDark ? Colors.white : Colors.black87,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          // Mini FAB
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: primaryColor,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: primaryColor.withValues(alpha: 0.4),
+                  blurRadius: 8,
+                  offset: const Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Icon(icon, color: Colors.white, size: 22),
+          ),
+        ],
+      ),
+    );
   }
 }

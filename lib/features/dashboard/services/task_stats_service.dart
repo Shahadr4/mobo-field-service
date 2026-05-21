@@ -90,6 +90,7 @@ class TaskStatsService {
         'args': [domain],
         'kwargs': {},
       });
+      log("eeee");
       return (result as num?)?.toInt() ?? 0;
     } catch (e) {
       log('[TaskStatsService] ⚠️ count error: $e');

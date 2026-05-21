@@ -20,6 +20,8 @@ class TaskModel {
   final double remainingHours;
   final String tagNames;
   final bool underWarranty;
+  final int? worksheetTemplateId;
+  final String worksheetTemplateName;
   final bool displaySendReport;
   final bool displaySignReport;
   final bool displayMarkAsDone;
@@ -55,6 +57,8 @@ class TaskModel {
     required this.remainingHours,
     required this.tagNames,
     required this.underWarranty,
+    this.worksheetTemplateId,
+    this.worksheetTemplateName = '',
     this.displaySendReport = false,
     this.displaySignReport = false,
     this.displayMarkAsDone = false,
@@ -91,6 +95,8 @@ class TaskModel {
     double? remainingHours,
     String? tagNames,
     bool? underWarranty,
+    int? worksheetTemplateId,
+    String? worksheetTemplateName,
     bool? displaySendReport,
     bool? displaySignReport,
     bool? displayMarkAsDone,
@@ -126,6 +132,8 @@ class TaskModel {
       remainingHours: remainingHours ?? this.remainingHours,
       tagNames: tagNames ?? this.tagNames,
       underWarranty: underWarranty ?? this.underWarranty,
+      worksheetTemplateId: worksheetTemplateId ?? this.worksheetTemplateId,
+      worksheetTemplateName: worksheetTemplateName ?? this.worksheetTemplateName,
       displaySendReport: displaySendReport ?? this.displaySendReport,
       displaySignReport: displaySignReport ?? this.displaySignReport,
       displayMarkAsDone: displayMarkAsDone ?? this.displayMarkAsDone,
@@ -217,6 +225,8 @@ class TaskModel {
       remainingHours: (map['remaining_hours'] as num?)?.toDouble() ?? 0.0,
       tagNames: map['tag_names']?.toString() ?? '',
       underWarranty: map['under_warranty'] == true,
+      worksheetTemplateId: rawId(map['worksheet_template_id']),
+      worksheetTemplateName: rel(map['worksheet_template_id']),
       displaySendReport: map['display_send_report_secondary'] == true,
       displaySignReport: map['display_sign_report_secondary'] == true,
       displayMarkAsDone: map['display_mark_as_done_secondary'] == true,

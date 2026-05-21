@@ -47,9 +47,9 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
   DateTime? _plannedEnd;
   bool      _underWarranty = false;
 
-  // FSM feature flags (fetched from Odoo settings)
-  bool _showWorksheetSection = true;
-  bool _showWarrantySection  = true;
+  // FSM feature flags — false until confirmed by Odoo settings fetch
+  bool _showWorksheetSection = false;
+  bool _showWarrantySection  = false;
 
   bool _loadingMeta = true;
   bool _saving      = false;

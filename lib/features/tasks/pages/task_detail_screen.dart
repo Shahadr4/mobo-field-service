@@ -33,8 +33,9 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
   int _refreshKey = 0;
   bool _isUpdated = false;
 
-  // FSM feature flags
-  bool _showWarrantySection = true;
+  // FSM feature flags — false until confirmed by settings fetch
+  bool _showWarrantySection   = false;
+  bool _showWorksheetSection  = false;
 
   @override
   void initState() {
@@ -47,14 +48,19 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
     final settings = await _service.fetchFsmSettings();
     if (mounted) {
       setState(() {
-        _showWarrantySection = settings.warrantyEnabled;
+        _showWarrantySection  = settings.warrantyEnabled;
+        _showWorksheetSection = settings.worksheetEnabled;
       });
     }
   }
 
   Future<void> _refresh() async {
     setState(() => _isLoading = true);
-    final fresh = await _service.fetchTaskById(_task.id);
+    final fresh = await _service.fetchTaskById(
+      _task.id,
+      includeWarranty:  _showWarrantySection,
+      includeWorksheet: _showWorksheetSection,
+    );
     if (mounted) {
       setState(() {
         if (fresh != null) _task = fresh;
@@ -188,19 +194,19 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
               color: isDark ? Colors.white54 : Colors.black54,
             ),
             onPressed: () async {
+              final provider = context.read<TaskProvider>();
               final updated = await Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => EditTaskScreen(task: _task)),
               );
+              if (!mounted) return;
               if (updated is TaskModel) {
                 setState(() {
                   _task = updated;
                   _isUpdated = true;
+                  _refreshKey++;
                 });
-                if (mounted) {
-                  context.read<TaskProvider>().updateTaskInMemory(updated);
-                }
-                _refresh();
+                provider.updateTaskInMemory(updated);
               }
             },
           ),
@@ -297,6 +303,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                                 task: _task,
                                 isDark: isDark,
                                 showWarrantySection: _showWarrantySection,
+                                showWorksheetSection: _showWorksheetSection,
                               )
                             : _tabIndex == 1
                             ? TimesheetContent(

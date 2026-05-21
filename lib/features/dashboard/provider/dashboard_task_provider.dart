@@ -1,9 +1,11 @@
 import 'package:flutter/foundation.dart';
 import '../model/dashboard_task_model.dart';
 import '../services/dashboard_task_service.dart';
+import '../../tasks/services/task_service.dart';
 
 class DashboardTaskProvider extends ChangeNotifier {
   final DashboardTaskService _service = DashboardTaskService();
+  final TaskService _taskService = TaskService();
 
   static const tabs = ['New', 'Nearby','In Progress', 'Planned', 'Done',  'Assigned'];
 
@@ -15,9 +17,24 @@ class DashboardTaskProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
 
+  bool _warrantyEnabled   = false;
+  bool _worksheetEnabled  = false;
+  bool _fsmSettingsFetched = false;
+
+  bool get warrantyEnabled  => _warrantyEnabled;
+  bool get worksheetEnabled => _worksheetEnabled;
+
   List<DashboardTask> get tasks => _cache[_tabIndex] ?? [];
   bool get isLoading => _isLoading;
   String? get error => _error;
+
+  Future<void> _loadFsmSettings() async {
+    if (_fsmSettingsFetched) return;
+    final s = await _taskService.fetchFsmSettings();
+    _warrantyEnabled   = s.warrantyEnabled;
+    _worksheetEnabled  = s.worksheetEnabled;
+    _fsmSettingsFetched = true;
+  }
 
   Future<void> selectTab(int index) async {
     if (_tabIndex == index) return;
@@ -29,7 +46,7 @@ class DashboardTaskProvider extends ChangeNotifier {
   }
 
   Future<void> init() async {
-    await _load(0);
+    await Future.wait([_loadFsmSettings(), _load(0)]);
   }
 
   Future<void> refresh() async {

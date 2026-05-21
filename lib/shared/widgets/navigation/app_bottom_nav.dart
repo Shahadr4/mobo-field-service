@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_snake_navigationbar/flutter_snake_navigationbar.dart';
 import 'package:hugeicons/hugeicons.dart';
+import 'package:mobo_feild_service/core/const/app_colors.dart';
 
 class AppBottomNav extends StatelessWidget {
   final int currentIndex;
@@ -11,128 +13,57 @@ class AppBottomNav extends StatelessWidget {
     required this.onTabSelected,
   });
 
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final primary = theme.colorScheme.primary;
-
-    return Container(
-      height: 90,
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF121212) : Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 20,
-            offset: const Offset(0, -8),
-          ),
-        ],
-      ),
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          // Navigation items
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _NavItem(
-                label: 'Dashboard',
-                icon: HugeIcons.strokeRoundedHome01,
-                isActive: currentIndex == 0,
-                onTap: () => onTabSelected(0),
-              ),
-              _NavItem(
-                label: 'Task',
-                icon: HugeIcons.strokeRoundedClipboard,
-                isActive: currentIndex == 1,
-                onTap: () => onTabSelected(1),
-              ),
-              _NavItem(
-                label: 'Employee',
-                icon: HugeIcons.strokeRoundedUserGroup,
-                isActive: currentIndex == 2,
-                onTap: () => onTabSelected(2),
-              ),
-              _NavItem(
-                label: 'Map',
-                icon: HugeIcons.strokeRoundedLocation01,
-                isActive: currentIndex == 3,
-                onTap: () => onTabSelected(3),
-              ),
-              _NavItem(
-                label: 'Timesheet',
-                icon: HugeIcons.strokeRoundedClock01,
-                isActive: currentIndex == 4,
-                onTap: () => onTabSelected(4),
-              ),
-            ],
-          ),
-
-        ],
-      ),
-    );
-  }
-}
-
-class _NavItem extends StatelessWidget {
-  final String label;
-  final List<List<dynamic>> icon;
-  final bool isActive;
-  final VoidCallback onTap;
-
-  const _NavItem({
-    required this.label,
-    required this.icon,
-    required this.isActive,
-    required this.onTap,
-  });
+  static const _items = [
+    (icon: HugeIcons.strokeRoundedDashboardSquare02, label: 'Dashboard'),
+    (icon: HugeIcons.strokeRoundedTask01,            label: 'Task'),
+    (icon: HugeIcons.strokeRoundedUserGroup,         label: 'Employee'),
+    (icon: HugeIcons.strokeRoundedLocation01,        label: 'Map'),
+    (icon: HugeIcons.strokeRoundedClock01,           label: 'Timesheet'),
+  ];
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final primary = theme.colorScheme.primary;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark ? const Color(0xFF1A1C23) : Colors.white;
 
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        behavior: HitTestBehavior.opaque,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Active indicator line (Thick and Rounded)
-            Container(
-              width: 70,
-              height: 4,
-              decoration: BoxDecoration(
-                color: isActive ? primary : Colors.transparent,
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-            const SizedBox(height: 14),
-            HugeIcon(
-              icon: icon,
-              color: isActive
-                  ? primary
-                  : (isDark ? Colors.white38 : const Color(0xFF9E9E9E)),
-              size: 28,
-            ),
-            const SizedBox(height: 6),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
-                color: isActive
-                    ? primary
-                    : (isDark ? Colors.white38 : const Color(0xFF9E9E9E)),
-              ),
-            ),
-          ],
-        ),
-      ),
+    return SnakeNavigationBar.color(
+      height: 64,
+      elevation: 8,
+      shadowColor: Colors.black26,
+      behaviour: SnakeBarBehaviour.pinned,
+      snakeShape: SnakeShape.indicator,
+
+      backgroundColor: bgColor,
+      snakeViewColor: isDark ? Colors.white : primaryColor,
+      selectedItemColor: isDark ? Colors.white : primaryColor,
+      unselectedItemColor:
+          isDark ? Colors.white38 : const Color(0xFF9E9E9E),
+      selectedLabelStyle: Theme.of(context).textTheme.bodySmall!.copyWith(
+            fontWeight: FontWeight.w700,
+            fontSize: 11,
+          ),
+      unselectedLabelStyle: Theme.of(context).textTheme.bodySmall!.copyWith(
+            fontWeight: FontWeight.w400,
+            fontSize: 11,
+          ),
+      showSelectedLabels: true,
+      showUnselectedLabels: true,
+      currentIndex: currentIndex,
+      onTap: onTabSelected,
+      items: List.generate(_items.length, (i) {
+        final e = _items[i];
+        final isActive = i == currentIndex;
+        return BottomNavigationBarItem(
+          icon: HugeIcon(
+            icon: e.icon,
+            color: isActive
+                ? (isDark ? Colors.white : primaryColor)
+                : (isDark ? Colors.white38 : const Color(0xFF9E9E9E)),
+            size: 26,
+          ),
+          label: e.label,
+        );
+      }),
     );
   }
 }

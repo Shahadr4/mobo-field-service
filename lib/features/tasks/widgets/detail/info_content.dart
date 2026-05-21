@@ -39,11 +39,13 @@ class InfoContent extends StatelessWidget {
   final TaskModel task;
   final bool isDark;
   final bool showWarrantySection;
+  final bool showWorksheetSection;
   const InfoContent({
     super.key,
     required this.task,
     required this.isDark,
-    this.showWarrantySection = true,
+    this.showWarrantySection = false,
+    this.showWorksheetSection = false,
   });
 
   @override
@@ -75,6 +77,8 @@ class InfoContent extends StatelessWidget {
         _InfoRow('Created', createdFmt),
       if (allocFmt.isNotEmpty)
         _InfoRow('Allocated', allocFmt),
+      if (showWorksheetSection && task.worksheetTemplateName.isNotEmpty)
+        _InfoRow('Worksheet', task.worksheetTemplateName),
       if (showWarrantySection)
         _InfoRow('Under Warranty', task.underWarranty ? 'Yes' : 'No'),
       if (task.tagNames.isNotEmpty)

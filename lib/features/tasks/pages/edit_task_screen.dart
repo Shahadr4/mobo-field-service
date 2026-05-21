@@ -50,9 +50,9 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
   DateTime? _plannedEnd;
   bool      _underWarranty = false;
 
-  // FSM feature flags (fetched from Odoo settings)
-  bool _showWorksheetSection = true;
-  bool _showWarrantySection  = true;
+  // FSM feature flags — false until confirmed by Odoo settings fetch
+  bool _showWorksheetSection = false;
+  bool _showWarrantySection  = false;
 
   bool _loadingMeta = true;
   bool _saving      = false;
@@ -80,8 +80,12 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
     final customerChanged = newCustId != origCustId;
 
     final phoneChanged = _phoneCtrl.text.trim() != widget.task.partnerPhone;
-    final warrantyChanged = _underWarranty != widget.task.underWarranty;
+    final warrantyChanged = _showWarrantySection && _underWarranty != widget.task.underWarranty;
     final priorityChanged = _priority != widget.task.priority;
+
+    final origWorksheetId = widget.task.worksheetTemplateId;
+    final newWorksheetId = (_selectedWorksheet?['id'] as num?)?.toInt();
+    final worksheetChanged = _showWorksheetSection && newWorksheetId != origWorksheetId;
 
     final startChanged = _plannedStart != widget.task.plannedDateBegin;
     final endChanged = _plannedEnd != widget.task.plannedDateEnd;
@@ -103,7 +107,8 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
         startChanged ||
         endChanged ||
         hoursChanged ||
-        descriptionChanged;
+        descriptionChanged ||
+        worksheetChanged;
   }
 
   bool _setEquals<T>(Set<T> a, Set<T> b) {
@@ -292,11 +297,6 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
     );
   }
 
-  void _removeOverlay(OverlayEntry? entry, void Function(dynamic) setter) {
-    entry?.remove();
-    setter(null);
-  }
-
   // ── Load meta ──────────────────────────────────────────────────────────────
 
   Future<void> _loadMeta() async {
@@ -316,6 +316,20 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
       _tags                  = results[3] as List<Map<String, dynamic>>;
       _showWorksheetSection  = fsmSettings.worksheetEnabled;
       _showWarrantySection   = fsmSettings.warrantyEnabled;
+      _loadingMeta           = false;
+
+      // Pre-populate worksheet from task
+      if (widget.task.worksheetTemplateId != null) {
+        final match = (results[1] as List<Map<String, dynamic>>).firstWhere(
+          (w) => (w['id'] as num).toInt() == widget.task.worksheetTemplateId,
+          orElse: () => {
+            'id': widget.task.worksheetTemplateId,
+            'name': widget.task.worksheetTemplateName,
+          },
+        );
+        _selectedWorksheet = match;
+        _worksheetCtrl.text = match['name']?.toString() ?? '';
+      }
     });
 
     // Match selected project from task
@@ -434,8 +448,8 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
       partnerId:           _selectedCustomer != null
           ? (_selectedCustomer!['id'] as num).toInt()
           : null,
-      underWarranty:       _underWarranty,
-      worksheetTemplateId: _selectedWorksheet != null
+      underWarranty:       _showWarrantySection ? _underWarranty : null,
+      worksheetTemplateId: _showWorksheetSection && _selectedWorksheet != null
           ? (_selectedWorksheet!['id'] as num).toInt()
           : null,
       description:         _descriptionCtrl.text.trim(),
@@ -492,7 +506,13 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
         priority:            _priority,
         description:         _descriptionCtrl.text.trim(),
         allocatedHours:      hours,
-        underWarranty:       _underWarranty,
+        underWarranty:       _showWarrantySection ? _underWarranty : widget.task.underWarranty,
+        worksheetTemplateId: _showWorksheetSection
+            ? (_selectedWorksheet != null ? (_selectedWorksheet!['id'] as num).toInt() : null)
+            : widget.task.worksheetTemplateId,
+        worksheetTemplateName: _showWorksheetSection
+            ? (_selectedWorksheet?['name']?.toString() ?? '')
+            : widget.task.worksheetTemplateName,
         projectId:           _selectedProject != null ? (_selectedProject!['id'] as num).toInt() : widget.task.projectId,
         stageId:             _selectedStage != null ? (_selectedStage!['id'] as num).toInt() : widget.task.stageId,
         partnerId:           _selectedCustomer != null ? (_selectedCustomer!['id'] as num).toInt() : widget.task.partnerId,
@@ -1068,19 +1088,33 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
         decoration: _fieldDeco(isDark),
         child: Row(
           children: [
-            Expanded(
-              child: Text(
-                _underWarranty ? 'Yes' : 'No',
-                style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: isDark ? Colors.white : Colors.black87),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 150),
+              width: 20,
+              height: 20,
+              decoration: BoxDecoration(
+                color: _underWarranty ? primaryColor : Colors.transparent,
+                border: Border.all(
+                  color: _underWarranty
+                      ? primaryColor
+                      : (isDark ? Colors.white38 : Colors.black38),
+                  width: 1.5,
+                ),
+                borderRadius: BorderRadius.circular(5),
               ),
+              child: _underWarranty
+                  ? const Icon(Icons.check_rounded,
+                      size: 14, color: Colors.white)
+                  : null,
             ),
-            Switch.adaptive(
-              value: _underWarranty,
-              activeColor: primaryColor,
-              onChanged: (v) => setState(() => _underWarranty = v),
+            const SizedBox(width: 12),
+            Text(
+              'Under Warranty',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: isDark ? Colors.white : Colors.black87,
+              ),
             ),
           ],
         ),
@@ -1198,7 +1232,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
         style: ElevatedButton.styleFrom(
           backgroundColor: primaryColor,
           disabledBackgroundColor:
-              isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.05),
+              isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.05),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
           elevation: 0,
         ),
@@ -1558,6 +1592,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
       ),
     );
     if (time == null) return;
+    if (!mounted) return;
 
     final result = DateTime(date.year, date.month, date.day, time.hour, time.minute);
     if (isStart) {

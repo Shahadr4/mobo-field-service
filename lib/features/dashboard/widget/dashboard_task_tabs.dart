@@ -329,7 +329,12 @@ class _DashboardTaskCardState extends State<_DashboardTaskCard> {
   Future<void> _navigateToDetail() async {
     if (_navLoading) return;
     setState(() => _navLoading = true);
-    final task = await TaskService().fetchTaskById(widget.task.id);
+    final provider = context.read<DashboardTaskProvider>();
+    final task = await TaskService().fetchTaskById(
+      widget.task.id,
+      includeWarranty:  provider.warrantyEnabled,
+      includeWorksheet: provider.worksheetEnabled,
+    );
     if (!mounted) return;
     setState(() => _navLoading = false);
     if (task != null) {

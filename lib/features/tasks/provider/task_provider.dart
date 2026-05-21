@@ -20,6 +20,10 @@ class TaskProvider extends ChangeNotifier {
   int               _currentPage     = 1;
   int               _totalCount      = 0;
 
+  bool _warrantyEnabled  = false;
+  bool _worksheetEnabled = false;
+  bool _fsmSettingsFetched = false;
+
   List<TaskModel>   get tasks           => _tasks;
   List<String>      get stages          => _stages;
   bool              get isLoading       => _isLoading;
@@ -85,7 +89,15 @@ class TaskProvider extends ChangeNotifier {
   }
 
   Future<void> init() async {
-    await Future.wait([fetchStages(), fetchTasks()]);
+    await Future.wait([fetchStages(), _loadFsmSettings(), fetchTasks()]);
+  }
+
+  Future<void> _loadFsmSettings() async {
+    if (_fsmSettingsFetched) return;
+    final s = await _service.fetchFsmSettings();
+    _warrantyEnabled  = s.warrantyEnabled;
+    _worksheetEnabled = s.worksheetEnabled;
+    _fsmSettingsFetched = true;
   }
 
   Future<void> fetchStages() async {
@@ -103,12 +115,15 @@ class TaskProvider extends ChangeNotifier {
     notifyListeners();
     try {
       log('[TaskProvider] fetchTasks page=$_currentPage filters=$_selectedFilters');
+      if (!_fsmSettingsFetched) await _loadFsmSettings();
       final result = await _service.fetchTasksPaged(
         search: _search,
         stageFilter: _selectedStage,
         filters: _selectedFilters,
         offset: (_currentPage - 1) * _pageSize,
         limit: _pageSize,
+        includeWarranty:  _warrantyEnabled,
+        includeWorksheet: _worksheetEnabled,
       );
       _tasks      = result.tasks;
       _totalCount = result.total;

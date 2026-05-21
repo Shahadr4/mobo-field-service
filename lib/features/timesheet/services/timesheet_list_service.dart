@@ -4,7 +4,7 @@ import '../../../core/services/odoo_session_manager.dart';
 import '../model/timesheet_entry_model.dart';
 
 class TimesheetListService {
-  static const int pageSize = 30;
+  static const int pageSize = 40;
 
   /// Returns [count, entries] for the given page.
   Future<(int, List<TimesheetEntry>)> fetchPaged({

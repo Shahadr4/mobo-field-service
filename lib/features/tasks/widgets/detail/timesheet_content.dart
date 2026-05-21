@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
-import 'package:mobo_feild_service/core/const/app_colors.dart';
 import 'package:shimmer/shimmer.dart';
 
 import '../../model/task_model.dart';
@@ -69,9 +68,6 @@ class _TimesheetContentState extends State<TimesheetContent> {
     return '${hrs}h ${mins}m';
   }
 
-  double _toHours(dynamic v) =>
-      (v is num) ? v.toDouble() : double.tryParse(v?.toString() ?? '') ?? 0.0;
-
   String _user(dynamic v) {
     if (v is List && v.length >= 2) return v[1].toString();
     return '';
@@ -109,8 +105,6 @@ class _TimesheetContentState extends State<TimesheetContent> {
       );
     }
 
-    final totalHours = entries.fold<double>(0, (s, e) => s + _toHours(e['unit_amount']));
-
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Theme(
@@ -145,7 +139,7 @@ class _TimesheetContentState extends State<TimesheetContent> {
                 BoxShadow(
                   color: isDark
                       ? Colors.black26
-                      : Colors.grey.withOpacity(0.1),
+                      : Colors.grey.withValues(alpha: 0.1),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
