@@ -10,6 +10,7 @@ class TaskModel {
   final String partnerCity;
   final String partnerCountry;
   final String partnerPhone;
+  final String partnerEmail;
   final String scheduledStart;
   final String scheduledEnd;
   final String deadline;
@@ -47,6 +48,7 @@ class TaskModel {
     required this.partnerCity,
     required this.partnerCountry,
     required this.partnerPhone,
+    this.partnerEmail = '',
     required this.scheduledStart,
     required this.scheduledEnd,
     required this.deadline,
@@ -85,6 +87,7 @@ class TaskModel {
     String? partnerCity,
     String? partnerCountry,
     String? partnerPhone,
+    String? partnerEmail,
     String? scheduledStart,
     String? scheduledEnd,
     String? deadline,
@@ -122,6 +125,7 @@ class TaskModel {
       partnerCity: partnerCity ?? this.partnerCity,
       partnerCountry: partnerCountry ?? this.partnerCountry,
       partnerPhone: partnerPhone ?? this.partnerPhone,
+      partnerEmail: partnerEmail ?? this.partnerEmail,
       scheduledStart: scheduledStart ?? this.scheduledStart,
       scheduledEnd: scheduledEnd ?? this.scheduledEnd,
       deadline: deadline ?? this.deadline,
@@ -215,6 +219,7 @@ class TaskModel {
       partnerCity: map['partner_city']?.toString() ?? '',
       partnerCountry: map['partner_country']?.toString() ?? '',
       partnerPhone: map['partner_phone']?.toString() ?? '',
+      partnerEmail: map['partner_email']?.toString() ?? '',
       scheduledStart: beginDt != null ? fmt12(beginDt) : '',
       scheduledEnd: deadlineDt != null ? fmt12(deadlineDt) : '',
       deadline: parseDate(map['date_deadline']),

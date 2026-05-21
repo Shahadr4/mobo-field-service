@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:mobo_feild_service/core/const/app_colors.dart';
+import 'package:open_file/open_file.dart';
 
 import '../model/task_model.dart';
 import 'edit_task_screen.dart';
@@ -17,6 +18,9 @@ import '../widgets/detail/info_content.dart';
 import '../widgets/detail/timesheet_content.dart';
 import 'package:mobo_feild_service/shared/widgets/snackbars/custom_snackbar.dart';
 import '../../map/provider/map_provider.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:flutter_email_sender/flutter_email_sender.dart';
+import 'package:mobo_feild_service/shared/widgets/loaders/loading_widget.dart';
 
 class TaskDetailScreen extends StatefulWidget {
   final TaskModel task;
@@ -33,6 +37,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
   int _tabIndex = 0;
   int _refreshKey = 0;
   bool _isUpdated = false;
+  String? _overlayLoadingMessage;
 
   // FSM feature flags — false until confirmed by settings fetch
   bool _showWarrantySection   = false;
@@ -138,11 +143,111 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
   }
 
   Future<void> _handleSignReport() async {
-    CustomSnackbar.showInfo(context, 'Sign report feature coming soon');
+    setState(() => _overlayLoadingMessage = 'Generating report...');
+    try {
+      final file = await _service.downloadTaskReport(_task.id);
+      if (!mounted) return;
+
+      if (file == null) {
+        throw Exception("Could not download report file.");
+      }
+
+      setState(() => _overlayLoadingMessage = null);
+      await OpenFile.open(file.path);
+      if (!mounted) return;
+
+      CustomSnackbar.showSuccess(
+        context,
+        'Report downloaded successfully',
+      );
+
+      CustomSnackbar.showInfo(context, 'Sign report feature coming soon');
+    } catch (e) {
+      if (mounted) {
+        setState(() => _overlayLoadingMessage = null);
+        CustomSnackbar.showError(
+          context,
+          'Failed to generate report: ${e.toString()}',
+        );
+      }
+    }
   }
 
   Future<void> _handleSendReport() async {
-    CustomSnackbar.showInfo(context, 'Send report feature coming soon');
+    setState(() => _overlayLoadingMessage = 'Generating report...');
+    try {
+      final file = await _service.downloadTaskReport(_task.id);
+      if (!mounted) return;
+
+      if (file == null) {
+        throw Exception("Could not download report file.");
+      }
+
+      setState(() => _overlayLoadingMessage = 'Preparing email...');
+
+      final hasEmail = _task.partnerEmail.isNotEmpty;
+      
+      if (hasEmail) {
+        try {
+          // Attempt to open the default email composer directly with the recipient and attachment prefilled
+          final Email email = Email(
+            body: 'Please find attached the field service report for task "${_task.name}".',
+            subject: 'Field Service Report: ${_task.name}',
+            recipients: [_task.partnerEmail],
+            attachmentPaths: [file.path],
+            isHTML: false,
+          );
+
+          await FlutterEmailSender.send(email);
+          
+          if (!mounted) return;
+          setState(() => _overlayLoadingMessage = null);
+          CustomSnackbar.showSuccess(
+            context,
+            'Email composer opened with attached report.',
+          );
+          return;
+        } catch (mailError) {
+          debugPrint("Direct email compose failed, falling back to share sheet: $mailError");
+          // Fall back to clipboard copy + native share sheet if direct email composition fails
+          await Clipboard.setData(ClipboardData(text: _task.partnerEmail));
+        }
+      }
+
+      // Open the native share/email sheet with the attached PDF
+      // ignore: deprecated_member_use
+      await Share.shareXFiles(
+        [XFile(file.path)],
+        subject: 'Field Service Report: ${_task.name}',
+        text: hasEmail
+            ? 'Customer Email: ${_task.partnerEmail}\n\n'
+                'Please find attached the field service report for task "${_task.name}".'
+            : 'Please find attached the field service report for task "${_task.name}".',
+      );
+
+      if (!mounted) return;
+      setState(() => _overlayLoadingMessage = null);
+
+      if (hasEmail) {
+        CustomSnackbar.showSuccess(
+          context,
+          'Report ready! Customer email copied to clipboard.',
+        );
+      } else {
+        CustomSnackbar.showSuccess(
+          context,
+          'Report ready to send',
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _overlayLoadingMessage = null);
+        CustomSnackbar.showError(
+          context,
+          'Failed to send report: ${e.toString()}',
+        );
+      }
+    }
   }
 
   @override
@@ -160,7 +265,9 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
     final bottomSheetH =
         48.0 + 48.0 + 60.0 + MediaQuery.of(context).padding.bottom;
 
-    return Scaffold(
+    return Stack(
+      children: [
+        Scaffold(
 
       appBar: AppBar(
         surfaceTintColor: Colors.transparent,
@@ -280,7 +387,6 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                       ),
                     ),
 
-                    // ── Tab content ───────
                     Padding(
                       padding: EdgeInsets.fromLTRB(
                         16,
@@ -322,6 +428,13 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                 ),
               ),
             ),
+        ),
+        if (_overlayLoadingMessage != null)
+          LoadingWidget(
+            message: _overlayLoadingMessage,
+            overlay: true,
+          ),
+      ],
     );
   }
 }
@@ -347,9 +460,7 @@ class _TaskActionMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Odoo conditions:
-    // visible = display_X_secondary == true AND has_template_ancestor == false AND has_project_template == false
-    final showSignReport = task.displaySignReport &&
+      final showSignReport = task.displaySignReport &&
         !task.hasTemplateAncestor &&
         !task.hasProjectTemplate;
     final showSendReport = task.displaySendReport &&

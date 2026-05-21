@@ -1,4 +1,7 @@
 import 'dart:developer';
+import 'dart:io';
+import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
 import '../../../core/services/odoo_session_manager.dart';
 import '../model/task_filter.dart';
 import '../model/task_model.dart';
@@ -200,7 +203,7 @@ class TaskService {
         'model': 'res.partner',
         'method': 'search_read',
         'args': [[['id', 'in', partnerIds]]],
-        'kwargs': {'fields': ['id', 'street', 'city', 'country_id', 'phone']},
+        'kwargs': {'fields': ['id', 'street', 'city', 'country_id', 'phone', 'email']},
       });
       if (partners is List) {
         final map = <int, Map<String, dynamic>>{};
@@ -212,6 +215,7 @@ class TaskService {
             'city':    p['city']    is String ? p['city']    : '',
             'country': countryRaw is List && countryRaw.length >= 2 ? countryRaw[1].toString() : '',
             'phone':   p['phone']   is String ? p['phone']   : '',
+            'email':   p['email']   is String ? p['email']   : '',
           };
         }
         for (final t in tasks) {
@@ -223,6 +227,7 @@ class TaskService {
               t['partner_city']    = addr['city'];
               t['partner_country'] = addr['country'];
               t['partner_phone']   = addr['phone'];
+              t['partner_email']   = addr['email'];
             }
           }
         }
@@ -369,7 +374,7 @@ class TaskService {
             [['id', 'in', partnerIds]]
           ],
           'kwargs': {
-            'fields': ['id', 'street', 'city', 'country_id', 'phone'],
+            'fields': ['id', 'street', 'city', 'country_id', 'phone', 'email'],
           },
         });
 
@@ -384,6 +389,7 @@ class TaskService {
                   ? countryRaw[1].toString()
                   : '',
               'phone': p['phone'] is String ? p['phone'] : '',
+              'email': p['email'] is String ? p['email'] : '',
             };
           }
         }
@@ -421,6 +427,7 @@ class TaskService {
             t['partner_city']    = addr['city'];
             t['partner_country'] = addr['country'];
             t['partner_phone']   = addr['phone'];
+            t['partner_email']   = addr['email'];
           }
         }
         final tagIds = t['tag_ids'];
@@ -471,7 +478,7 @@ class TaskService {
             [['id', '=', pid]]
           ],
           'kwargs': {
-            'fields': ['id', 'street', 'city', 'country_id', 'phone'],
+            'fields': ['id', 'street', 'city', 'country_id', 'phone', 'email'],
             'limit': 1,
           },
         });
@@ -483,6 +490,7 @@ class TaskService {
           t['partner_country'] = countryRaw is List && countryRaw.length >= 2
               ? countryRaw[1].toString() : '';
           t['partner_phone']   = p['phone'] is String ? p['phone'] : '';
+          t['partner_email']   = p['email'] is String ? p['email'] : '';
         }
       }
       // Resolve user names
@@ -974,5 +982,128 @@ class TaskService {
     }
 
     return (worksheetEnabled: worksheetEnabled, warrantyEnabled: warrantyEnabled);
+  }
+
+  /// Downloads the task PDF report from Odoo and saves it locally.
+  ///
+  /// Returns the saved [File] or null if the report couldn't be generated or downloaded.
+  Future<File?> downloadTaskReport(int taskId) async {
+    try {
+      final session = await OdooSessionManager.getCurrentSession();
+      if (session == null) {
+        throw Exception("Session not found");
+      }
+
+      final baseUrl = session.serverUrl;
+      final sessionId = session.sessionId;
+
+      // STEP 1 — CALL action_send_report
+      final result = await OdooSessionManager.safeCallKw({
+        'model': 'project.task',
+        'method': 'action_send_report',
+        'args': [
+          [taskId]
+        ],
+        'kwargs': {},
+      });
+
+      if (result == null || result is! Map) {
+        throw Exception("Failed to call action_send_report on task $taskId");
+      }
+
+      // STEP 2 — GET REPORT ACTION
+      final contextObj = result['context'];
+      if (contextObj == null || contextObj is! Map) {
+        throw Exception("Invalid response context from action_send_report");
+      }
+
+      final reportAction = contextObj['report_action'];
+      if (reportAction == null || reportAction is! Map) {
+        throw Exception("No report action found in response");
+      }
+
+      // STEP 3 — GET TEMPLATE ID
+      final reportActionContext = reportAction['context'];
+      if (reportActionContext == null || reportActionContext is! Map) {
+        throw Exception("No context found in report action");
+      }
+
+      final templateId = reportActionContext['default_template_id'];
+      if (templateId == null) {
+        throw Exception("No default_template_id found in report action");
+      }
+
+      // STEP 4 — READ MAIL TEMPLATE
+      final template = await OdooSessionManager.safeCallKw({
+        'model': 'mail.template',
+        'method': 'read',
+        'args': [
+          [templateId]
+        ],
+        'kwargs': {},
+      });
+
+      if (template == null || template is! List || template.isEmpty) {
+        throw Exception("Failed to read mail template $templateId");
+      }
+
+      // STEP 5 — REPORT TEMPLATE IDS
+      final reportTemplateIds = template[0]['report_template_ids'];
+      if (reportTemplateIds == null || reportTemplateIds is! List || reportTemplateIds.isEmpty) {
+        throw Exception("No report_template_ids found in mail template $templateId");
+      }
+
+      // STEP 6 — REPORT ID
+      final reportId = reportTemplateIds[0];
+
+      // STEP 7 — READ REPORT
+      final report = await OdooSessionManager.safeCallKw({
+        'model': 'ir.actions.report',
+        'method': 'read',
+        'args': [
+          [reportId],
+          ['report_name']
+        ],
+        'kwargs': {},
+      });
+
+      if (report == null || report is! List || report.isEmpty) {
+        throw Exception("Failed to read report action $reportId");
+      }
+
+      // STEP 8 — REPORT NAME
+      final reportName = report[0]['report_name'];
+      if (reportName == null || reportName.toString().isEmpty) {
+        throw Exception("Report name is empty for report action $reportId");
+      }
+
+      // STEP 9 — BUILD REPORT URL
+      final reportUrl = '$baseUrl/report/pdf/$reportName/$taskId';
+
+      // STEP 10 — DOWNLOAD PDF
+      final response = await http.get(
+        Uri.parse(reportUrl),
+        headers: {
+          'Cookie': 'session_id=$sessionId',
+        },
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception(
+          'Server returned HTTP ${response.statusCode} while downloading report'
+        );
+      }
+
+      // STEP 11 — SAVE PDF
+      final dir = await getApplicationDocumentsDirectory();
+      final filePath = '${dir.path}/fsm_report_$taskId.pdf';
+      final file = File(filePath);
+      await file.writeAsBytes(response.bodyBytes);
+
+      return file;
+    } catch (e) {
+      log('⚠️ [TaskService] downloadTaskReport error: $e');
+      rethrow;
+    }
   }
 }
