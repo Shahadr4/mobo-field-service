@@ -62,23 +62,33 @@ class _AssigneeListScreenState extends State<AssigneeListScreen> {
                     ),
                   ),
                 )
-                // else if (p.groupBy != AssigneeGroupBy.none)
-                //   Container(
-                //     padding: const EdgeInsets.symmetric(
-                //         horizontal: 12, vertical: 5),
-                //     decoration: BoxDecoration(
-                //       color: isDark ? Colors.white : Colors.black87,
-                //       borderRadius: BorderRadius.circular(8),
-                //     ),
-                //     child: Text(
-                //       '${p.groupBy.label}',
-                //       style: TextStyle(
-                //         fontSize: 12,
-                //         fontWeight: FontWeight.w600,
-                //         color: isDark ? Colors.black : Colors.white,
-                //       ),
-                //     ),
-                //   )
+                else if (p.groupBy != AssigneeGroupBy.none)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white : Colors.black87,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                      Icon(
+                      Icons.layers_outlined,
+                      size: 15,
+                        color: isDark ? Colors.black : Colors.white,
+                      ),
+                        SizedBox(width: 5,),
+                        Text(
+                          '${p.groupBy.label}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: isDark ? Colors.black : Colors.white,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
               else
                 Text(
                   'No filter applied',

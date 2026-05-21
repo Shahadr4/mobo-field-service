@@ -52,6 +52,7 @@ class DashboardTaskService {
     } else if (tab == 'Nearby') {
       domain = [
         ...base,
+        ['user_ids', 'in', [userId]],
         ['partner_id', '!=', false],
       ];
     } else if (tab == 'Assigned') {

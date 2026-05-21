@@ -21,6 +21,7 @@ import 'features/dashboard/provider/task_stats_provider.dart';
 import 'features/review/services/review_service.dart';
 import 'features/settings/providers/settings_provider.dart';
 import 'features/splash/splash_screen.dart';
+import 'features/timesheet/provider/timesheet_list_provider.dart';
 
 
 final RouteObserver<ModalRoute<void>> routeObserver =
@@ -43,6 +44,7 @@ void main() {
       ChangeNotifierProvider(create: (_) => AssigneeProvider()),
       ChangeNotifierProvider(create: (_) => MapProvider()),
       ChangeNotifierProvider(create: (_) => ExampleFieldDelayProvider()),
+      ChangeNotifierProvider(create: (_) => TimesheetListProvider()),
       ChangeNotifierProvider<LoginProvider>(
         create: (_) => LoginProvider(),
       ),
