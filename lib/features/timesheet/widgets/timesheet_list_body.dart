@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:lottie/lottie.dart';
 import 'package:mobo_feild_service/core/const/app_colors.dart';
 import 'package:provider/provider.dart';
 
+import '../../../shared/widgets/empty_state.dart';
 import '../model/timesheet_entry_model.dart';
+import '../pages/timesheet_detail_screen.dart';
 import '../provider/timesheet_list_provider.dart';
 import 'timesheet_card.dart';
 import 'timesheet_shimmer.dart';
@@ -26,14 +27,29 @@ class TimesheetListBody extends StatelessWidget {
     if (p.isLoading) return TimesheetShimmerList(isDark: isDark);
 
     if (p.entries.isEmpty) {
+      final hasFilter =
+          p.hasActiveFilter || p.search.isNotEmpty || p.groupBy != TimesheetGroupBy.none;
       return RefreshIndicator(
         color: primaryColor,
         onRefresh: onRefresh,
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           child: SizedBox(
-            height: MediaQuery.of(context).size.height * 0.6,
-            child: _EmptyState(isDark: isDark),
+            height: MediaQuery.of(context).size.height * 0.7,
+            child: EmptyState(
+              lottieAsset: 'assets/lotties/empty ghost.json',
+              title: 'No Timesheets Found',
+              subtitle: hasFilter
+                  ? 'No entries match your current filter'
+                  : 'You have no timesheet entries yet',
+              actionLabel: hasFilter ? 'Clear Filter' : 'Retry',
+              onAction: hasFilter
+                  ? () async {
+                      await p.clearFilters();
+                      clearSearch();
+                    }
+                  : () => p.refresh(),
+            ),
           ),
         ),
       );
@@ -43,7 +59,11 @@ class TimesheetListBody extends StatelessWidget {
       return RefreshIndicator(
         color: primaryColor,
         onRefresh: onRefresh,
-        child: _GroupedList(grouped: p.grouped, isDark: isDark),
+        child: _GroupedList(
+          grouped: p.grouped,
+          isDark: isDark,
+          onChanged: () => p.refresh(),
+        ),
       );
     }
 
@@ -71,8 +91,11 @@ class _FlatList extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
       itemCount: entries.length,
       separatorBuilder: (ctx, i) => const SizedBox(height: 10),
-      itemBuilder: (ctx, i) =>
-          TimesheetCard(entry: entries[i], isDark: isDark),
+      itemBuilder: (ctx, i) => TimesheetCard(
+        entry: entries[i],
+        isDark: isDark,
+        onChanged: () => context.read<TimesheetListProvider>().refresh(),
+      ),
     );
   }
 }
@@ -84,8 +107,9 @@ class _FlatList extends StatelessWidget {
 class _GroupedList extends StatelessWidget {
   final Map<String, List<TimesheetEntry>> grouped;
   final bool isDark;
+  final VoidCallback onChanged;
 
-  const _GroupedList({required this.grouped, required this.isDark});
+  const _GroupedList({required this.grouped, required this.isDark, required this.onChanged});
 
   @override
   Widget build(BuildContext context) {
@@ -96,6 +120,7 @@ class _GroupedList extends StatelessWidget {
                 label: e.key,
                 entries: e.value,
                 isDark: isDark,
+                onChanged: onChanged,
               ))
           .toList(),
     );
@@ -110,11 +135,13 @@ class _GroupSection extends StatefulWidget {
   final String label;
   final List<TimesheetEntry> entries;
   final bool isDark;
+  final VoidCallback onChanged;
 
   const _GroupSection({
     required this.label,
     required this.entries,
     required this.isDark,
+    required this.onChanged,
   });
 
   @override
@@ -248,7 +275,11 @@ class _GroupSectionState extends State<_GroupSection> {
                     final isLast = i == widget.entries.length - 1;
                     return Column(
                       children: [
-                        _EntryRow(entry: entry, isDark: widget.isDark),
+                        _EntryRow(
+                          entry: entry,
+                          isDark: widget.isDark,
+                          onChanged: widget.onChanged,
+                        ),
                         if (!isLast)
                           Divider(
                             height: 1,
@@ -276,100 +307,110 @@ class _GroupSectionState extends State<_GroupSection> {
 class _EntryRow extends StatelessWidget {
   final TimesheetEntry entry;
   final bool isDark;
+  final VoidCallback onChanged;
 
-  const _EntryRow({required this.entry, required this.isDark});
+  const _EntryRow({
+    required this.entry,
+    required this.isDark,
+    required this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
     final subtitleColor = isDark ? Colors.white38 : Colors.black38;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Left accent dot
-          Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: Container(
-              width: 8,
-              height: 8,
-              decoration: BoxDecoration(
-                color: primaryColor.withValues(alpha: 0.7),
-                shape: BoxShape.circle,
+    return GestureDetector(
+      onTap: () async {
+        final changed = await TimesheetDetailScreen.push(context, entry);
+        if (changed) onChanged();
+      },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: primaryColor.withValues(alpha: 0.7),
+                  shape: BoxShape.circle,
+                ),
               ),
             ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        entry.taskName.isEmpty ? 'No Task' : entry.taskName,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: isDark ? Colors.white : Colors.black87,
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          entry.taskName.isEmpty ? 'No Task' : entry.taskName,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: isDark ? Colors.white : Colors.black87,
+                          ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: primaryColor.withValues(alpha: 0.10),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        entry.formattedHours,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: primaryColor,
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: primaryColor.withValues(alpha: 0.10),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          entry.formattedHours,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: primaryColor,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                ),
-                if (entry.projectName.isNotEmpty) ...[
-                  const SizedBox(height: 3),
-                  Text(
-                    entry.projectName,
-                    style: TextStyle(fontSize: 12, color: subtitleColor),
+                    ],
                   ),
-                ],
-                if (entry.description.isNotEmpty) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    entry.description,
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
-                    style: TextStyle(fontSize: 12, color: subtitleColor),
-                  ),
-                ],
-                const SizedBox(height: 3),
-                Row(
-                  children: [
-                    Icon(Icons.calendar_today_outlined,
-                        size: 11, color: subtitleColor),
-                    const SizedBox(width: 4),
+                  if (entry.projectName.isNotEmpty) ...[
+                    const SizedBox(height: 3),
                     Text(
-                      _formatDate(entry.date),
-                      style: TextStyle(fontSize: 11, color: subtitleColor),
+                      entry.projectName,
+                      style: TextStyle(fontSize: 12, color: subtitleColor),
                     ),
                   ],
-                ),
-              ],
+                  if (entry.description.isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      entry.description,
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                      style: TextStyle(fontSize: 12, color: subtitleColor),
+                    ),
+                  ],
+                  const SizedBox(height: 3),
+                  Row(
+                    children: [
+                      Icon(Icons.calendar_today_outlined,
+                          size: 11, color: subtitleColor),
+                      const SizedBox(width: 4),
+                      Text(
+                        _formatDate(entry.date),
+                        style: TextStyle(fontSize: 11, color: subtitleColor),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -385,51 +426,3 @@ class _EntryRow extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Empty state
-// ─────────────────────────────────────────────────────────────────────────────
-
-class TimesheetEmptyState extends StatelessWidget {
-  final bool isDark;
-
-  const TimesheetEmptyState({super.key, required this.isDark});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Lottie.asset(
-            'assets/lotties/empty ghost.json',
-            width: 150,
-            height: 150,
-            fit: BoxFit.contain,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'No timesheets found',
-            style: TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: isDark ? Colors.white38 : Colors.black45,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Nothing here for this filter',
-            style: TextStyle(
-              fontSize: 12,
-              color: isDark ? Colors.white24 : Colors.black26,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// local alias used only inside this file
-class _EmptyState extends TimesheetEmptyState {
-  const _EmptyState({required super.isDark});
-}

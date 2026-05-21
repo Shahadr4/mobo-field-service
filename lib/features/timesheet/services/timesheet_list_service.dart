@@ -118,6 +118,52 @@ class TimesheetListService {
     }
   }
 
+  Future<bool> updateEntry({
+    required int id,
+    required double hours,
+    required DateTime date,
+    required String description,
+  }) async {
+    try {
+      String pad(int n) => n.toString().padLeft(2, '0');
+      final dateStr = '${date.year}-${pad(date.month)}-${pad(date.day)}';
+      await OdooSessionManager.callKwWithCompany({
+        'model': 'account.analytic.line',
+        'method': 'write',
+        'args': [
+          [id],
+          {
+            'unit_amount': hours,
+            'date': dateStr,
+            'name': description.isEmpty ? '/' : description,
+          }
+        ],
+        'kwargs': {},
+      });
+      log('[TimesheetListService] updated id=$id');
+      return true;
+    } catch (e) {
+      log('[TimesheetListService] updateEntry error: $e');
+      return false;
+    }
+  }
+
+  Future<bool> deleteEntry(int id) async {
+    try {
+      await OdooSessionManager.callKwWithCompany({
+        'model': 'account.analytic.line',
+        'method': 'unlink',
+        'args': [[id]],
+        'kwargs': {},
+      });
+      log('[TimesheetListService] deleted id=$id');
+      return true;
+    } catch (e) {
+      log('[TimesheetListService] deleteEntry error: $e');
+      return false;
+    }
+  }
+
   String _fmt(DateTime d) =>
       '${d.year}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 }

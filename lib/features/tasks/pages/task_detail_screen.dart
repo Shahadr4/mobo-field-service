@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:hugeicons/hugeicons.dart';
 import 'package:mobo_feild_service/core/const/app_colors.dart';
 
 import '../model/task_model.dart';
@@ -188,9 +189,8 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
 
           IconButton(
             padding: EdgeInsets.zero,
-            icon: Icon(
-              Icons.edit_outlined,
-              size: 20,
+            icon: HugeIcon(
+              icon: HugeIcons.strokeRoundedPencilEdit02,
               color: isDark ? Colors.white54 : Colors.black54,
             ),
             onPressed: () async {

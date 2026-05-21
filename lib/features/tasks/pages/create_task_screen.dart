@@ -55,7 +55,9 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
   bool _saving      = false;
 
   bool get _canSubmit =>
-      _titleCtrl.text.trim().isNotEmpty && _selectedProject != null;
+      _titleCtrl.text.trim().isNotEmpty &&
+      _selectedProject != null &&
+      _selectedCustomer != null;
 
   // ── Typeahead controllers / focus / links ─────────────────────────────────
 
@@ -605,7 +607,33 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
       lastDate: DateTime(2030),
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(
-            colorScheme: ColorScheme.fromSeed(seedColor: primaryColor)),
+          colorScheme: Theme.of(ctx).colorScheme.copyWith(
+            primary: primaryColor,
+            onPrimary: Colors.white,
+            onSurface: Theme.of(ctx).brightness == Brightness.dark
+                ? Colors.white
+                : Colors.black87,
+          ),
+          datePickerTheme: DatePickerThemeData(
+            backgroundColor: Theme.of(ctx).brightness == Brightness.dark
+                ? const Color(0xFF1E2028)
+                : Colors.white,
+            headerBackgroundColor: primaryColor,
+            headerForegroundColor: Colors.white,
+            dayOverlayColor:
+                WidgetStateProperty.all(primaryColor.withValues(alpha: 0.12)),
+            todayForegroundColor:
+                WidgetStateProperty.all(primaryColor),
+            todayBackgroundColor:
+                WidgetStateProperty.all(Colors.transparent),
+            todayBorder: const BorderSide(color: primaryColor, width: 1),
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16)),
+          ),
+          textButtonTheme: TextButtonThemeData(
+            style: TextButton.styleFrom(foregroundColor: primaryColor),
+          ),
+        ),
         child: child!,
       ),
     );
@@ -615,7 +643,44 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
       initialTime: TimeOfDay.fromDateTime(init),
       builder: (ctx, child) => Theme(
         data: Theme.of(ctx).copyWith(
-            colorScheme: ColorScheme.fromSeed(seedColor: primaryColor)),
+          colorScheme: Theme.of(ctx).colorScheme.copyWith(
+            primary: primaryColor,
+            onPrimary: Colors.white,
+            onSurface: Theme.of(ctx).brightness == Brightness.dark
+                ? Colors.white
+                : Colors.black87,
+            surface: Theme.of(ctx).brightness == Brightness.dark
+                ? const Color(0xFF1E2028)
+                : Colors.white,
+          ),
+          timePickerTheme: TimePickerThemeData(
+            backgroundColor: Theme.of(ctx).brightness == Brightness.dark
+                ? const Color(0xFF1E2028)
+                : Colors.white,
+            hourMinuteColor: WidgetStateColor.resolveWith((states) =>
+                states.contains(WidgetState.selected)
+                    ? primaryColor
+                    : (Theme.of(ctx).brightness == Brightness.dark
+                        ? const Color(0xFF2A2D3E)
+                        : const Color(0xFFF1F3F5))),
+            hourMinuteTextColor: WidgetStateColor.resolveWith((states) =>
+                states.contains(WidgetState.selected)
+                    ? Colors.white
+                    : (Theme.of(ctx).brightness == Brightness.dark
+                        ? Colors.white
+                        : Colors.black87)),
+            dialHandColor: primaryColor,
+            dialBackgroundColor: Theme.of(ctx).brightness == Brightness.dark
+                ? const Color(0xFF2A2D3E)
+                : const Color(0xFFF1F3F5),
+            entryModeIconColor: primaryColor,
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16)),
+          ),
+          textButtonTheme: TextButtonThemeData(
+            style: TextButton.styleFrom(foregroundColor: primaryColor),
+          ),
+        ),
         child: child!,
       ),
     );
@@ -814,6 +879,9 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                       _gap(),
                       _labeled(isDark, 'Assigned to',
                           _assigneeField(isDark)),
+                      _gap(),
+                      _labeled(isDark, 'Customer *',
+                          _customerField(isDark)),
                     ]),
                     const SizedBox(height: 16),
 
@@ -857,9 +925,6 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                               },
                             )),
                       ],
-                      _gap(),
-                      _labeled(isDark, 'Customer',
-                          _customerField(isDark)),
                       _gap(),
                       _labeled(isDark, 'Contact Number',
                           _plainInput(isDark, _phoneCtrl, 'Phone number',
@@ -1293,14 +1358,6 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
         decoration: _fieldDeco(isDark),
         child: Row(
           children: [
-            Expanded(
-              child: Text(
-                _underWarranty ? 'Yes' : 'No',
-                style: TextStyle(
-                    fontSize: 14,
-                    color: isDark ? Colors.white : Colors.black87),
-              ),
-            ),
             AnimatedContainer(
               duration: const Duration(milliseconds: 150),
               width: 20,
@@ -1308,15 +1365,26 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
               decoration: BoxDecoration(
                 color: _underWarranty ? primaryColor : Colors.transparent,
                 border: Border.all(
-                  color: _underWarranty ? primaryColor : (isDark ? Colors.white38 : Colors.black38),
+                  color: _underWarranty
+                      ? primaryColor
+                      : (isDark ? Colors.white38 : Colors.black38),
                   width: 1.5,
                 ),
                 borderRadius: BorderRadius.circular(5),
               ),
               child: _underWarranty
                   ? const Icon(Icons.check_rounded,
-                      size: 13, color: Colors.white)
+                      size: 14, color: Colors.white)
                   : null,
+            ),
+            const SizedBox(width: 12),
+            Text(
+              'Under Warranty',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: isDark ? Colors.white : Colors.black87,
+              ),
             ),
           ],
         ),
@@ -1446,15 +1514,6 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
       ),
     );
   }
-
-  Widget _sectionHeader(String title, bool isDark) => Padding(
-        padding: const EdgeInsets.only(left: 2),
-        child: Text(title,
-            style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-                color: isDark ? Colors.white : Colors.black87)),
-      );
 
   Widget _gap() => const SizedBox(height: 16);
 

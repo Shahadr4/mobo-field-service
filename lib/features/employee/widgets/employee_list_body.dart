@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:hugeicons/hugeicons.dart';
 import 'package:provider/provider.dart';
 import '../../../core/const/app_colors.dart';
+import '../../../shared/widgets/empty_state.dart';
 import '../model/employee_filter.dart';
 import '../model/employee_model.dart';
 import '../provider/employee_provider.dart';
@@ -41,24 +41,17 @@ class AssigneeListBody extends StatelessWidget {
     }
 
     if (p.assignees.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            HugeIcon(
-              icon: HugeIcons.strokeRoundedUserGroup,
-              size: 48,
-              color: Colors.grey.shade300,
-            ),
-            const SizedBox(height: 14),
-            Text(
-              p.search.isNotEmpty
-                  ? 'No assignees match "${p.search}"'
-                  : 'No assignees found',
-              style: TextStyle(fontSize: 15, color: Colors.grey.shade500),
-            ),
-          ],
-        ),
+      final hasFilter = p.hasActiveFilter || p.search.isNotEmpty;
+      return EmptyState(
+        lottieAsset: 'assets/lotties/empty ghost.json',
+        title: 'No Employees Found',
+        subtitle: hasFilter
+            ? 'No employees match your current filter'
+            : 'No employees available',
+        actionLabel: hasFilter ? 'Clear Filter' : 'Retry',
+        onAction: hasFilter
+            ? () => context.read<AssigneeProvider>().clearFilters()
+            : () => context.read<AssigneeProvider>().fetchAssignees(),
       );
     }
 

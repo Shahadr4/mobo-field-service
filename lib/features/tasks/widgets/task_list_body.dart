@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:hugeicons/hugeicons.dart';
 import 'package:mobo_feild_service/core/const/app_colors.dart';
 import 'package:provider/provider.dart';
 import 'package:shimmer/shimmer.dart';
 
+import '../../../shared/widgets/empty_state.dart';
 import '../model/task_filter.dart';
 import '../model/task_model.dart';
 import '../pages/task_detail_screen.dart';
@@ -44,24 +44,17 @@ class TaskListBody extends StatelessWidget {
     }
 
     if (p.tasks.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            HugeIcon(
-              icon: HugeIcons.strokeRoundedTask01,
-              size: 48,
-              color: Colors.grey.shade300,
-            ),
-            const SizedBox(height: 14),
-            Text(
-              p.search.isNotEmpty
-                  ? 'No tasks match "${p.search}"'
-                  : 'No tasks found',
-              style: TextStyle(fontSize: 15, color: Colors.grey.shade500),
-            ),
-          ],
-        ),
+      final hasFilter = p.hasActiveFilter || p.search.isNotEmpty;
+      return EmptyState(
+        lottieAsset: 'assets/lotties/empty ghost.json',
+        title: 'No Tasks Found',
+        subtitle: hasFilter
+            ? 'No tasks match your current filter'
+            : 'You have no tasks assigned yet',
+        actionLabel: hasFilter ? 'Clear Filter' : 'Retry',
+        onAction: hasFilter
+            ? () => context.read<TaskProvider>().clearFilters()
+            : () => context.read<TaskProvider>().fetchTasks(),
       );
     }
 

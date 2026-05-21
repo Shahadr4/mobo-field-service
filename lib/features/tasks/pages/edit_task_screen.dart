@@ -117,7 +117,10 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
   }
 
   bool get _canSubmit =>
-      _titleCtrl.text.trim().isNotEmpty && _selectedProject != null && _hasChanges;
+      _titleCtrl.text.trim().isNotEmpty &&
+      _selectedProject != null &&
+      _selectedCustomer != null &&
+      _hasChanges;
 
   // ── Typeahead controllers / focus / links ─────────────────────────────────
 
@@ -655,6 +658,9 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
                       _gap(),
                       _labeled(isDark, 'Assigned to',
                           _assigneeField(isDark)),
+                      _gap(),
+                      _labeled(isDark, 'Customer *',
+                          _customerField(isDark)),
                     ]),
                     const SizedBox(height: 16),
 
@@ -698,9 +704,6 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
                               },
                             )),
                       ],
-                      _gap(),
-                      _labeled(isDark, 'Customer',
-                          _customerField(isDark)),
                       _gap(),
                       _labeled(isDark, 'Contact Number',
                           _plainInput(isDark, _phoneCtrl, 'Phone number',
@@ -1567,9 +1570,31 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
       lastDate: DateTime(2030),
       builder: (context, child) => Theme(
         data: Theme.of(context).copyWith(
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: primaryColor,
+          colorScheme: Theme.of(context).colorScheme.copyWith(
             primary: primaryColor,
+            onPrimary: Colors.white,
+            onSurface: Theme.of(context).brightness == Brightness.dark
+                ? Colors.white
+                : Colors.black87,
+          ),
+          datePickerTheme: DatePickerThemeData(
+            backgroundColor: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFF1E2028)
+                : Colors.white,
+            headerBackgroundColor: primaryColor,
+            headerForegroundColor: Colors.white,
+            dayOverlayColor:
+                WidgetStateProperty.all(primaryColor.withValues(alpha: 0.12)),
+            todayForegroundColor:
+                WidgetStateProperty.all(primaryColor),
+            todayBackgroundColor:
+                WidgetStateProperty.all(Colors.transparent),
+            todayBorder: const BorderSide(color: primaryColor, width: 1),
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16)),
+          ),
+          textButtonTheme: TextButtonThemeData(
+            style: TextButton.styleFrom(foregroundColor: primaryColor),
           ),
         ),
         child: child!,
@@ -1583,9 +1608,43 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
       initialTime: TimeOfDay.fromDateTime(initial),
       builder: (context, child) => Theme(
         data: Theme.of(context).copyWith(
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: primaryColor,
+          colorScheme: Theme.of(context).colorScheme.copyWith(
             primary: primaryColor,
+            onPrimary: Colors.white,
+            onSurface: Theme.of(context).brightness == Brightness.dark
+                ? Colors.white
+                : Colors.black87,
+            surface: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFF1E2028)
+                : Colors.white,
+          ),
+          timePickerTheme: TimePickerThemeData(
+            backgroundColor: Theme.of(context).brightness == Brightness.dark
+                ? const Color(0xFF1E2028)
+                : Colors.white,
+            hourMinuteColor: WidgetStateColor.resolveWith((states) =>
+                states.contains(WidgetState.selected)
+                    ? primaryColor
+                    : (Theme.of(context).brightness == Brightness.dark
+                        ? const Color(0xFF2A2D3E)
+                        : const Color(0xFFF1F3F5))),
+            hourMinuteTextColor: WidgetStateColor.resolveWith((states) =>
+                states.contains(WidgetState.selected)
+                    ? Colors.white
+                    : (Theme.of(context).brightness == Brightness.dark
+                        ? Colors.white
+                        : Colors.black87)),
+            dialHandColor: primaryColor,
+            dialBackgroundColor:
+                Theme.of(context).brightness == Brightness.dark
+                    ? const Color(0xFF2A2D3E)
+                    : const Color(0xFFF1F3F5),
+            entryModeIconColor: primaryColor,
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16)),
+          ),
+          textButtonTheme: TextButtonThemeData(
+            style: TextButton.styleFrom(foregroundColor: primaryColor),
           ),
         ),
         child: child!,

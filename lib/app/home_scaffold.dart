@@ -8,6 +8,12 @@ import 'package:provider/provider.dart';
 import '../core/const/app_colors.dart';
 import '../core/services/odoo_session_manager.dart';
 import '../core/services/connectivity_service.dart';
+import '../features/dashboard/provider/timesheet_provider.dart';
+import '../features/dashboard/services/timesheet_service.dart';
+import '../features/dashboard/widget/project_picker_sheet.dart';
+import '../features/timesheet/pages/add_timesheet_screen.dart';
+import '../features/timesheet/provider/timesheet_list_provider.dart';
+import '../shared/widgets/snackbars/custom_snackbar.dart' show CustomSnackbar;
 
 
 import '../features/dashboard/pages/dashboard_screen.dart';
@@ -314,10 +320,37 @@ class _TimesheetFab extends StatefulWidget {
 
 class _TimesheetFabState extends State<_TimesheetFab> {
   bool _open = false;
+  bool _isStarting = false;
+  final _service = TimesheetService();
 
   void _toggle() => setState(() => _open = !_open);
-
   void _close() => setState(() => _open = false);
+
+  Future<void> _onStartTimer() async {
+    _close();
+    final task = await ProjectPickerSheet.show(context);
+    if (task == null || !mounted) return;
+
+    setState(() => _isStarting = true);
+
+    final timerProv = context.read<TimesheetProvider>();
+
+    if (timerProv.isTimerRunning) {
+      await timerProv.autoStopAndSaveRunningTimer();
+    }
+
+    final timesheetId = await _service.startTimer(task.id);
+    if (!mounted) return;
+
+    if (timesheetId == null) {
+      setState(() => _isStarting = false);
+      CustomSnackbar.showError(context, 'Could not start timer. Please try again.');
+      return;
+    }
+
+    timerProv.startGlobalTimer(task, timesheetId);
+    setState(() => _isStarting = false);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -333,17 +366,21 @@ class _TimesheetFabState extends State<_TimesheetFab> {
             label: 'Timer Recording',
             icon: Icons.play_arrow_rounded,
             isDark: isDark,
-            onTap: () {
-              _close();
-            },
+            loading: _isStarting,
+            onTap: _onStartTimer,
           ),
           const SizedBox(height: 12),
           _FabOption(
             label: 'Manual Recording',
             icon: Icons.edit_note_rounded,
             isDark: isDark,
-            onTap: () {
+            loading: false,
+            onTap: () async {
               _close();
+              final saved = await AddTimesheetScreen.push(context);
+              if (saved && context.mounted) {
+                context.read<TimesheetListProvider>().refresh();
+              }
             },
           ),
           const SizedBox(height: 16),
@@ -366,19 +403,21 @@ class _FabOption extends StatelessWidget {
   final String label;
   final IconData icon;
   final bool isDark;
+  final bool loading;
   final VoidCallback onTap;
 
   const _FabOption({
     required this.label,
     required this.icon,
     required this.isDark,
+    required this.loading,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: loading ? null : onTap,
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [

@@ -178,6 +178,61 @@ class TimesheetService {
     }
   }
 
+  // ── Manual log: create analytic line with explicit hours + date ──────────
+
+  Future<bool> logManual({
+    required int taskId,
+    required double hours,
+    required DateTime date,
+    required String description,
+  }) async {
+    try {
+      final session = await OdooSessionManager.getCurrentSession();
+      if (session == null) return false;
+
+      final tasks = await OdooSessionManager.callKwWithCompany({
+        'model': 'project.task',
+        'method': 'search_read',
+        'args': [
+          [['id', '=', taskId]]
+        ],
+        'kwargs': {'fields': ['id', 'project_id'], 'limit': 1},
+      });
+      if (tasks is! List || tasks.isEmpty) return false;
+
+      final projectRaw = tasks[0]['project_id'];
+      final projectId =
+          projectRaw is List ? (projectRaw[0] as num).toInt() : null;
+      if (projectId == null) return false;
+
+      String pad(int n) => n.toString().padLeft(2, '0');
+      final dateStr =
+          '${date.year}-${pad(date.month)}-${pad(date.day)}';
+
+      await OdooSessionManager.callKwWithCompany({
+        'model': 'account.analytic.line',
+        'method': 'create',
+        'args': [
+          {
+            'task_id': taskId,
+            'project_id': projectId,
+            'date': dateStr,
+            'unit_amount': hours,
+            'name': description.isEmpty ? '/' : description,
+            'user_id': session.userId,
+          }
+        ],
+        'kwargs': {},
+      });
+
+      log('[TimesheetService] ✅ manual log task=$taskId hours=$hours date=$dateStr');
+      return true;
+    } catch (e) {
+      log('[TimesheetService] ⚠️ logManual error: $e');
+      return false;
+    }
+  }
+
   // ── Cancel: stop timer + delete the analytic line ─────────────────────────
 
   Future<void> cancelTimer({

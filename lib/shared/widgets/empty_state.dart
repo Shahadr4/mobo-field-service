@@ -30,14 +30,14 @@ class EmptyState extends StatelessWidget {
     if (lottieAsset != null && lottieAsset!.isNotEmpty) {
       illustration = Lottie.asset(
         lottieAsset!,
-        width: 220,
-        height: 220,
+        width: 160,
+        height: 160,
         repeat: true,
         fit: BoxFit.contain,
         errorBuilder: (context, error, stack) {
           return Icon(
             icon ?? Icons.inbox_outlined,
-            size: 96,
+            size: 72,
             color: isDark ? Colors.grey[600] : Colors.grey[400],
           );
         },
@@ -45,14 +45,14 @@ class EmptyState extends StatelessWidget {
     } else {
       illustration = Icon(
         icon ?? Icons.inbox_outlined,
-        size: 96,
+        size: 72,
         color: isDark ? Colors.grey[600] : Colors.grey[400],
       );
     }
 
-    return Padding(
-      padding: padding,
-      child: Center(
+    return Center(
+      child: SingleChildScrollView(
+        padding: padding,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -82,7 +82,7 @@ class EmptyState extends StatelessWidget {
                 style: OutlinedButton.styleFrom(
                   foregroundColor: theme.colorScheme.primary,
                   side: BorderSide(
-                    color: theme.colorScheme.primary.withOpacity(0.4),
+                    color: theme.colorScheme.primary.withValues(alpha: 0.4),
                   ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
