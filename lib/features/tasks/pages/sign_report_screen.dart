@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:mobo_feild_service/core/const/app_colors.dart';
 
-class WorksheetPreviewScreen extends StatefulWidget {
+class SignReport extends StatefulWidget {
   final String url;
   final String sessionId;
   final String taskName;
 
-  const WorksheetPreviewScreen({
+  const SignReport({
     super.key,
     required this.url,
     required this.sessionId,
@@ -15,10 +15,10 @@ class WorksheetPreviewScreen extends StatefulWidget {
   });
 
   @override
-  State<WorksheetPreviewScreen> createState() => _WorksheetPreviewScreenState();
+  State<SignReport> createState() => _SignReportState();
 }
 
-class _WorksheetPreviewScreenState extends State<WorksheetPreviewScreen> {
+class _SignReportState extends State<SignReport> {
   bool _isLoading = true;
 
   @override
@@ -60,7 +60,7 @@ class _WorksheetPreviewScreenState extends State<WorksheetPreviewScreen> {
           ),
         ),
         title: Text(
-          'Worksheet',
+          'Sign Report',
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w600,

@@ -8,10 +8,6 @@ import '../model/task_model.dart';
 import '../services/task_service.dart';
 import 'package:mobo_feild_service/shared/widgets/snackbars/custom_snackbar.dart';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// EditTaskScreen
-// ─────────────────────────────────────────────────────────────────────────────
-
 class EditTaskScreen extends StatefulWidget {
   final TaskModel task;
   const EditTaskScreen({super.key, required this.task});
@@ -50,14 +46,14 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
   DateTime? _plannedEnd;
   bool      _underWarranty = false;
 
-  // FSM feature flags — false until confirmed by Odoo settings fetch
+  /// FSM feature flags — false until confirmed by Odoo settings fetch
   bool _showWorksheetSection = false;
   bool _showWarrantySection  = false;
 
   bool _loadingMeta = true;
   bool _saving      = false;
 
-  // Change detection logic
+  /// Change detection logic
   bool get _hasChanges {
     final titleChanged = _titleCtrl.text.trim() != widget.task.name;
     
@@ -120,6 +116,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
       _titleCtrl.text.trim().isNotEmpty &&
       _selectedProject != null &&
       _selectedCustomer != null &&
+      _assigneeIds.isNotEmpty &&
       _hasChanges;
 
   // ── Typeahead controllers / focus / links ─────────────────────────────────
@@ -451,10 +448,13 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
       partnerId:           _selectedCustomer != null
           ? (_selectedCustomer!['id'] as num).toInt()
           : null,
-      underWarranty:       _showWarrantySection ? _underWarranty : null,
-      worksheetTemplateId: _showWorksheetSection && _selectedWorksheet != null
+      underWarranty:          _showWarrantySection ? _underWarranty : null,
+      worksheetTemplateId:    _showWorksheetSection && _selectedWorksheet != null
           ? (_selectedWorksheet!['id'] as num).toInt()
           : null,
+      clearWorksheetTemplate: _showWorksheetSection &&
+          _selectedWorksheet == null &&
+          widget.task.worksheetTemplateId != null,
       description:         _descriptionCtrl.text.trim(),
       priority:            _priority,
     );
@@ -656,7 +656,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
                             )),
                       ],
                       _gap(),
-                      _labeled(isDark, 'Assigned to',
+                      _labeled(isDark, 'Assigned to *',
                           _assigneeField(isDark)),
                       _gap(),
                       _labeled(isDark, 'Customer *',

@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hugeicons/hugeicons.dart';
@@ -20,7 +18,8 @@ import '../widgets/detail/timesheet_content.dart';
 import '../widgets/detail/products_content.dart';
 import 'package:mobo_feild_service/shared/widgets/snackbars/custom_snackbar.dart';
 import '../../map/provider/map_provider.dart';
-import 'worksheet_preview_screen.dart';
+import 'sign_report_screen.dart';
+import 'worksheet_screen.dart';
 import 'package:flutter_email_sender/flutter_email_sender.dart';
 import 'package:mobo_feild_service/shared/widgets/loaders/loading_widget.dart';
 
@@ -153,7 +152,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
       await Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => WorksheetPreviewScreen(
+          builder: (_) => SignReport(
             url: result.url,
             sessionId: result.sessionId,
             taskName: _task.name,
@@ -247,17 +246,25 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
           ),
         ),
         actions: [
-          IconButton(
-            padding: EdgeInsets.zero,
-            icon: HugeIcon(
-              icon: HugeIcons.strokeRoundedTask02,
-              color: isDark ? Colors.white54 : Colors.black54,
+     if(_showWorksheetSection)
+            IconButton(
+              padding: EdgeInsets.zero,
+              icon: HugeIcon(
+                icon: HugeIcons.strokeRoundedTask02,
+                color: isDark ? Colors.white54 : Colors.black54,
+              ),
+              onPressed: () async {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => WorksheetScreen(
+                      taskId: _task.id,
+                      taskName: _task.name,
+                    ),
+                  ),
+                );
+              },
             ),
-            onPressed: () async {
-              log("work sheet template");
-
-            },
-          ),
 
           IconButton(
             padding: EdgeInsets.zero,

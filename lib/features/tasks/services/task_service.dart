@@ -348,6 +348,9 @@ class TaskService {
             'has_template_ancestor',
             'has_project_template',
             'allow_material',
+            'is_fsm',
+            'allow_worksheets',
+            'worksheet_count',
           ],
           'order': 'name asc',
           'limit': 200,
@@ -822,6 +825,7 @@ class TaskService {
     DateTime? plannedDateEnd,
     List<int>? tagIds,
     int? worksheetTemplateId,
+    bool clearWorksheetTemplate = false,
     String? description,
     int? priority,
   }) async {
@@ -851,7 +855,11 @@ class TaskService {
           [6, 0, tagIds]
         ];
       }
-      if (worksheetTemplateId != null) vals['worksheet_template_id'] = worksheetTemplateId;
+      if (worksheetTemplateId != null) {
+        vals['worksheet_template_id'] = worksheetTemplateId;
+      } else if (clearWorksheetTemplate) {
+        vals['worksheet_template_id'] = false;
+      }
       if (plannedDateBegin != null) vals['planned_date_begin'] = fmtDt(plannedDateBegin);
 
       if (vals.isEmpty) return null;

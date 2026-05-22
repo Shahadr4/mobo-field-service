@@ -57,7 +57,8 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
   bool get _canSubmit =>
       _titleCtrl.text.trim().isNotEmpty &&
       _selectedProject != null &&
-      _selectedCustomer != null;
+      _selectedCustomer != null &&
+      _assigneeIds.isNotEmpty;
 
   // ── Typeahead controllers / focus / links ─────────────────────────────────
 
@@ -877,7 +878,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                             )),
                       ],
                       _gap(),
-                      _labeled(isDark, 'Assigned to',
+                      _labeled(isDark, 'Assigned to *',
                           _assigneeField(isDark)),
                       _gap(),
                       _labeled(isDark, 'Customer *',

@@ -29,6 +29,9 @@ class TaskModel {
   final bool hasTemplateAncestor;
   final bool hasProjectTemplate;
   final bool allowMaterial;
+  final bool isFsm;
+  final bool allowWorksheets;
+  final int worksheetCount;
   final int? projectId;
   final int? stageId;
   final int? partnerId;
@@ -68,6 +71,9 @@ class TaskModel {
     this.hasTemplateAncestor = false,
     this.hasProjectTemplate = false,
     this.allowMaterial = false,
+    this.isFsm = false,
+    this.allowWorksheets = false,
+    this.worksheetCount = 0,
     this.projectId,
     this.stageId,
     this.partnerId,
@@ -108,6 +114,9 @@ class TaskModel {
     bool? hasTemplateAncestor,
     bool? hasProjectTemplate,
     bool? allowMaterial,
+    bool? isFsm,
+    bool? allowWorksheets,
+    int? worksheetCount,
     int? projectId,
     int? stageId,
     int? partnerId,
@@ -147,6 +156,9 @@ class TaskModel {
       hasTemplateAncestor: hasTemplateAncestor ?? this.hasTemplateAncestor,
       hasProjectTemplate: hasProjectTemplate ?? this.hasProjectTemplate,
       allowMaterial: allowMaterial ?? this.allowMaterial,
+      isFsm: isFsm ?? this.isFsm,
+      allowWorksheets: allowWorksheets ?? this.allowWorksheets,
+      worksheetCount: worksheetCount ?? this.worksheetCount,
       projectId: projectId ?? this.projectId,
       stageId: stageId ?? this.stageId,
       partnerId: partnerId ?? this.partnerId,
@@ -242,6 +254,9 @@ class TaskModel {
       hasTemplateAncestor: map['has_template_ancestor'] == true,
       hasProjectTemplate: map['has_project_template'] == true,
       allowMaterial: map['allow_material'] == true,
+      isFsm: map['is_fsm'] == true,
+      allowWorksheets: map['allow_worksheets'] == true,
+      worksheetCount: (map['worksheet_count'] as num?)?.toInt() ?? 0,
       projectId: rawId(map['project_id']),
       stageId: rawId(map['stage_id']),
       partnerId: rawId(map['partner_id']),
