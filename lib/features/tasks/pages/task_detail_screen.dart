@@ -246,7 +246,11 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
           ),
         ),
         actions: [
-     if(_showWorksheetSection)
+          if ((_task.isFsm || _task.partnerId != null) &&
+              _task.allowWorksheets &&
+              _task.worksheetTemplateId != null &&
+              !_task.hasTemplateAncestor &&
+              !_task.hasProjectTemplate)
             IconButton(
               padding: EdgeInsets.zero,
               icon: HugeIcon(

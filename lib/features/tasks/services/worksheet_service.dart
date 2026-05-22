@@ -20,16 +20,22 @@ class WorksheetActionResult {
   final String resModel;
   final Map<String, dynamic> context;
   final List<dynamic> views;
+  /// The many2one field on the worksheet model that links back to project.task.
+  /// Detected dynamically; defaults to 'x_project_task_id' as fallback.
+  final String taskLinkField;
 
   const WorksheetActionResult({
     required this.resModel,
     required this.context,
     required this.views,
+    this.taskLinkField = 'x_project_task_id',
   });
 }
 
 class WorksheetService {
   /// Step 1 — call action_fsm_worksheet to get res_model + context.
+  /// Also detects the task-link field name from the action context
+  /// (Odoo puts it as a `default_x_*` key in the context).
   Future<WorksheetActionResult?> fetchWorksheetAction(int taskId) async {
     try {
       final result = await OdooSessionManager.callKwWithCompany({
@@ -48,7 +54,23 @@ class WorksheetService {
           ? Map<String, dynamic>.from(m['context'] as Map)
           : <String, dynamic>{};
       final views = m['views'] is List ? m['views'] as List : [];
-      return WorksheetActionResult(resModel: resModel, context: ctx, views: views);
+
+      // Detect task link field from context: Odoo sets default_<field> = taskId
+      // e.g. {'default_x_project_task_id': 12}
+      String taskLinkField = 'x_project_task_id';
+      for (final key in ctx.keys) {
+        if (key.startsWith('default_') && ctx[key] == taskId) {
+          taskLinkField = key.replaceFirst('default_', '');
+          break;
+        }
+      }
+
+      return WorksheetActionResult(
+        resModel: resModel,
+        context: ctx,
+        views: views,
+        taskLinkField: taskLinkField,
+      );
     } catch (e) {
       log('[WorksheetService] fetchWorksheetAction error: $e');
       return null;
@@ -164,35 +186,44 @@ class WorksheetService {
   }
 
   /// Step 3 — search_read the worksheet record for this task.
-  /// Returns the raw map (may be empty if not yet created).
+  /// Returns the raw map (null if not yet created).
   Future<Map<String, dynamic>?> fetchRecord(
     String model,
     int taskId,
     List<WorksheetFieldMeta> fields,
+    String taskLinkField,
   ) async {
-    try {
-      final fieldNames = fields.map((f) => f.name).toList();
-      final result = await OdooSessionManager.callKwWithCompany({
-        'model': model,
-        'method': 'search_read',
-        'args': [
-          [
-            ['x_project_task_id', '=', taskId]
-          ]
-        ],
-        'kwargs': {
-          'fields': fieldNames,
-          'limit': 1,
-        },
-      });
-      if (result is List && result.isNotEmpty) {
-        return Map<String, dynamic>.from(result.first as Map);
+    final fieldNames = ['id', ...fields.map((f) => f.name)];
+
+    // Try with the detected task-link field first, then common fallbacks.
+    final candidates = <String>{
+      taskLinkField,
+      'x_project_task_id',
+      'project_task_id',
+    };
+
+    for (final linkField in candidates) {
+      try {
+        final result = await OdooSessionManager.callKwWithCompany({
+          'model': model,
+          'method': 'search_read',
+          'args': [
+            [
+              [linkField, '=', taskId]
+            ]
+          ],
+          'kwargs': {'fields': fieldNames, 'limit': 1},
+        });
+        if (result is List && result.isNotEmpty) {
+          return Map<String, dynamic>.from(result.first as Map);
+        }
+        // search succeeded but returned empty — record not created yet
+        if (result is List) return null;
+      } catch (_) {
+        // field doesn't exist on this model — try next candidate
       }
-      return null;
-    } catch (e) {
-      log('[WorksheetService] fetchRecord error: $e');
-      return null;
     }
+    return null;
   }
 
   /// Fetch relation options (name_search / search_read) for many2one / many2many.

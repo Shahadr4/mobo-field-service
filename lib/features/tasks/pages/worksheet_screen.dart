@@ -36,6 +36,7 @@ class _WorksheetScreenState extends State<WorksheetScreen> {
   String? _errorMessage;
 
   String? _worksheetModel;
+  String _taskLinkField = 'x_project_task_id';
   List<WorksheetFieldMeta> _fields = [];
   int? _recordId;
 
@@ -77,6 +78,7 @@ class _WorksheetScreenState extends State<WorksheetScreen> {
       return;
     }
     _worksheetModel = action.resModel;
+    _taskLinkField = action.taskLinkField;
     setState(() { _loadingAction = false; _loadingFields = true; });
 
     final fields = await _service.fetchFieldsMeta(_worksheetModel!);
@@ -91,8 +93,8 @@ class _WorksheetScreenState extends State<WorksheetScreen> {
     _fields = fields;
     setState(() { _loadingFields = false; _loadingRecord = true; });
 
-    final record =
-        await _service.fetchRecord(_worksheetModel!, widget.taskId, _fields);
+    final record = await _service.fetchRecord(
+        _worksheetModel!, widget.taskId, _fields, _taskLinkField);
     if (!mounted) return;
 
     _formCtrl = WorksheetFormController(fields: _fields);
@@ -145,7 +147,7 @@ class _WorksheetScreenState extends State<WorksheetScreen> {
       errorMsg =
           await _service.writeRecord(_worksheetModel!, _recordId!, vals);
     } else {
-      vals['x_project_task_id'] = widget.taskId;
+      vals[_taskLinkField] = widget.taskId;
       final res = await _service.createRecord(_worksheetModel!, vals);
       errorMsg = res.error;
       if (res.id != null) _recordId = res.id;
