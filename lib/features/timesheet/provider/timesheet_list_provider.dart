@@ -63,6 +63,18 @@ class TimesheetListProvider extends ChangeNotifier {
     await _load();
   }
 
+  void reset() {
+    _entries = [];
+    _isLoading = false;
+    _error = null;
+    _currentPage = 1;
+    _totalCount = 0;
+    _search = '';
+    _dateFilter = TimesheetDateFilter.all;
+    _groupBy = TimesheetGroupBy.none;
+    notifyListeners();
+  }
+
   Future<void> refresh() async {
     _currentPage = 1;
     await _load();

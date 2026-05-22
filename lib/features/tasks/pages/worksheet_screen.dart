@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:ui' as ui;
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
@@ -104,6 +106,8 @@ class _WorksheetScreenState extends State<WorksheetScreen> {
     } else {
       _formCtrl.loadDefaults();
     }
+    // Always set name field to task name (auto-fill, not user-editable)
+    _formCtrl.set('name', widget.taskName);
     _formInitialised = true;
 
     for (final f in _fields) {
@@ -165,6 +169,12 @@ class _WorksheetScreenState extends State<WorksheetScreen> {
   }
 
   void _rebuild() => setState(() {});
+
+  bool _shouldShowField(WorksheetFieldMeta f) {
+    final n = f.name.toLowerCase();
+    if (n.startsWith('x_studio_binary_')) return false;
+    return true;
+  }
 
   // ── Build ─────────────────────────────────────────────────────────────────
 
@@ -278,34 +288,46 @@ class _WorksheetScreenState extends State<WorksheetScreen> {
       blurRadius: 10,
       offset: const Offset(0, 2),
     );
+    final visibleFields = _fields.where(_shouldShowField).toList();
 
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-      children: [
-        Container(
-          decoration: BoxDecoration(
-            color: cardBg,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [shadow],
+    return CustomScrollView(
+      physics: const ClampingScrollPhysics(),
+      slivers: [
+        SliverPadding(
+          padding: EdgeInsets.fromLTRB(
+            16, 8, 16,
+            MediaQuery.of(context).viewInsets.bottom + 16,
           ),
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Worksheet Details',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  color: isDark ? Colors.white70 : Colors.black87,
+          sliver: SliverList(
+            delegate: SliverChildListDelegate([
+              Container(
+                decoration: BoxDecoration(
+                  color: cardBg,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [shadow],
+                ),
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Worksheet Details',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? Colors.white70 : Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    ...visibleFields.map((f) => Padding(
+                          padding: const EdgeInsets.only(bottom: 14),
+                          child: _buildFieldRow(isDark, f),
+                        )),
+                  ],
                 ),
               ),
-              const SizedBox(height: 16),
-              ..._fields.map((f) => Padding(
-                    padding: const EdgeInsets.only(bottom: 14),
-                    child: _buildFieldRow(isDark, f),
-                  )),
-            ],
+            ]),
           ),
         ),
       ],
@@ -350,6 +372,10 @@ class _WorksheetScreenState extends State<WorksheetScreen> {
   // ── Per-field row ─────────────────────────────────────────────────────────
 
   Widget _buildFieldRow(bool isDark, WorksheetFieldMeta f) {
+    // Boolean renders its own label inline — skip the label row
+    if (f.type == 'boolean' && !f.readonly) {
+      return _buildFieldWidget(isDark, f);
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -368,7 +394,7 @@ class _WorksheetScreenState extends State<WorksheetScreen> {
   }
 
   Widget _buildFieldWidget(bool isDark, WorksheetFieldMeta f) {
-    if (f.readonly) {
+    if (f.readonly || f.name == 'name') {
       return _ReadonlyValue(isDark: isDark, field: f, formCtrl: _formCtrl);
     }
     switch (f.type) {
@@ -418,6 +444,12 @@ class _WorksheetScreenState extends State<WorksheetScreen> {
           onChanged: _rebuild,
         );
       case 'binary':
+        final isSign = f.name.toLowerCase().contains('sign') ||
+            f.label.toLowerCase().contains('sign');
+        if (isSign) {
+          return _SignatureField(
+              isDark: isDark, field: f, formCtrl: _formCtrl, onChanged: _rebuild);
+        }
         return _BinaryField(
             isDark: isDark, field: f, formCtrl: _formCtrl, onChanged: _rebuild);
       default:
@@ -730,44 +762,45 @@ class _BooleanField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final val = formCtrl.values[field.name] == true;
+    final label = field.required ? '${field.label} *' : field.label;
     return InkWell(
       onTap: () {
         formCtrl.set(field.name, !val);
         onChanged();
       },
-      borderRadius: BorderRadius.circular(10),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
-        decoration: _fieldDeco(isDark),
+      borderRadius: BorderRadius.circular(8),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
         child: Row(
           children: [
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: isDark ? Colors.white38 : Colors.black45,
+                ),
+              ),
+            ),
             AnimatedContainer(
               duration: const Duration(milliseconds: 150),
-              width: 20,
-              height: 20,
+              width: 22,
+              height: 22,
               decoration: BoxDecoration(
                 color: val ? primaryColor : Colors.transparent,
                 border: Border.all(
                   color: val
                       ? primaryColor
                       : (isDark ? Colors.white38 : Colors.black38),
-                  width: 1.5,
+                  width: 1.8,
                 ),
-                borderRadius: BorderRadius.circular(5),
+                borderRadius: BorderRadius.circular(6),
               ),
               child: val
                   ? const Icon(Icons.check_rounded,
-                      size: 14, color: Colors.white)
+                      size: 15, color: Colors.white)
                   : null,
-            ),
-            const SizedBox(width: 12),
-            Text(
-              val ? 'Yes' : 'No',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: isDark ? Colors.white : Colors.black87,
-              ),
             ),
           ],
         ),
@@ -794,13 +827,17 @@ class _SelectionField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final current = formCtrl.values[field.name]?.toString();
-    final items = <DropdownMenuItem<String>>[
+    final rawCurrent = formCtrl.values[field.name]?.toString();
+    final current = (rawCurrent == null || rawCurrent.isEmpty) ? null : rawCurrent;
+    final seen = <String?>{};
+    final items = <DropdownMenuItem<String?>>[
       const DropdownMenuItem(value: null, child: Text('— Select —')),
-      ...field.selection.map((s) {
+      ...field.selection.expand((s) {
         final value = s.isNotEmpty ? s[0].toString() : '';
+        if (value.isEmpty || seen.contains(value)) return <DropdownMenuItem<String?>>[];
+        seen.add(value);
         final label = s.length >= 2 ? s[1].toString() : value;
-        return DropdownMenuItem<String>(value: value, child: Text(label));
+        return [DropdownMenuItem<String?>(value: value, child: Text(label))];
       }),
     ];
 
@@ -808,9 +845,10 @@ class _SelectionField extends StatelessWidget {
       decoration: _fieldDeco(isDark),
       padding: const EdgeInsets.symmetric(horizontal: 14),
       child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
+        child: DropdownButton<String?>(
           value: current,
           isExpanded: true,
+          menuMaxHeight: 280,
           dropdownColor: isDark ? const Color(0xFF252836) : Colors.white,
           style: TextStyle(
               fontSize: 14,
@@ -1018,7 +1056,7 @@ Widget _wsPicker(BuildContext context, Widget? child) {
         headerForegroundColor: Colors.white,
         shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16)),
-        todayForegroundColor: WidgetStateProperty.all(primaryColor),
+        todayForegroundColor: WidgetStateProperty.all(Colors.blue),
         todayBorder: const BorderSide(color: primaryColor, width: 1),
       ),
       timePickerTheme: TimePickerThemeData(
@@ -1084,6 +1122,7 @@ class _Many2oneField extends StatelessWidget {
         child: DropdownButton<int>(
           value: currentId,
           isExpanded: true,
+          menuMaxHeight: 280,
           dropdownColor: isDark ? const Color(0xFF252836) : Colors.white,
           style: TextStyle(
               fontSize: 14,
@@ -1258,6 +1297,349 @@ class _Many2manyFieldState extends State<_Many2manyField> {
         ),
       ),
     );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// signature (draw or upload)
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _SignatureField extends StatefulWidget {
+  final bool isDark;
+  final WorksheetFieldMeta field;
+  final WorksheetFormController formCtrl;
+  final VoidCallback onChanged;
+
+  const _SignatureField(
+      {required this.isDark,
+      required this.field,
+      required this.formCtrl,
+      required this.onChanged});
+
+  @override
+  State<_SignatureField> createState() => _SignatureFieldState();
+}
+
+class _SignatureFieldState extends State<_SignatureField> {
+  final List<List<Offset>> _strokes = [];
+  final _canvasKey = GlobalKey();
+
+  Size get _canvasSize {
+    final box = _canvasKey.currentContext?.findRenderObject() as RenderBox?;
+    return box?.size ?? const Size(300, 160);
+  }
+
+  Future<void> _saveDrawing() async {
+    final sz = _canvasSize;
+    final recorder = ui.PictureRecorder();
+    final canvas = Canvas(recorder,
+        Rect.fromLTWH(0, 0, sz.width, sz.height));
+    canvas.drawRect(
+      Rect.fromLTWH(0, 0, sz.width, sz.height),
+      Paint()
+        ..color = widget.isDark
+            ? const Color(0xFF2A2D3E)
+            : Colors.white,
+    );
+    final paint = Paint()
+      ..color = widget.isDark ? Colors.white : Colors.black87
+      ..strokeWidth = 2.5
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..style = PaintingStyle.stroke;
+    for (final stroke in _strokes) {
+      if (stroke.isEmpty) continue;
+      final path = Path()..moveTo(stroke.first.dx, stroke.first.dy);
+      for (int i = 1; i < stroke.length; i++) {
+        // Use quadratic bezier for smooth curves
+        if (i < stroke.length - 1) {
+          final mid = Offset(
+            (stroke[i].dx + stroke[i + 1].dx) / 2,
+            (stroke[i].dy + stroke[i + 1].dy) / 2,
+          );
+          path.quadraticBezierTo(
+              stroke[i].dx, stroke[i].dy, mid.dx, mid.dy);
+        } else {
+          path.lineTo(stroke[i].dx, stroke[i].dy);
+        }
+      }
+      canvas.drawPath(path, paint);
+    }
+    final picture = recorder.endRecording();
+    final img = await picture.toImage(sz.width.toInt(), sz.height.toInt());
+    final bytes = await img.toByteData(format: ui.ImageByteFormat.png);
+    if (bytes == null) return;
+    widget.formCtrl.set(
+        widget.field.name, base64Encode(bytes.buffer.asUint8List()));
+    widget.onChanged();
+  }
+
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final picked =
+        await picker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+    if (picked == null) return;
+    final bytes = await File(picked.path).readAsBytes();
+    widget.formCtrl.set(widget.field.name, base64Encode(bytes));
+    widget.onChanged();
+  }
+
+  void _clearDrawing() {
+    setState(() => _strokes.clear());
+    widget.formCtrl.set(widget.field.name, null);
+    widget.onChanged();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = widget.isDark;
+    final canvasBg = isDark ? const Color(0xFF1E2028) : Colors.white;
+    final borderColor = isDark ? Colors.white24 : Colors.black12;
+    final val = widget.formCtrl.values[widget.field.name];
+    final hasSaved = val != null && val.toString().isNotEmpty;
+    // Show saved preview when no new strokes have been drawn yet
+    final showPreview = hasSaved && _strokes.isEmpty;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ── Saved signature preview ───────────────────────────────────
+        if (showPreview) ...[
+          Stack(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.memory(
+                  base64Decode(val.toString()),
+                  width: double.infinity,
+                  height: 180,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, _, _) => Container(
+                    height: 180,
+                    decoration: BoxDecoration(
+                      color: canvasBg,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: borderColor, width: 1.5),
+                    ),
+                    child: Center(
+                      child: Icon(Icons.broken_image_rounded,
+                          color: isDark ? Colors.white38 : Colors.black38),
+                    ),
+                  ),
+                ),
+              ),
+              // "Re-sign" badge overlay
+              Positioned(
+                top: 8,
+                right: 8,
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() => _strokes.clear());
+                    widget.formCtrl.set(widget.field.name, null);
+                    widget.onChanged();
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: Colors.black54,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.edit_outlined,
+                            size: 13, color: Colors.white),
+                        SizedBox(width: 4),
+                        Text('Re-sign',
+                            style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600)),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ] else ...[
+          // ── Drawing canvas ──────────────────────────────────────────
+          RawGestureDetector(
+            behavior: HitTestBehavior.opaque,
+            gestures: {
+              _EagerPanGestureRecognizer:
+                  GestureRecognizerFactoryWithHandlers<
+                      _EagerPanGestureRecognizer>(
+                () => _EagerPanGestureRecognizer(),
+                (_EagerPanGestureRecognizer r) {
+                  r.onStart = (d) =>
+                      setState(() => _strokes.add([d.localPosition]));
+                  r.onUpdate = (d) =>
+                      setState(() => _strokes.last.add(d.localPosition));
+                  r.onEnd = (_) => _saveDrawing();
+                },
+              ),
+            },
+            child: Container(
+              key: _canvasKey,
+              width: double.infinity,
+              height: 180,
+              decoration: BoxDecoration(
+                color: canvasBg,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: borderColor, width: 1.5),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(11),
+                child: CustomPaint(
+                  painter:
+                      _SignaturePainter(strokes: _strokes, isDark: isDark),
+                  child: _strokes.isEmpty
+                      ? Center(
+                          child: Text(
+                            'Sign here',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: isDark
+                                  ? Colors.white24
+                                  : Colors.black26,
+                            ),
+                          ),
+                        )
+                      : null,
+                ),
+              ),
+            ),
+          ),
+        ],
+        const SizedBox(height: 10),
+
+        // ── Action buttons row ────────────────────────────────────────
+        Row(
+          children: [
+            // Upload
+            Expanded(
+              child: _SigButton(
+                icon: Icons.upload_file_outlined,
+                label: 'Upload',
+                color: isDark ? Colors.white70 : Colors.black54,
+                bgColor: isDark
+                    ? Colors.white.withValues(alpha: 0.06)
+                    : Colors.black.withValues(alpha: 0.04),
+                onTap: _pickImage,
+              ),
+            ),
+            const SizedBox(width: 8),
+
+            // Clear — clears drawing strokes or saved data
+            Expanded(
+              child: _SigButton(
+                icon: Icons.close_rounded,
+                label: 'Clear',
+                color: primaryColor,
+                bgColor: primaryColor.withValues(alpha: 0.08),
+                onTap: (hasSaved || _strokes.isNotEmpty) ? _clearDrawing : null,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _SigButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final Color bgColor;
+  final VoidCallback? onTap;
+
+  const _SigButton({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.bgColor,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final disabled = onTap == null;
+    final effectiveColor = disabled ? color.withValues(alpha: 0.35) : color;
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 11),
+        decoration: BoxDecoration(
+          color: disabled ? bgColor.withValues(alpha: 0.4) : bgColor,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 16, color: effectiveColor),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: effectiveColor,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SignaturePainter extends CustomPainter {
+  final List<List<Offset>> strokes;
+  final bool isDark;
+
+  const _SignaturePainter({required this.strokes, required this.isDark});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = isDark ? Colors.white : Colors.black87
+      ..strokeWidth = 2.5
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..style = PaintingStyle.stroke;
+
+    for (final stroke in strokes) {
+      if (stroke.isEmpty) continue;
+      final path = Path()..moveTo(stroke.first.dx, stroke.first.dy);
+      for (int i = 1; i < stroke.length; i++) {
+        if (i < stroke.length - 1) {
+          final mid = Offset(
+            (stroke[i].dx + stroke[i + 1].dx) / 2,
+            (stroke[i].dy + stroke[i + 1].dy) / 2,
+          );
+          path.quadraticBezierTo(
+              stroke[i].dx, stroke[i].dy, mid.dx, mid.dy);
+        } else {
+          path.lineTo(stroke[i].dx, stroke[i].dy);
+        }
+      }
+      canvas.drawPath(path, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_SignaturePainter old) => true;
+}
+
+// Wins the gesture arena immediately so the parent scroll never steals the drag.
+class _EagerPanGestureRecognizer extends PanGestureRecognizer {
+  @override
+  void addAllowedPointer(PointerDownEvent event) {
+    super.addAllowedPointer(event);
+    resolve(GestureDisposition.accepted);
   }
 }
 

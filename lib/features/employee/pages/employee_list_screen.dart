@@ -17,17 +17,29 @@ class AssigneeListScreen extends StatefulWidget {
 
 class _AssigneeListScreenState extends State<AssigneeListScreen> {
   final _searchCtrl = TextEditingController();
+  late final AssigneeProvider _provider;
 
   @override
   void initState() {
     super.initState();
+    _provider = context.read<AssigneeProvider>();
+    _provider.addListener(_onProviderChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<AssigneeProvider>().fetchAssignees();
+      if (_provider.assignees.isEmpty && !_provider.isLoading) {
+        _provider.fetchAssignees();
+      }
     });
+  }
+
+  void _onProviderChanged() {
+    if (_provider.assignees.isEmpty && !_provider.isLoading && _provider.error == null) {
+      _provider.fetchAssignees();
+    }
   }
 
   @override
   void dispose() {
+    _provider.removeListener(_onProviderChanged);
     _searchCtrl.dispose();
     super.dispose();
   }

@@ -109,7 +109,7 @@ class WorksheetFormController {
         case 'binary':
           empty = v == null || v.toString().isEmpty;
         case 'boolean':
-          empty = false; // boolean can never be "empty"
+          empty = v != true; // required boolean must be checked (true)
         default:
           empty = v == null || v.toString().trim().isEmpty || v == false;
       }

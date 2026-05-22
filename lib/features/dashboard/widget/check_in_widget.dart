@@ -112,41 +112,18 @@ class _StatusIcon extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(11),
           decoration: BoxDecoration(
-            color: isCheckedIn
-                ? primaryColor.withValues(alpha: 0.1)
-                : (isDark
+            color: (isDark
                     ? const Color(0xFF2A2D36)
                     : const Color(0xFFF4F4F4)),
             borderRadius: BorderRadius.circular(12),
           ),
           child: HugeIcon(
-            icon: isCheckedIn
-                ? HugeIcons.strokeRoundedCheckmarkCircle01
-                : HugeIcons.strokeRoundedClock01,
+            icon:  HugeIcons.strokeRoundedCheckmarkCircle01,
             size: 22,
-            color: isCheckedIn
-                ? primaryColor
-                : (isDark ? Colors.grey.shade400 : Colors.grey.shade500),
+            color:(isDark ? Colors.grey.shade400 : Colors.grey.shade600),
           ),
         ),
-        Positioned(
-          bottom: -2,
-          right: -2,
-          child: Container(
-            width: 11,
-            height: 11,
-            decoration: BoxDecoration(
-              color: isCheckedIn
-                  ? const Color(0xFF22C55E)
-                  : Colors.grey.shade400,
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: isDark ? const Color(0xFF1E2028) : Colors.white,
-                width: 2,
-              ),
-            ),
-          ),
-        ),
+
       ],
     );
   }
@@ -213,7 +190,7 @@ class _ActionButton extends StatelessWidget {
           color: isLoading
               ? (isCheckedIn ? Colors.transparent : Colors.black38)
               : (isCheckedIn ? Colors.transparent : Colors.black),
-          borderRadius: BorderRadius.circular(50),
+          borderRadius: BorderRadius.circular(10),
           border: isCheckedIn
               ? Border.all(
                   color: isDark ? Colors.white24 : Colors.black,

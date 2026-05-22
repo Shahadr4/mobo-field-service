@@ -35,9 +35,30 @@ class _TaskListView extends StatefulWidget {
 
 class _TaskListViewState extends State<_TaskListView> {
   final _searchCtrl = TextEditingController();
+  late final TaskProvider _provider;
+
+  @override
+  void initState() {
+    super.initState();
+    _provider = context.read<TaskProvider>();
+    _provider.addListener(_onProviderChanged);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_provider.tasks.isEmpty && !_provider.isLoading) {
+        _provider.init();
+      }
+    });
+  }
+
+  void _onProviderChanged() {
+    // When reset() clears tasks and loading stops, re-fetch from Odoo
+    if (_provider.tasks.isEmpty && !_provider.isLoading && _provider.error == null) {
+      _provider.init();
+    }
+  }
 
   @override
   void dispose() {
+    _provider.removeListener(_onProviderChanged);
     _searchCtrl.dispose();
     super.dispose();
   }

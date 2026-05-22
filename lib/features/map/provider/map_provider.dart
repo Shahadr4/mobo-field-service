@@ -239,6 +239,13 @@ class MapProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void resetTab() {
+    if (_activeHomeTab == 0) return;
+    _activeHomeTab = 0;
+    refresh();
+    notifyListeners();
+  }
+
   int? _pendingJumpTaskId;
   int? get pendingJumpTaskId => _pendingJumpTaskId;
 

@@ -120,6 +120,18 @@ class AssigneeProvider extends ChangeNotifier {
   Future<void> nextPage() => goToPage(_currentPage + 1);
   Future<void> prevPage() => goToPage(_currentPage - 1);
 
+  void reset() {
+    _assignees = [];
+    _isLoading = false;
+    _error = null;
+    _search = '';
+    _filters = {};
+    _groupBy = AssigneeGroupBy.none;
+    _currentPage = 1;
+    _totalCount = 0;
+    notifyListeners();
+  }
+
   Future<void> refresh() async {
     _search = '';
     _currentPage = 1;

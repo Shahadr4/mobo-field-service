@@ -10,6 +10,7 @@ import '../model/project_item_model.dart';
 import '../services/timesheet_service.dart';
 import '../provider/timesheet_provider.dart';
 import '../../../shared/widgets/snackbars/custom_snackbar.dart';
+import '../../map/provider/map_provider.dart';
 import 'project_picker_sheet.dart';
 import 'timesheet_entry_sheet.dart';
 
@@ -132,9 +133,8 @@ class _TimerWidgetState extends State<TimerWidget>
             title: 'Log Hours',
             subtitle: 'Manually record hours you worked earlier',
             loading: false,
-            onTap: () {
-              // Log Hours placeholder
-            },
+            onTap: () =>
+                context.read<MapProvider>().setActiveHomeTab(4),
           ),
           const SizedBox(height: 12),
         ],
@@ -173,7 +173,8 @@ class _TimerWidgetState extends State<TimerWidget>
           title: 'Log Hours',
           subtitle: 'Manually record hours you worked earlier',
           loading: false,
-          onTap: () {},
+          onTap: () =>
+              context.read<MapProvider>().setActiveHomeTab(4),
         ),
         const SizedBox(height: 12),
         _WorkManagementCard(

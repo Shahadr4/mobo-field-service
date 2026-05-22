@@ -20,17 +20,29 @@ class TimesheetListScreen extends StatefulWidget {
 
 class _TimesheetListScreenState extends State<TimesheetListScreen> {
   final _searchCtrl = TextEditingController();
+  late final TimesheetListProvider _provider;
 
   @override
   void initState() {
     super.initState();
+    _provider = context.read<TimesheetListProvider>();
+    _provider.addListener(_onProviderChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<TimesheetListProvider>().init();
+      if (_provider.entries.isEmpty && !_provider.isLoading) {
+        _provider.init();
+      }
     });
+  }
+
+  void _onProviderChanged() {
+    if (_provider.entries.isEmpty && !_provider.isLoading && _provider.error == null) {
+      _provider.init();
+    }
   }
 
   @override
   void dispose() {
+    _provider.removeListener(_onProviderChanged);
     _searchCtrl.dispose();
     super.dispose();
   }

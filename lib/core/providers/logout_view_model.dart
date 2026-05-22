@@ -9,6 +9,14 @@ import '../../shared/widgets/snackbars/custom_snackbar.dart';
 import '../../shared/widgets/loaders/loading_widget.dart';
 import '../../app/app_entry.dart';
 import '../routing/page_transition.dart';
+import '../../features/dashboard/provider/check_in_provider.dart';
+import '../../features/dashboard/provider/task_stats_provider.dart';
+import '../../features/dashboard/provider/dashboard_task_provider.dart';
+import '../../features/tasks/provider/task_provider.dart';
+import '../../features/employee/provider/employee_provider.dart';
+import '../../features/map/provider/map_provider.dart';
+import '../../features/timesheet/provider/timesheet_list_provider.dart';
+import '../../features/dashboard/provider/timesheet_provider.dart';
 
 class LogoutViewModel extends ChangeNotifier {
   Future<void> confirmLogout(BuildContext context) async {
@@ -158,12 +166,13 @@ class LogoutViewModel extends ChangeNotifier {
     // Small delay to let the dialog render smoothly
     await Future.delayed(const Duration(milliseconds: 900));
 
-   // providerResetKey.value++;
     // Perform logout using SessionService
     await context.read<SessionService>().logout();
 
-
-
+    // Reset all feature providers and bottom nav tab
+    if (context.mounted) {
+      context.read<MapProvider>().resetTab();
+    }
 
     // Close dialog
     if (dialogContext != null && dialogContext!.mounted) {

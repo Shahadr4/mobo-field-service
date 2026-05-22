@@ -187,6 +187,23 @@ class TaskProvider extends ChangeNotifier {
     await fetchTasks();
   }
 
+  void reset() {
+    _tasks = [];
+    _stages = [];
+    _isLoading = false;
+    _error = null;
+    _search = '';
+    _selectedStage = 'All';
+    _selectedFilters = {TaskFilterBy.myTasks};
+    _groupBy = TaskGroupBy.none;
+    _currentPage = 1;
+    _totalCount = 0;
+    _warrantyEnabled = false;
+    _worksheetEnabled = false;
+    _fsmSettingsFetched = false;
+    notifyListeners();
+  }
+
   Future<void> refresh() async {
     _search        = '';
     _selectedStage = 'All';

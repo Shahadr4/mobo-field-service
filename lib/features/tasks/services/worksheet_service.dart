@@ -14,7 +14,21 @@ const _kSkipFields = {
   'display_name',
   'x_project_task_id',
   'project_task_id',
+  'x_name'
 };
+
+/// Returns true for fields that should never be shown regardless of context.
+bool _isJunkField(String name) {
+  // Odoo auto-generates a companion *_filename char field for every binary field.
+  // These are internal storage helpers, not user-facing.
+  if (name.startsWith('x_studio_binary_')) return true;
+  // Many-to-one field that Odoo adds as a task link — already excluded via skip
+  // set but guard here too.
+  if (name.endsWith('_id') && name.startsWith('x_') && name.contains('task')) {
+    return true;
+  }
+  return false;
+}
 
 class WorksheetActionResult {
   final String resModel;
@@ -128,7 +142,7 @@ class WorksheetService {
     final re = RegExp(r'<field[^>]+name="([^"]+)"', unicode: true);
     for (final m in re.allMatches(arch)) {
       final name = m.group(1)!;
-      if (!_kSkipFields.contains(name) && !names.contains(name)) {
+      if (!_kSkipFields.contains(name) && !_isJunkField(name) && !names.contains(name)) {
         names.add(name);
       }
     }
@@ -163,6 +177,7 @@ class WorksheetService {
       result.forEach((key, value) {
         final name = key.toString();
         if (_kSkipFields.contains(name)) return;
+        if (_isJunkField(name)) return;
         if (value is Map) {
           allMeta[name] =
               WorksheetFieldMeta.fromMap(name, Map<String, dynamic>.from(value));

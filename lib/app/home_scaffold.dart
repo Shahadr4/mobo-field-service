@@ -27,6 +27,7 @@ import '../features/tasks/pages/task_list_screen.dart';
 import '../features/tasks/pages/create_task_screen.dart';
 import '../features/tasks/provider/task_provider.dart';
 import '../features/employee/pages/employee_list_screen.dart';
+import '../features/employee/provider/employee_provider.dart';
 import '../features/review/services/review_service.dart';
 
 import '../features/profile/pages/profile_screen.dart';
@@ -210,14 +211,29 @@ class _HomeScaffoldState extends State<HomeScaffold>
         final checkIn = context.read<CheckInProvider>();
         final taskStats = context.read<TaskStatsProvider>();
         final dashTasks = context.read<DashboardTaskProvider>();
+        final tasks = context.read<TaskProvider>();
+        final employees = context.read<AssigneeProvider>();
+        final mapProv = context.read<MapProvider>();
+        final timesheetList = context.read<TimesheetListProvider>();
 
         // Clear stale data immediately — shimmer shows while fresh data loads
         checkIn.reset();
         taskStats.reset();
-        dashTasks.refresh();
+        dashTasks.reset();
+        tasks.reset();
+        employees.reset();
+        timesheetList.reset();
+        mapProv.resetTab();
 
-        // Trigger fresh load (IndexedStack keeps DashboardScreen alive, initState won't re-fire)
-        unawaited(Future.wait([checkIn.init(), taskStats.fetch()]));
+        // Reload all data sources for the new company/account.
+        // tasks/employees/timesheetList reset() triggers their screen listeners
+        // to auto-call init()/fetchAssignees()/init() from Odoo.
+        mapProv.refresh();
+        unawaited(Future.wait([
+          checkIn.init(),
+          taskStats.fetch(),
+          dashTasks.refresh(),
+        ]));
 
         if (!mounted) return;
         CustomSnackbar.showSuccess(context, 'Switched to $companyName');

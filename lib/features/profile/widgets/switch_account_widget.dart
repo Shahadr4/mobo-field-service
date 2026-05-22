@@ -18,6 +18,12 @@ import '../../dashboard/provider/task_stats_provider.dart';
 import '../../login/pages/credentials_screen.dart';
 import '../../../core/routing/page_transition.dart';
 import '../../../app/home_scaffold.dart';
+import '../../../features/dashboard/provider/dashboard_task_provider.dart';
+import '../../../features/tasks/provider/task_provider.dart';
+import '../../../features/employee/provider/employee_provider.dart';
+import '../../../features/map/provider/map_provider.dart';
+import '../../../features/timesheet/provider/timesheet_list_provider.dart';
+import '../../../features/dashboard/provider/timesheet_provider.dart';
 import '../../login/pages/server_setup_screen.dart';
 import '../providers/profile_provider.dart';
 
@@ -669,10 +675,18 @@ class SwitchAccountWidget extends StatelessWidget {
         await fixedSession.saveToPrefs();
         await OdooSessionManager.updateSession(fixedSession);
         sessionService.updateSession(fixedSession);
+        // await context.read<CheckInProvider>().refresh();
+        // await context.read<TaskStatsProvider>().refresh();
+        // await  context.read<DashboardTaskProvider>().refresh();
 
         if (context.mounted) {
-          context.read<CheckInProvider>().reset();
-          context.read<TaskStatsProvider>().reset();
+
+          context.read<TimesheetProvider>().reset();
+          context.read<DashboardTaskProvider>().reset();
+          context.read<TaskProvider>().reset();
+          context.read<AssigneeProvider>().reset();
+          context.read<TimesheetListProvider>().reset();
+          context.read<MapProvider>().resetTab();
 
           Navigator.pop(context);
           Navigator.pushAndRemoveUntil(

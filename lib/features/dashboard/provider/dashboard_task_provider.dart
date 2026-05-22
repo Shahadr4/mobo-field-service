@@ -49,6 +49,19 @@ class DashboardTaskProvider extends ChangeNotifier {
     await Future.wait([_loadFsmSettings(), _load(0)]);
   }
 
+  void reset() {
+    _tabIndex = 0;
+    _cache.clear();
+    _isLoading = false;
+    _error = null;
+    _warrantyEnabled = false;
+    _worksheetEnabled = false;
+    _fsmSettingsFetched = false;
+    refresh();
+    notifyListeners();
+
+  }
+
   Future<void> refresh() async {
     _cache.clear();
     await _load(_tabIndex);
