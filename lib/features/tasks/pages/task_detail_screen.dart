@@ -246,6 +246,34 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
           ),
         ),
         actions: [
+          IconButton(
+            padding: EdgeInsets.zero,
+            icon: HugeIcon(
+              icon: HugeIcons.strokeRoundedTask02,
+              color: isDark ? Colors.white54 : Colors.black54,
+            ),
+            onPressed: () async {
+              log("work sheet template");
+
+              try {
+
+                final result = await OdooSessionManager.callKwWithCompany({
+                  'model': 'project.task',
+                  'method': 'action_fsm_worksheet',
+                  'args': [
+                    [_task.id] // TASK ID
+                  ],
+                  'kwargs': {},
+                });
+
+                print(result);
+
+
+              } catch (e) {
+                log("ERROR => ${e.toString()}");
+              }
+            },
+          ),
 
           IconButton(
             padding: EdgeInsets.zero,
@@ -428,7 +456,7 @@ class _TaskActionMenu extends StatelessWidget {
       icon: Icon(
         Icons.more_vert,
         size: 20,
-        color: isDark ? Colors.white54 : Colors.black54,
+        color: isDark ? Colors.white54 : Colors.black,
       ),
       onSelected: (action) {
         switch (action) {

@@ -188,7 +188,7 @@ class _TaskFilterSheetState extends State<TaskFilterSheet> {
                       side: BorderSide(
                         color: isDark
                             ? Colors.white24
-                            : Colors.black.withValues(alpha: 0.18),
+                            : primaryColor,
                         width: 1.2,
                       ),
                       shape: RoundedRectangleBorder(
@@ -199,7 +199,7 @@ class _TaskFilterSheetState extends State<TaskFilterSheet> {
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
-                        color: isDark ? Colors.white70 : Colors.black87,
+                        color: isDark ? Colors.white70 : primaryColor,
                       ),
                     ),
                   ),
