@@ -108,9 +108,7 @@ class TaskCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                Icon(Icons.more_vert_rounded,
-                    size: 20,
-                    color: isDark ? Colors.white38 : Colors.black38),
+
               ],
             ),
             const SizedBox(height: 6),

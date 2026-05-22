@@ -1106,4 +1106,30 @@ class TaskService {
       rethrow;
     }
   }
+
+  /// Calls action_preview_worksheet on the task and returns the preview URL
+  /// along with the session cookie string needed to authenticate the webview.
+  Future<({String url, String sessionId})> fetchWorksheetPreviewUrl(int taskId) async {
+    final session = await OdooSessionManager.getCurrentSession();
+    if (session == null) throw Exception('Session not found');
+
+    final result = await OdooSessionManager.safeCallKw({
+      'model': 'project.task',
+      'method': 'action_preview_worksheet',
+      'args': [[taskId]],
+      'kwargs': {},
+    });
+
+    if (result == null || result is! Map) {
+      throw Exception('Failed to call action_preview_worksheet');
+    }
+
+    final url = result['url'] as String?;
+    if (url == null || url.isEmpty) {
+      throw Exception('No URL returned from action_preview_worksheet');
+    }
+
+    final fullUrl = url.startsWith('http') ? url : '${session.serverUrl}$url';
+    return (url: fullUrl, sessionId: session.sessionId);
+  }
 }

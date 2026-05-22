@@ -4,6 +4,7 @@ import '../../../core/const/app_colors.dart';
 import '../../../shared/widgets/empty_state.dart';
 import '../model/employee_filter.dart';
 import '../model/employee_model.dart';
+import '../pages/employee_detail_screen.dart';
 import '../provider/employee_provider.dart';
 import 'employee_card.dart';
 import 'employee_shimmer.dart';
@@ -75,11 +76,21 @@ class AssigneeListBody extends StatelessWidget {
           : ListView.builder(
               padding: const EdgeInsets.fromLTRB(16, 14, 16, 28),
               itemCount: grouped['']?.length ?? 0,
-              itemBuilder: (_, i) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: AssigneeCard(
-                    assignee: grouped['']![i], isDark: isDark),
-              ),
+              itemBuilder: (_, i) {
+                final a = grouped['']![i];
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: GestureDetector(
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => EmployeeDetailScreen(assignee: a),
+                      ),
+                    ),
+                    child: AssigneeCard(assignee: a, isDark: isDark),
+                  ),
+                );
+              },
             ),
     );
   }
@@ -199,7 +210,17 @@ class _GroupSectionState extends State<_GroupSection> {
                     final isLast = i == widget.assignees.length - 1;
                     return Column(
                       children: [
-                        _AssigneeRow(assignee: a, isDark: widget.isDark),
+                        GestureDetector(
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) =>
+                                  EmployeeDetailScreen(assignee: a),
+                            ),
+                          ),
+                          child: _AssigneeRow(
+                              assignee: a, isDark: widget.isDark),
+                        ),
                         if (!isLast)
                           Divider(
                               height: 1,

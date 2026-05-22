@@ -1,9 +1,10 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:mobo_feild_service/core/const/app_colors.dart';
-import 'package:open_file/open_file.dart';
-
+import '../../../core/services/odoo_session_manager.dart';
 import '../model/task_model.dart';
 import 'edit_task_screen.dart';
 import 'package:provider/provider.dart';
@@ -18,7 +19,7 @@ import '../widgets/detail/info_content.dart';
 import '../widgets/detail/timesheet_content.dart';
 import 'package:mobo_feild_service/shared/widgets/snackbars/custom_snackbar.dart';
 import '../../map/provider/map_provider.dart';
-import 'package:share_plus/share_plus.dart';
+import 'worksheet_preview_screen.dart';
 import 'package:flutter_email_sender/flutter_email_sender.dart';
 import 'package:mobo_feild_service/shared/widgets/loaders/loading_widget.dart';
 
@@ -143,32 +144,25 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
   }
 
   Future<void> _handleSignReport() async {
-    setState(() => _overlayLoadingMessage = 'Generating report...');
+    setState(() => _overlayLoadingMessage = 'Loading worksheet...');
     try {
-      final file = await _service.downloadTaskReport(_task.id);
+      final result = await _service.fetchWorksheetPreviewUrl(_task.id);
       if (!mounted) return;
-
-      if (file == null) {
-        throw Exception("Could not download report file.");
-      }
-
       setState(() => _overlayLoadingMessage = null);
-      await OpenFile.open(file.path);
-      if (!mounted) return;
-
-      CustomSnackbar.showSuccess(
+      await Navigator.push(
         context,
-        'Report downloaded successfully',
+        MaterialPageRoute(
+          builder: (_) => WorksheetPreviewScreen(
+            url: result.url,
+            sessionId: result.sessionId,
+            taskName: _task.name,
+          ),
+        ),
       );
-
-      CustomSnackbar.showInfo(context, 'Sign report feature coming soon');
     } catch (e) {
       if (mounted) {
         setState(() => _overlayLoadingMessage = null);
-        CustomSnackbar.showError(
-          context,
-          'Failed to generate report: ${e.toString()}',
-        );
+        CustomSnackbar.showError(context, 'Failed to load worksheet: ${e.toString()}');
       }
     }
   }
@@ -185,60 +179,19 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
 
       setState(() => _overlayLoadingMessage = 'Preparing email...');
 
-      final hasEmail = _task.partnerEmail.isNotEmpty;
-      
-      if (hasEmail) {
-        try {
-          // Attempt to open the default email composer directly with the recipient and attachment prefilled
-          final Email email = Email(
-            body: 'Please find attached the field service report for task "${_task.name}".',
-            subject: 'Field Service Report: ${_task.name}',
-            recipients: [_task.partnerEmail],
-            attachmentPaths: [file.path],
-            isHTML: false,
-          );
-
-          await FlutterEmailSender.send(email);
-          
-          if (!mounted) return;
-          setState(() => _overlayLoadingMessage = null);
-          CustomSnackbar.showSuccess(
-            context,
-            'Email composer opened with attached report.',
-          );
-          return;
-        } catch (mailError) {
-          debugPrint("Direct email compose failed, falling back to share sheet: $mailError");
-          // Fall back to clipboard copy + native share sheet if direct email composition fails
-          await Clipboard.setData(ClipboardData(text: _task.partnerEmail));
-        }
-      }
-
-      // Open the native share/email sheet with the attached PDF
-      // ignore: deprecated_member_use
-      await Share.shareXFiles(
-        [XFile(file.path)],
+      final Email email = Email(
+        body: 'Please find attached the field service report for task "${_task.name}".',
         subject: 'Field Service Report: ${_task.name}',
-        text: hasEmail
-            ? 'Customer Email: ${_task.partnerEmail}\n\n'
-                'Please find attached the field service report for task "${_task.name}".'
-            : 'Please find attached the field service report for task "${_task.name}".',
+        recipients: _task.partnerEmail.isNotEmpty ? [_task.partnerEmail] : [],
+        attachmentPaths: [file.path],
+        isHTML: false,
       );
+
+      await FlutterEmailSender.send(email);
 
       if (!mounted) return;
       setState(() => _overlayLoadingMessage = null);
-
-      if (hasEmail) {
-        CustomSnackbar.showSuccess(
-          context,
-          'Report ready! Customer email copied to clipboard.',
-        );
-      } else {
-        CustomSnackbar.showSuccess(
-          context,
-          'Report ready to send',
-        );
-      }
+      CustomSnackbar.showSuccess(context, 'Email composer opened with attached report.');
     } catch (e) {
       if (mounted) {
         setState(() => _overlayLoadingMessage = null);
