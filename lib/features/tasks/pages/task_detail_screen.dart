@@ -17,6 +17,7 @@ import '../widgets/detail/task_pill_tab.dart';
 import '../widgets/detail/subtasks_content.dart';
 import '../widgets/detail/info_content.dart';
 import '../widgets/detail/timesheet_content.dart';
+import '../widgets/detail/products_content.dart';
 import 'package:mobo_feild_service/shared/widgets/snackbars/custom_snackbar.dart';
 import '../../map/provider/map_provider.dart';
 import 'worksheet_preview_screen.dart';
@@ -255,23 +256,6 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
             onPressed: () async {
               log("work sheet template");
 
-              try {
-
-                final result = await OdooSessionManager.callKwWithCompany({
-                  'model': 'project.task',
-                  'method': 'action_fsm_worksheet',
-                  'args': [
-                    [_task.id] // TASK ID
-                  ],
-                  'kwargs': {},
-                });
-
-                print(result);
-
-
-              } catch (e) {
-                log("ERROR => ${e.toString()}");
-              }
             },
           ),
 
@@ -339,29 +323,43 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                           const SizedBox(height: 16),
 
                           // Pill tabs
-                          Row(
-                            children: [
-                              TaskPillTab(
-                                label: 'Info',
-                                selected: _tabIndex == 0,
-                                isDark: isDark,
-                                onTap: () => setState(() => _tabIndex = 0),
-                              ),
-                              const SizedBox(width: 10),
-                              TaskPillTab(
-                                label: 'Timesheet',
-                                selected: _tabIndex == 1,
-                                isDark: isDark,
-                                onTap: () => setState(() => _tabIndex = 1),
-                              ),
-                              const SizedBox(width: 10),
-                              TaskPillTab(
-                                label: 'Subtasks',
-                                selected: _tabIndex == 2,
-                                isDark: isDark,
-                                onTap: () => setState(() => _tabIndex = 2),
-                              ),
-                            ],
+                          SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: [
+                                TaskPillTab(
+                                  label: 'Info',
+                                  selected: _tabIndex == 0,
+                                  isDark: isDark,
+                                  onTap: () => setState(() => _tabIndex = 0),
+                                ),
+                                const SizedBox(width: 10),
+                                TaskPillTab(
+                                  label: 'Timesheet',
+                                  selected: _tabIndex == 1,
+                                  isDark: isDark,
+                                  onTap: () => setState(() => _tabIndex = 1),
+                                ),
+                                const SizedBox(width: 10),
+                                TaskPillTab(
+                                  label: 'Subtasks',
+                                  selected: _tabIndex == 2,
+                                  isDark: isDark,
+                                  onTap: () => setState(() => _tabIndex = 2),
+                                ),
+                                if (_task.allowMaterial &&
+                                    !_task.hasTemplateAncestor &&
+                                    !_task.hasProjectTemplate) ...[
+                                  const SizedBox(width: 10),
+                                  TaskPillTab(
+                                    label: 'Products',
+                                    selected: _tabIndex == 3,
+                                    isDark: isDark,
+                                    onTap: () => setState(() => _tabIndex = 3),
+                                  ),
+                                ],
+                              ],
+                            ),
                           ),
                           const SizedBox(height: 12),
                         ],
@@ -398,8 +396,14 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                                 task: _task,
                                 isDark: isDark,
                               )
-                            : SubtasksContent(
+                            : _tabIndex == 2
+                            ? SubtasksContent(
                                 key: ValueKey('sub$_refreshKey'),
+                                task: _task,
+                                isDark: isDark,
+                              )
+                            : ProductsContent(
+                                key: ValueKey('prod$_refreshKey'),
                                 task: _task,
                                 isDark: isDark,
                               ),

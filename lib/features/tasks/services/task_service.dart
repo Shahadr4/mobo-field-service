@@ -347,6 +347,7 @@ class TaskService {
             'display_mark_as_done_secondary',
             'has_template_ancestor',
             'has_project_template',
+            'allow_material',
           ],
           'order': 'name asc',
           'limit': 200,

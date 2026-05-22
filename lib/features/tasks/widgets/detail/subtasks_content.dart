@@ -106,7 +106,7 @@ class _SubtasksContentState extends State<SubtasksContent> {
             child: OutlinedButton.icon(
               onPressed: _showAddSubtaskSheet,
               icon: const Icon(Icons.add, size: 18),
-              label: const Text('Add Subtask'),
+                label: const Text('Add Subtask'),
               style: OutlinedButton.styleFrom(
                 foregroundColor: primaryColor,
                 side: BorderSide(color: primaryColor.withValues(alpha: 0.6)),

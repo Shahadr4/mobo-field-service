@@ -28,6 +28,7 @@ class TaskModel {
   final bool displayMarkAsDone;
   final bool hasTemplateAncestor;
   final bool hasProjectTemplate;
+  final bool allowMaterial;
   final int? projectId;
   final int? stageId;
   final int? partnerId;
@@ -66,6 +67,7 @@ class TaskModel {
     this.displayMarkAsDone = false,
     this.hasTemplateAncestor = false,
     this.hasProjectTemplate = false,
+    this.allowMaterial = false,
     this.projectId,
     this.stageId,
     this.partnerId,
@@ -105,6 +107,7 @@ class TaskModel {
     bool? displayMarkAsDone,
     bool? hasTemplateAncestor,
     bool? hasProjectTemplate,
+    bool? allowMaterial,
     int? projectId,
     int? stageId,
     int? partnerId,
@@ -143,6 +146,7 @@ class TaskModel {
       displayMarkAsDone: displayMarkAsDone ?? this.displayMarkAsDone,
       hasTemplateAncestor: hasTemplateAncestor ?? this.hasTemplateAncestor,
       hasProjectTemplate: hasProjectTemplate ?? this.hasProjectTemplate,
+      allowMaterial: allowMaterial ?? this.allowMaterial,
       projectId: projectId ?? this.projectId,
       stageId: stageId ?? this.stageId,
       partnerId: partnerId ?? this.partnerId,
@@ -237,6 +241,7 @@ class TaskModel {
       displayMarkAsDone: map['display_mark_as_done_secondary'] == true,
       hasTemplateAncestor: map['has_template_ancestor'] == true,
       hasProjectTemplate: map['has_project_template'] == true,
+      allowMaterial: map['allow_material'] == true,
       projectId: rawId(map['project_id']),
       stageId: rawId(map['stage_id']),
       partnerId: rawId(map['partner_id']),
