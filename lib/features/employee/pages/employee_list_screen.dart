@@ -32,7 +32,7 @@ class _AssigneeListScreenState extends State<AssigneeListScreen> {
   }
 
   void _onProviderChanged() {
-    if (_provider.assignees.isEmpty && !_provider.isLoading && _provider.error == null) {
+    if (!_provider.hasFetched && !_provider.isLoading && _provider.error == null) {
       _provider.fetchAssignees();
     }
   }

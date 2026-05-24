@@ -12,6 +12,7 @@ import '../widget/task_stats_shimmer.dart';
 import '../provider/dashboard_task_provider.dart';
 import '../widget/timer_widget.dart';
 import '../widget/dashboard_task_tabs.dart';
+import '../provider/timesheet_provider.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -33,6 +34,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     await Future.wait([
       context.read<CheckInProvider>().init(),
       context.read<TaskStatsProvider>().fetch(),
+      context.read<DashboardTaskProvider>().init(),
     ]);
   }
 
@@ -51,6 +53,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final profileProvider = context.watch<ProfileProvider>();
     final isProfileLoading =
         profileProvider.isLoading && profileProvider.userData == null;
+    final isTimerRunning = context.watch<TimesheetProvider>().isTimerRunning;
 
     return Scaffold(
       body: RefreshIndicator(
@@ -66,6 +69,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   : GreetingCardWidget(profileProvider: profileProvider),
               const SizedBox(height: 18),
               const CheckInWidget(),
+              if (isTimerRunning) ...[
+                const SizedBox(height: 18),
+                const TimerWidget(),
+              ],
               const SizedBox(height: 18),
               const DashboardTaskTabs(),
               const SizedBox(height: 10),
@@ -73,8 +80,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ? const TaskStatsShimmer()
                   : const TaskStatsGrid(),
               const SizedBox(height: 16),
-              const TimerWidget(),
-              const SizedBox(height: 20),
+              if (!isTimerRunning) ...[
+                const TimerWidget(),
+                const SizedBox(height: 20),
+              ],
             ],
           ),
         ),

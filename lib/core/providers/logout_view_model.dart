@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import 'package:provider/provider.dart';
-import '../../../main.dart';
 import '../const/app_colors.dart';
 import '../services/session_service.dart';
 import '../../features/settings/providers/settings_provider.dart';
@@ -17,6 +16,7 @@ import '../../features/employee/provider/employee_provider.dart';
 import '../../features/map/provider/map_provider.dart';
 import '../../features/timesheet/provider/timesheet_list_provider.dart';
 import '../../features/dashboard/provider/timesheet_provider.dart';
+import '../../features/profile/providers/profile_provider.dart';
 
 class LogoutViewModel extends ChangeNotifier {
   Future<void> confirmLogout(BuildContext context) async {
@@ -171,7 +171,15 @@ class LogoutViewModel extends ChangeNotifier {
 
     // Reset all feature providers and bottom nav tab
     if (context.mounted) {
-      context.read<MapProvider>().resetTab();
+      context.read<TimesheetProvider>().reset();
+      context.read<DashboardTaskProvider>().reset();
+      context.read<TaskProvider>().reset();
+      context.read<AssigneeProvider>().reset();
+      context.read<TimesheetListProvider>().reset();
+      context.read<TaskStatsProvider>().reset();
+      context.read<CheckInProvider>().reset();
+      context.read<MapProvider>().reset();
+      context.read<ProfileProvider>().resetState();
     }
 
     // Close dialog

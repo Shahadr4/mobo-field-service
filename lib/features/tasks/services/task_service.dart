@@ -840,7 +840,7 @@ class TaskService {
       if (description != null) vals['description'] = description;
       if (priority != null) vals['priority'] = priority.toString();
       if (plannedDateEnd != null) {
-        vals['date_deadline'] = '${plannedDateEnd.year}-${plannedDateEnd.month.toString().padLeft(2,'0')}-${plannedDateEnd.day.toString().padLeft(2,'0')}';
+        vals['date_deadline'] =  fmtDt(plannedDateEnd);
       }
       if (assigneeIds != null) {
         vals['user_ids'] = [
@@ -863,6 +863,7 @@ class TaskService {
       if (plannedDateBegin != null) vals['planned_date_begin'] = fmtDt(plannedDateBegin);
 
       if (vals.isEmpty) return null;
+      log("values ==> $vals");
 
       final result = await OdooSessionManager.callKwWithCompany({
         'model': 'project.task',

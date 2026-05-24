@@ -173,11 +173,19 @@ class TimesheetProvider extends ChangeNotifier {
       _service.cancelTimer(timesheetId: timesheetId, taskId: taskId);
 
   void reset() {
+    _globalTicker?.cancel();
+    _activeTaskId = null;
+    _activeTimesheetId = null;
+    _activeElapsed = Duration.zero;
+    _isTimerRunning = false;
+    _isTimerPaused = false;
+    _activeTask = null;
     _tasks = [];
     _query = '';
     _error = null;
     _isLoading = false;
     _isSubmitting = false;
+    notifyListeners();
   }
 
   @override

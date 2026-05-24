@@ -164,28 +164,30 @@ class _HomeScaffoldState extends State<HomeScaffold>
             index: activeIndex,
             children: _screens,
           ),
-          floatingActionButton: activeIndex == 1
-              ? FloatingActionButton(
-                  onPressed: () async {
-                    final provider = context.read<TaskProvider>();
-                    final created = await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => const CreateTaskScreen(),
-                      ),
-                    );
-                    if (created == true && mounted) {
-                      provider.refresh();
-                    }
-                  },
-                  backgroundColor: primaryColor,
-                  foregroundColor: Colors.white,
-                  elevation: 4,
-                  child: const Icon(Icons.add_rounded, size: 28),
-                )
-              : activeIndex == 4
-                  ? const _TimesheetFab()
-                  : null,
+          floatingActionButton: activeIndex == 0
+              ? const _DashboardFab()
+              : activeIndex == 1
+                  ? FloatingActionButton(
+                      onPressed: () async {
+                        final provider = context.read<TaskProvider>();
+                        final created = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const CreateTaskScreen(),
+                          ),
+                        );
+                        if (created == true && mounted) {
+                          provider.refresh();
+                        }
+                      },
+                      backgroundColor: primaryColor,
+                      foregroundColor: Colors.white,
+                      elevation: 4,
+                      child: const Icon(Icons.add_rounded, size: 28),
+                    )
+                  : activeIndex == 4
+                      ? const _TimesheetFab()
+                      : null,
           bottomNavigationBar: AppBottomNav(
             currentIndex: activeIndex,
             onTabSelected: (i) => mapProvider.setActiveHomeTab(i),
@@ -320,6 +322,106 @@ class _HomeScaffoldState extends State<HomeScaffold>
         ),
       ),
     ];
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Dashboard expandable FAB
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _DashboardFab extends StatefulWidget {
+  const _DashboardFab();
+
+  @override
+  State<_DashboardFab> createState() => _DashboardFabState();
+}
+
+class _DashboardFabState extends State<_DashboardFab> {
+  bool _open = false;
+  bool _isStarting = false;
+  final _service = TimesheetService();
+
+  void _toggle() => setState(() => _open = !_open);
+  void _close() => setState(() => _open = false);
+
+  Future<void> _onStartTimer() async {
+    _close();
+    final task = await ProjectPickerSheet.show(context);
+    if (task == null || !mounted) return;
+
+    setState(() => _isStarting = true);
+
+    final timerProv = context.read<TimesheetProvider>();
+
+    if (timerProv.isTimerRunning) {
+      await timerProv.autoStopAndSaveRunningTimer();
+    }
+
+    final timesheetId = await _service.startTimer(task.id);
+    if (!mounted) return;
+
+    if (timesheetId == null) {
+      setState(() => _isStarting = false);
+      CustomSnackbar.showError(context, 'Could not start timer. Please try again.');
+      return;
+    }
+
+    timerProv.startGlobalTimer(task, timesheetId);
+    setState(() => _isStarting = false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        // Option buttons
+        if (_open) ...[
+          _FabOption(
+            label: 'Timer Recording',
+            icon: Icons.play_arrow_rounded,
+            isDark: isDark,
+            loading: _isStarting,
+            onTap: _onStartTimer,
+          ),
+          const SizedBox(height: 12),
+          _FabOption(
+            label: 'Create Task',
+            icon: Icons.add_task_rounded,
+            isDark: isDark,
+            loading: false,
+            onTap: () async {
+              _close();
+              final provider = context.read<TaskProvider>();
+              final dashTaskProvider = context.read<DashboardTaskProvider>();
+              final created = await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const CreateTaskScreen(),
+                ),
+              );
+              if (created == true && context.mounted) {
+                provider.refresh();
+                dashTaskProvider.refresh();
+              }
+            },
+          ),
+          const SizedBox(height: 16),
+        ],
+
+        // Main FAB
+        FloatingActionButton(
+          onPressed: _toggle,
+          backgroundColor: primaryColor,
+          foregroundColor: Colors.white,
+          elevation: 4,
+          child: const Icon(Icons.add_rounded, size: 28),
+        ),
+      ],
+    );
   }
 }
 

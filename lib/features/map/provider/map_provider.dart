@@ -246,6 +246,20 @@ class MapProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void reset() {
+    _state = MapLoadState.idle;
+    _tasks = [];
+    _selectedCluster = null;
+    _routePoints = [];
+    _searchQuery = '';
+    _currentPage = 1;
+    _userPosition = null;
+    _viewMode = MapViewMode.map;
+    _activeHomeTab = 0;
+    _pendingJumpTaskId = null;
+    notifyListeners();
+  }
+
   int? _pendingJumpTaskId;
   int? get pendingJumpTaskId => _pendingJumpTaskId;
 

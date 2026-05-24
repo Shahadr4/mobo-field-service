@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -164,6 +165,8 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
     _descriptionCtrl.text = widget.task.description;
     _hoursCtrl.text = widget.task.allocatedHours > 0 ? widget.task.allocatedHours.toString() : '';
     _plannedStart = widget.task.plannedDateBegin;
+    log("planned date end ==> ${ widget.task.plannedDateEnd}") ;
+    log("planned date start ==> ${ widget.task.plannedDateBegin}") ;
     _plannedEnd = widget.task.plannedDateEnd;
     _underWarranty = widget.task.underWarranty;
     _priority = widget.task.priority;

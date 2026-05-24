@@ -66,13 +66,13 @@ class _AppEntryState extends State<AppEntry> {
             {},
           );
 
-          // Field Service module check
+          // Field Service & HR Attendance modules check
           final count = await client.callKw({
             'model': 'ir.module.module',
             'method': 'search_count',
             'args': [
               [
-                ['name', '=', 'industry_fsm'],
+                ['name', 'in', ['industry_fsm', 'hr_attendance']],
                 ['state', '=', 'installed'],
               ]
             ],
@@ -80,7 +80,7 @@ class _AppEntryState extends State<AppEntry> {
           });
 
 
-          fieldServiceInstalled = (count as num) > 0;
+          fieldServiceInstalled = (count as num) == 2;
 
           if (fieldServiceInstalled) {
             final sessionService = SessionService.instance;

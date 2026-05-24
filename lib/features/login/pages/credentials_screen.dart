@@ -19,6 +19,16 @@ import '../../../core/services/odoo_session_manager.dart';
 import '../../../core/services/biometric_context_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../features/dashboard/provider/timesheet_provider.dart';
+import '../../../features/dashboard/provider/dashboard_task_provider.dart';
+import '../../../features/dashboard/provider/check_in_provider.dart';
+import '../../../features/dashboard/provider/task_stats_provider.dart';
+import '../../../features/tasks/provider/task_provider.dart';
+import '../../../features/employee/provider/employee_provider.dart';
+import '../../../features/timesheet/provider/timesheet_list_provider.dart';
+import '../../../features/map/provider/map_provider.dart';
+import '../../profile/providers/profile_provider.dart';
+
 class CredentialsScreen extends StatefulWidget {
   final String url;
   final String database;
@@ -140,6 +150,18 @@ class _CredentialsScreenState extends State<CredentialsScreen> {
           await Future.delayed(const Duration(milliseconds: 100));
           // Save autofill data and finish autofill context
           TextInput.finishAutofillContext(shouldSave: true);
+
+          if (mounted) {
+            context.read<TimesheetProvider>().reset();
+            context.read<DashboardTaskProvider>().reset();
+            context.read<TaskProvider>().reset();
+            context.read<AssigneeProvider>().reset();
+            context.read<TimesheetListProvider>().reset();
+            context.read<TaskStatsProvider>().reset();
+            context.read<CheckInProvider>().reset();
+            context.read<MapProvider>().reset();
+            context.read<ProfileProvider>().resetState();
+          }
 
           Navigator.of(context).pushAndRemoveUntil(
             dynamicRoute(context, const AppEntry()),
@@ -299,8 +321,17 @@ class _CredentialsScreenState extends State<CredentialsScreen> {
       // Navigate to AppEntry so startup checks (including inventory module check)
       // can run and show MissingInventoryScreen if needed.
 
-
       if (mounted) {
+        context.read<TimesheetProvider>().reset();
+        context.read<DashboardTaskProvider>().reset();
+        context.read<TaskProvider>().reset();
+        context.read<AssigneeProvider>().reset();
+        context.read<TimesheetListProvider>().reset();
+        context.read<TaskStatsProvider>().reset();
+        context.read<CheckInProvider>().reset();
+        context.read<MapProvider>().reset();
+        context.read<ProfileProvider>().resetState();
+
         Navigator.of(context).pushAndRemoveUntil(
           dynamicRoute(context, const AppEntry()),
           (route) => false,

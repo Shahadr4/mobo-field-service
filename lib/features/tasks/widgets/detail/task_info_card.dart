@@ -11,17 +11,20 @@ import 'package:mobo_feild_service/features/dashboard/provider/timesheet_provide
 
 import '../../model/task_model.dart';
 import 'package:mobo_feild_service/shared/widgets/snackbars/custom_snackbar.dart';
+import 'package:mobo_feild_service/features/timesheet/provider/timesheet_list_provider.dart';
 
 class TaskInfoCard extends StatefulWidget {
   final TaskModel task;
   final bool isDark;
   final Color stageColor;
+  final VoidCallback? onTimerSaved;
 
   const TaskInfoCard({
     super.key,
     required this.task,
     required this.isDark,
     required this.stageColor,
+    this.onTimerSaved,
   });
 
   @override
@@ -90,12 +93,17 @@ class _TaskInfoCardState extends State<TaskInfoCard>
 
     if (!mounted) return;
 
-    await TimesheetEntrySheet.show(
+    final saved = await TimesheetEntrySheet.show(
       context,
       task: projectItem,
       timesheetId: timesheetId,
       elapsed: elapsed,
     );
+
+    if (saved && mounted) {
+      context.read<TimesheetListProvider>().refresh();
+      widget.onTimerSaved?.call();
+    }
   }
 
   String _formatted(Duration duration) {

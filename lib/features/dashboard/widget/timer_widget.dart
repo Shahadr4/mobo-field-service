@@ -13,6 +13,7 @@ import '../../../shared/widgets/snackbars/custom_snackbar.dart';
 import '../../map/provider/map_provider.dart';
 import 'project_picker_sheet.dart';
 import 'timesheet_entry_sheet.dart';
+import '../../timesheet/provider/timesheet_list_provider.dart';
 
 class TimerWidget extends StatefulWidget {
   const TimerWidget({super.key});
@@ -83,12 +84,16 @@ class _TimerWidgetState extends State<TimerWidget>
 
     if (!mounted) return;
 
-    await TimesheetEntrySheet.show(
+    final saved = await TimesheetEntrySheet.show(
       context,
       task: task,
       timesheetId: timesheetId,
       elapsed: elapsed,
     );
+
+    if (saved && mounted) {
+      context.read<TimesheetListProvider>().refresh();
+    }
   }
 
   String _formatted(Duration duration) {

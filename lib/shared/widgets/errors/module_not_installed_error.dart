@@ -39,8 +39,8 @@ class ModuleMissingDialog extends StatelessWidget {
             const SizedBox(height: 14),
 
             const Text(
-              'The required "Field Service" module is not installed. '
-                  'Please contact your administrator to enable it.',
+              'The required "Field Service" or "HR Attendance" module is not installed. '
+                  'Please contact your administrator to enable them.',
               style: TextStyle(
                 fontSize: 14,
                 color: Colors.black87,

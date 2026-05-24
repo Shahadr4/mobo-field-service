@@ -10,6 +10,7 @@ class TimesheetListProvider extends ChangeNotifier {
   List<TimesheetEntry> _entries = [];
   bool _isLoading = false;
   String? _error;
+  bool _hasFetched = false;
 
   int _currentPage = 1;
   int _totalCount = 0;
@@ -22,6 +23,7 @@ class TimesheetListProvider extends ChangeNotifier {
   List<TimesheetEntry> get entries => _entries;
   bool get isLoading => _isLoading;
   String? get error => _error;
+  bool get hasFetched => _hasFetched;
   int get currentPage => _currentPage;
   int get totalCount => _totalCount;
   String get search => _search;
@@ -67,6 +69,7 @@ class TimesheetListProvider extends ChangeNotifier {
     _entries = [];
     _isLoading = false;
     _error = null;
+    _hasFetched = false;
     _currentPage = 1;
     _totalCount = 0;
     _search = '';
@@ -144,6 +147,7 @@ class TimesheetListProvider extends ChangeNotifier {
       );
       _totalCount = count;
       _entries = entries;
+      _hasFetched = true;
     } catch (e) {
       _error = e.toString();
     } finally {

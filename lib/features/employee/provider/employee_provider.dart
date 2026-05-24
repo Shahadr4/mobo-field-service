@@ -12,6 +12,7 @@ class AssigneeProvider extends ChangeNotifier {
   List<AssigneeModel> _assignees = [];
   bool _isLoading = false;
   String? _error;
+  bool _hasFetched = false;
   String _search = '';
   Set<AssigneeFilterBy> _filters = {};
   AssigneeGroupBy _groupBy = AssigneeGroupBy.none;
@@ -21,6 +22,7 @@ class AssigneeProvider extends ChangeNotifier {
   List<AssigneeModel> get assignees => _assignees;
   bool get isLoading => _isLoading;
   String? get error => _error;
+  bool get hasFetched => _hasFetched;
   String get search => _search;
   Set<AssigneeFilterBy> get filters => _filters;
   AssigneeGroupBy get groupBy => _groupBy;
@@ -79,6 +81,7 @@ class AssigneeProvider extends ChangeNotifier {
       );
       _assignees = result.assignees;
       _totalCount = result.total;
+      _hasFetched = true;
     } catch (e) {
       _error = e.toString();
     } finally {
@@ -124,6 +127,7 @@ class AssigneeProvider extends ChangeNotifier {
     _assignees = [];
     _isLoading = false;
     _error = null;
+    _hasFetched = false;
     _search = '';
     _filters = {};
     _groupBy = AssigneeGroupBy.none;

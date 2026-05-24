@@ -70,7 +70,10 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
     );
     if (mounted) {
       setState(() {
-        if (fresh != null) _task = fresh;
+        if (fresh != null) {
+          _task = fresh;
+          _isUpdated = true;
+        }
         _refreshKey++;
         _isLoading = false;
       });
@@ -330,6 +333,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                             task: _task,
                             isDark: isDark,
                             stageColor: stageColor,
+                            onTimerSaved: _refresh,
                           ),
                           const SizedBox(height: 16),
 

@@ -51,7 +51,7 @@ class _TaskListViewState extends State<_TaskListView> {
 
   void _onProviderChanged() {
     // When reset() clears tasks and loading stops, re-fetch from Odoo
-    if (_provider.tasks.isEmpty && !_provider.isLoading && _provider.error == null) {
+    if (!_provider.hasFetched && !_provider.isLoading && _provider.error == null) {
       _provider.init();
     }
   }

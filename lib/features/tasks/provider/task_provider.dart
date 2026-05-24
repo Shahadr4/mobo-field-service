@@ -13,6 +13,7 @@ class TaskProvider extends ChangeNotifier {
   List<String>      _stages          = [];
   bool              _isLoading       = false;
   String?           _error;
+  bool              _hasFetched      = false;
   String            _search          = '';
   String            _selectedStage   = 'All';
   Set<TaskFilterBy> _selectedFilters = {TaskFilterBy.myTasks};
@@ -28,6 +29,7 @@ class TaskProvider extends ChangeNotifier {
   List<String>      get stages          => _stages;
   bool              get isLoading       => _isLoading;
   String?           get error           => _error;
+  bool              get hasFetched      => _hasFetched;
   String            get search          => _search;
   String            get selectedStage   => _selectedStage;
   Set<TaskFilterBy> get selectedFilters => _selectedFilters;
@@ -127,6 +129,7 @@ class TaskProvider extends ChangeNotifier {
       );
       _tasks      = result.tasks;
       _totalCount = result.total;
+      _hasFetched = true;
       log('[TaskProvider] got ${_tasks.length} tasks, total=$_totalCount');
     } catch (e) {
       _error = e.toString();
@@ -192,6 +195,7 @@ class TaskProvider extends ChangeNotifier {
     _stages = [];
     _isLoading = false;
     _error = null;
+    _hasFetched = false;
     _search = '';
     _selectedStage = 'All';
     _selectedFilters = {TaskFilterBy.myTasks};

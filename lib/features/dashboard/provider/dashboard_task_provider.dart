@@ -46,6 +46,7 @@ class DashboardTaskProvider extends ChangeNotifier {
   }
 
   Future<void> init() async {
+    if (_cache.containsKey(0) && _fsmSettingsFetched) return;
     await Future.wait([_loadFsmSettings(), _load(0)]);
   }
 
@@ -57,9 +58,7 @@ class DashboardTaskProvider extends ChangeNotifier {
     _warrantyEnabled = false;
     _worksheetEnabled = false;
     _fsmSettingsFetched = false;
-    refresh();
     notifyListeners();
-
   }
 
   Future<void> refresh() async {

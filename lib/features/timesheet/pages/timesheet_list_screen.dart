@@ -35,7 +35,7 @@ class _TimesheetListScreenState extends State<TimesheetListScreen> {
   }
 
   void _onProviderChanged() {
-    if (_provider.entries.isEmpty && !_provider.isLoading && _provider.error == null) {
+    if (!_provider.hasFetched && !_provider.isLoading && _provider.error == null) {
       _provider.init();
     }
   }
