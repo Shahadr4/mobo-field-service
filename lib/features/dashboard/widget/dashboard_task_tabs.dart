@@ -183,22 +183,106 @@ class _TabContent extends StatelessWidget {
       );
     }
 
+    final totalTasks = p.tasks.length;
+    final visibleCount = p.getVisibleCount(p.tabIndex);
+    final showLoadMore = totalTasks > visibleCount;
+    final itemCount = showLoadMore ? visibleCount + 1 : totalTasks;
+
     return SizedBox(
       height: 300,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
-        itemCount: p.tasks.length,
+        itemCount: itemCount,
         separatorBuilder: (_, _) => const SizedBox(width: 12),
-        itemBuilder: (_, i) => _DashboardTaskCard(
-          key: ValueKey(p.tasks[i].id),
-          task: p.tasks[i],
-          isDark: isDark,
+        itemBuilder: (_, i) {
+          if (showLoadMore && i == visibleCount) {
+            return _LoadMoreCard(
+              isDark: isDark,
+              onTap: () => p.loadMore(p.tabIndex),
+            );
+          }
+          return _DashboardTaskCard(
+            key: ValueKey(p.tasks[i].id),
+            task: p.tasks[i],
+            isDark: isDark,
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _LoadMoreCard extends StatelessWidget {
+  final bool isDark;
+  final VoidCallback onTap;
+
+  const _LoadMoreCard({required this.isDark, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 180,
+        height: 290,
+        margin: const EdgeInsets.only(bottom: 10),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1E2028) : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: primaryColor.withValues(alpha: isDark ? 0.3 : 0.2),
+            width: 1.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.18 : 0.07),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: primaryColor.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.add_circle_outline_rounded,
+                  size: 32,
+                  color: primaryColor,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Load More',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: isDark ? Colors.white : Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Show next 5 tasks',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: isDark ? Colors.white38 : Colors.black45,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
+
 
 class _ShimmerTaskCard extends StatelessWidget {
   final bool isDark;
@@ -512,17 +596,20 @@ class _DashboardTaskCardState extends State<_DashboardTaskCard> {
           // Loading overlay while fetching task detail
           if (_navLoading)
             Positioned.fill(
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(16),
-                child: Container(
-                  color: Colors.black.withValues(alpha: 0.35),
-                  child: const Center(
-                    child: SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2.5,
-                        color: Colors.white,
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: Container(
+                    color: Colors.black.withValues(alpha: 0.35),
+                    child: const Center(
+                      child: SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.5,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ),

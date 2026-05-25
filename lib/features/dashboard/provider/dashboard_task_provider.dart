@@ -14,8 +14,16 @@ class DashboardTaskProvider extends ChangeNotifier {
   String get currentTab => tabs[_tabIndex];
 
   final Map<int, List<DashboardTask>> _cache = {};
+  final Map<int, int> _visibleCounts = {};
   bool _isLoading = false;
   String? _error;
+
+  int getVisibleCount(int index) => _visibleCounts[index] ?? 5;
+
+  void loadMore(int index) {
+    _visibleCounts[index] = getVisibleCount(index) + 5;
+    notifyListeners();
+  }
 
   bool _warrantyEnabled   = false;
   bool _worksheetEnabled  = false;
@@ -53,6 +61,7 @@ class DashboardTaskProvider extends ChangeNotifier {
   void reset() {
     _tabIndex = 0;
     _cache.clear();
+    _visibleCounts.clear();
     _isLoading = false;
     _error = null;
     _warrantyEnabled = false;
@@ -63,12 +72,14 @@ class DashboardTaskProvider extends ChangeNotifier {
 
   Future<void> refresh() async {
     _cache.clear();
+    _visibleCounts[_tabIndex] = 5;
     await _load(_tabIndex);
   }
 
   Future<void> selectTabAndRefresh(int index) async {
     _tabIndex = index;
     _cache.clear();
+    _visibleCounts.clear();
     notifyListeners();
     await _load(index);
   }

@@ -630,18 +630,6 @@ class _HtmlField extends StatelessWidget {
             borderRadius:
                 const BorderRadius.vertical(top: Radius.circular(10)),
           ),
-          child: Row(
-            children: [
-              Icon(Icons.code_rounded,
-                  size: 14,
-                  color: isDark ? Colors.white38 : Colors.black38),
-              const SizedBox(width: 6),
-              Text('HTML',
-                  style: TextStyle(
-                      fontSize: 11,
-                      color: isDark ? Colors.white38 : Colors.black38)),
-            ],
-          ),
         ),
         TextField(
           controller: formCtrl.textControllers[field.name],

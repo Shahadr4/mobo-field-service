@@ -74,44 +74,44 @@ class _TaskListViewState extends State<_TaskListView> {
       children: [
         TaskSearchBar(ctrl: _searchCtrl, isDark: isDark),
         // ── My / All toggle ──────────────────────────────────────
-        Padding(
-          padding: const EdgeInsets.only(left: 16, right: 16, bottom: 8),
-          child: Align(
-            alignment: Alignment.centerRight,
-            child: Container(
-              height: 36,
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF2A2D36) : const Color(0xFFEEEEEE),
-                borderRadius: BorderRadius.circular(50),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _CapsuleTab(
-                    label: 'My',
-                    selected: isMyTasks,
-                    isDark: isDark,
-                    onTap: () {
-                      if (!isMyTasks) {
-                        context.read<TaskProvider>().toggleMyTasks(true);
-                      }
-                    },
-                  ),
-                  _CapsuleTab(
-                    label: 'All',
-                    selected: !isMyTasks,
-                    isDark: isDark,
-                    onTap: () {
-                      if (isMyTasks) {
-                        context.read<TaskProvider>().toggleMyTasks(false);
-                      }
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
+        // Padding(
+        //   padding: const EdgeInsets.only(left: 16, right: 16, bottom: 8),
+        //   child: Align(
+        //     alignment: Alignment.centerRight,
+        //     child: Container(
+        //       height: 36,
+        //       decoration: BoxDecoration(
+        //         color: isDark ? const Color(0xFF2A2D36) : const Color(0xFFEEEEEE),
+        //         borderRadius: BorderRadius.circular(50),
+        //       ),
+        //       child: Row(
+        //         mainAxisSize: MainAxisSize.min,
+        //         children: [
+        //           _CapsuleTab(
+        //             label: 'My',
+        //             selected: isMyTasks,
+        //             isDark: isDark,
+        //             onTap: () {
+        //               if (!isMyTasks) {
+        //                 context.read<TaskProvider>().toggleMyTasks(true);
+        //               }
+        //             },
+        //           ),
+        //           _CapsuleTab(
+        //             label: 'All',
+        //             selected: !isMyTasks,
+        //             isDark: isDark,
+        //             onTap: () {
+        //               if (isMyTasks) {
+        //                 context.read<TaskProvider>().toggleMyTasks(false);
+        //               }
+        //             },
+        //           ),
+        //         ],
+        //       ),
+        //     ),
+        //   ),
+        // ),
         Padding(
           padding: const EdgeInsets.only(left: 16, right: 16, bottom: 6),
           child: Row(

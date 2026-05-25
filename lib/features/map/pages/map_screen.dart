@@ -10,6 +10,7 @@ import 'package:provider/provider.dart';
 
 import '../../../core/const/app_colors.dart';
 import '../../../shared/widgets/pagination/pagination_controls.dart';
+import '../../../shared/widgets/snackbars/custom_snackbar.dart';
 import '../../dashboard/model/dashboard_task_model.dart';
 import '../../dashboard/services/location_map_service.dart';
 import '../../tasks/pages/task_detail_screen.dart';
@@ -30,6 +31,10 @@ class _MapScreenState extends State<MapScreen>
   late final AnimationController _sheetAnim;
   late final Animation<Offset> _sheetSlide;
 
+  MapProvider? _providerRef;
+  LatLng? _lastFollowedPos;
+  bool _arrivalShown = false;
+
   @override
   void initState() {
     super.initState();
@@ -44,12 +49,70 @@ class _MapScreenState extends State<MapScreen>
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final provider = context.read<MapProvider>();
+      _providerRef = provider;
+      provider.addListener(_onProviderChange);
       if (provider.state == MapLoadState.idle) provider.load();
     });
   }
 
+  void _onProviderChange() {
+    final provider = _providerRef;
+    if (provider == null || !mounted) return;
+
+    if (provider.isNavigating && provider.userLatLng != null) {
+      final p = provider.userLatLng!;
+      if (_lastFollowedPos == null ||
+          _lastFollowedPos!.latitude != p.latitude ||
+          _lastFollowedPos!.longitude != p.longitude) {
+        _lastFollowedPos = p;
+        try {
+          _mapController.move(p, 17);
+        } catch (_) {}
+      }
+      if (provider.arrived && !_arrivalShown) {
+        _arrivalShown = true;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _showArrivalDialog(provider);
+        });
+      }
+    } else {
+      _lastFollowedPos = null;
+      _arrivalShown = false;
+    }
+  }
+
+  void _showArrivalDialog(MapProvider provider) {
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          icon: const Icon(Icons.flag_rounded, color: Color(0xFF22C55E), size: 40),
+          title: const Text("You've arrived"),
+          content: Text(
+            provider.navTask?.partnerAddress.isNotEmpty == true
+                ? provider.navTask!.partnerAddress
+                : 'You are at the destination.',
+            textAlign: TextAlign.center,
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(ctx).pop();
+                provider.stopNavigation();
+              },
+              child: const Text('Done'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   void dispose() {
+    _providerRef?.removeListener(_onProviderChange);
     _sheetAnim.dispose();
     _searchController.dispose();
     _mapController.dispose();
@@ -69,19 +132,28 @@ class _MapScreenState extends State<MapScreen>
   void _jumpToTask(DashboardTask task, MapProvider provider) {
     provider.setViewMode(MapViewMode.map);
 
+    final lat = task.partnerLat;
+    final lng = task.partnerLng;
+    if (!lat.isFinite || !lng.isFinite) return;
+
     // Find the cluster this task belongs to
     final cluster = provider.clusters.firstWhere(
       (c) => c.tasks.any((t) => t.id == task.id),
       orElse: () => TaskCluster(
-        position: LatLng(task.partnerLat, task.partnerLng),
+        position: LatLng(lat, lng),
         tasks: [task],
       ),
     );
 
+    final pos = cluster.position;
+    if (!pos.latitude.isFinite || !pos.longitude.isFinite) return;
+
     // Animate after the view has switched
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      _mapController.move(cluster.position, 15);
+      try {
+        _mapController.move(pos, 15);
+      } catch (_) {}
       _selectCluster(cluster, provider);
     });
   }
@@ -217,6 +289,7 @@ class _MapScreenState extends State<MapScreen>
     final userLatLng = provider.userLatLng!;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final clusters = provider.clusters;
+    final isNav = provider.isNavigating;
 
     return Stack(
       children: [
@@ -227,32 +300,35 @@ class _MapScreenState extends State<MapScreen>
             initialZoom: 13,
             minZoom: 4,
             maxZoom: 18,
-            onTap: (tap, pos) => _selectCluster(null, provider),
+            onTap: (tap, pos) {
+              if (!isNav) _selectCluster(null, provider);
+            },
           ),
           children: [
             TileLayer(
               urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
               userAgentPackageName: 'com.example.mobo_feild_service',
             ),
-            CircleLayer(
-              circles: [
-                CircleMarker(
-                  point: userLatLng,
-                  radius: 10000,
-                  useRadiusInMeter: true,
-                  color: primaryColor.withValues(alpha: 0.07),
-                  borderColor: primaryColor.withValues(alpha: 0.4),
-                  borderStrokeWidth: 1.5,
-                ),
-              ],
-            ),
+            if (!isNav)
+              CircleLayer(
+                circles: [
+                  CircleMarker(
+                    point: userLatLng,
+                    radius: 10000,
+                    useRadiusInMeter: true,
+                    color: primaryColor.withValues(alpha: 0.07),
+                    borderColor: primaryColor.withValues(alpha: 0.4),
+                    borderStrokeWidth: 1.5,
+                  ),
+                ],
+              ),
             if (provider.routePoints.isNotEmpty)
               PolylineLayer(
                 polylines: [
                   Polyline(
                     points: provider.routePoints,
                     color: primaryColor,
-                    strokeWidth: 4.5,
+                    strokeWidth: isNav ? 6 : 4.5,
                     strokeCap: StrokeCap.round,
                     strokeJoin: StrokeJoin.round,
                   ),
@@ -260,30 +336,54 @@ class _MapScreenState extends State<MapScreen>
               ),
             MarkerLayer(
               markers: [
-                ...clusters.map((c) => _buildClusterPin(c, provider)),
-                _buildUserDot(userLatLng),
+                if (!isNav) ...clusters.map((c) => _buildClusterPin(c, provider)),
+                if (isNav && provider.navDestination != null)
+                  _buildDestinationPin(provider.navDestination!),
+                _buildUserDot(userLatLng, heading: isNav ? provider.userHeading : null),
               ],
             ),
           ],
         ),
 
-        // Top bar
-        Positioned(
-          top: 12,
-          left: 12,
-          right: 12,
-          child: _buildTopBar(provider, isDark),
-        ),
+        // Top bar (hidden in nav mode)
+        if (!isNav)
+          Positioned(
+            top: 12,
+            left: 12,
+            right: 12,
+            child: _buildTopBar(provider, isDark),
+          ),
+
+        // Nav banner (only in nav mode)
+        if (isNav)
+          Positioned(
+            top: 12,
+            left: 12,
+            right: 12,
+            child: _NavTopBanner(
+              task: provider.navTask,
+              distanceMeters: provider.routeDistanceMeters,
+              durationSeconds: provider.routeDurationSeconds,
+              isDark: isDark,
+              onClose: () => provider.stopNavigation(),
+            ),
+          ),
 
         // My-location FAB
         AnimatedPositioned(
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeOutCubic,
-          bottom: provider.selectedCluster != null ? 280 : 24,
+          bottom: isNav
+              ? 110
+              : (provider.selectedCluster != null ? 280 : 24),
           right: 16,
           child: FloatingActionButton.small(
             heroTag: 'map_locate',
-            onPressed: () => _mapController.move(userLatLng, 13),
+            onPressed: () {
+              try {
+                _mapController.move(userLatLng, isNav ? 17 : 13);
+              } catch (_) {}
+            },
             backgroundColor: Colors.white,
             foregroundColor: primaryColor,
             elevation: 4,
@@ -291,21 +391,200 @@ class _MapScreenState extends State<MapScreen>
           ),
         ),
 
-        // Cluster bottom sheet
-        SlideTransition(
-          position: _sheetSlide,
-          child: Align(
-            alignment: Alignment.bottomCenter,
-            child: provider.selectedCluster != null
-                ? _ClusterSingleTaskSwiper(
-                    cluster: provider.selectedCluster!,
-                    isDark: isDark,
-                    onClose: () => _selectCluster(null, provider),
-                  )
-                : const SizedBox.shrink(),
+        // Nav bottom bar (Stop + Open in Google Maps)
+        if (isNav)
+          Positioned(
+            left: 12,
+            right: 12,
+            bottom: 16,
+            child: _NavBottomBar(
+              isDark: isDark,
+              onStop: () => provider.stopNavigation(),
+              onExternal: () => _openExternalNav(provider),
+            ),
           ),
-        ),
+
+        // Cluster bottom sheet (hidden in nav mode)
+        if (!isNav)
+          SlideTransition(
+            position: _sheetSlide,
+            child: Align(
+              alignment: Alignment.bottomCenter,
+              child: provider.selectedCluster != null
+                  ? _ClusterSingleTaskSwiper(
+                      cluster: provider.selectedCluster!,
+                      isDark: isDark,
+                      onClose: () => _selectCluster(null, provider),
+                      onStartNavigation: (task) => _startNavigation(task, provider),
+                    )
+                  : const SizedBox.shrink(),
+            ),
+          ),
       ],
+    );
+  }
+
+  Future<void> _startNavigation(DashboardTask task, MapProvider provider) async {
+    final result = await provider.startNavigation(task);
+    if (!mounted) return;
+    switch (result) {
+      case NavStartResult.ok:
+        _sheetAnim.reverse();
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          final lat = task.partnerLat;
+          final lng = task.partnerLng;
+          if (!lat.isFinite || !lng.isFinite) return;
+          try {
+            _mapController.move(LatLng(lat, lng), 17);
+          } catch (_) {}
+        });
+        return;
+      case NavStartResult.noCoords:
+        _offerExternalNav(
+          task,
+          title: 'In-app navigation unavailable',
+          message: task.partnerAddress.isNotEmpty
+              ? 'This task has no precise coordinates. You can navigate to this location using Google Maps.'
+              : 'This task has no location data.',
+        );
+        return;
+      case NavStartResult.noUserLocation:
+        _offerExternalNav(
+          task,
+          title: 'Your location is unavailable',
+          message:
+              'We couldn\'t get your current position. You can still navigate to this location using Google Maps.',
+        );
+        return;
+      case NavStartResult.routeUnavailable:
+        _offerExternalNav(
+          task,
+          title: 'No route found',
+          message:
+              'We couldn\'t plot a route to this location right now. You can navigate to this location using Google Maps.',
+        );
+        return;
+    }
+  }
+
+  void _offerExternalNav(
+    DashboardTask task, {
+    required String title,
+    required String message,
+  }) {
+    final hasAnyLocation = (task.partnerLat.isFinite &&
+            task.partnerLng.isFinite &&
+            task.partnerLat != 0.0 &&
+            task.partnerLng != 0.0) ||
+        task.partnerAddress.isNotEmpty;
+    showDialog<void>(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          icon: const Icon(Icons.info_outline_rounded,
+              color: primaryColor, size: 36),
+          title: Text(title, textAlign: TextAlign.center),
+          content: Text(message, textAlign: TextAlign.center),
+          actionsAlignment: MainAxisAlignment.center,
+          actions: [
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: primaryColor,
+                        side: BorderSide(color: primaryColor)
+                    ),
+
+                    onPressed: () => Navigator.of(ctx).pop(),
+                    child: const Text('Cancel'),
+                  ),
+                ),
+                SizedBox(width: 10,),
+                if (hasAnyLocation)
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.of(ctx).pop();
+                        _launchExternalNav(task);
+                      },
+                      icon: const Icon(Icons.assistant_direction_rounded, size: 18),
+                      label: const Text('Open Google Maps'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryColor,
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                  ),
+
+              ],
+            ),
+
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _launchExternalNav(DashboardTask task) async {
+    Uri uri;
+    final lat = task.partnerLat;
+    final lng = task.partnerLng;
+    final hasCoords = lat.isFinite && lng.isFinite && (lat != 0.0 || lng != 0.0);
+    if (hasCoords) {
+      uri = Uri.parse('google.navigation:q=$lat,$lng&mode=d');
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri);
+        return;
+      }
+      uri = Uri.parse(
+          'https://www.google.com/maps/dir/?api=1&destination=$lat,$lng');
+    } else if (task.partnerAddress.isNotEmpty) {
+      uri = Uri.parse(
+          'https://www.google.com/maps/dir/?api=1&destination=${Uri.encodeComponent(task.partnerAddress)}');
+    } else {
+      return;
+    }
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  Future<void> _openExternalNav(MapProvider provider) async {
+    final task = provider.navTask;
+    if (task == null) return;
+    Uri uri;
+    if (task.partnerLat != 0.0 && task.partnerLng != 0.0) {
+      uri = Uri.parse('google.navigation:q=${task.partnerLat},${task.partnerLng}&mode=d');
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri);
+        return;
+      }
+      uri = Uri.parse('https://www.google.com/maps/dir/?api=1&destination=${task.partnerLat},${task.partnerLng}');
+    } else if (task.partnerAddress.isNotEmpty) {
+      uri = Uri.parse('https://www.google.com/maps/dir/?api=1&destination=${Uri.encodeComponent(task.partnerAddress)}');
+    } else {
+      return;
+    }
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  Marker _buildDestinationPin(LatLng pos) {
+    return Marker(
+      point: pos,
+      width: 40,
+      height: 50,
+      alignment: const Alignment(0, -1),
+      child: _PinShape(
+        isSelected: true,
+        child: const Icon(Icons.flag_rounded, size: 18, color: Colors.white),
+      ),
     );
   }
 
@@ -548,7 +827,7 @@ class _MapScreenState extends State<MapScreen>
 
   // ── Markers ──────────────────────────────────────────────────────────────
 
-  Marker _buildUserDot(LatLng pos) {
+  Marker _buildUserDot(LatLng pos, {double? heading}) {
     return Marker(
       point: pos,
       width: 60,
@@ -564,22 +843,35 @@ class _MapScreenState extends State<MapScreen>
               color: const Color(0xFF2563EB).withValues(alpha: 0.15),
             ),
           ),
-          Container(
-            width: 26,
-            height: 26,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: const Color(0xFF2563EB),
-              border: Border.all(color: Colors.white, width: 3),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF2563EB).withValues(alpha: 0.45),
-                  blurRadius: 10,
-                  spreadRadius: 2,
-                ),
-              ],
+          if (heading != null)
+            Transform.rotate(
+              angle: heading * 3.1415926535 / 180,
+              child: const Icon(
+                Icons.navigation_rounded,
+                color: Color(0xFF2563EB),
+                size: 34,
+                shadows: [
+                  Shadow(color: Colors.black38, blurRadius: 4, offset: Offset(0, 2)),
+                ],
+              ),
+            )
+          else
+            Container(
+              width: 26,
+              height: 26,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: const Color(0xFF2563EB),
+                border: Border.all(color: Colors.white, width: 3),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF2563EB).withValues(alpha: 0.45),
+                    blurRadius: 10,
+                    spreadRadius: 2,
+                  ),
+                ],
+              ),
             ),
-          ),
         ],
       ),
     );
@@ -999,6 +1291,7 @@ class _SingleTaskCard extends StatefulWidget {
   final DashboardTask task;
   final bool isDark;
   final VoidCallback onClose;
+  final VoidCallback? onStartNavigation;
   final int? index;
   final int? totalCount;
 
@@ -1006,6 +1299,7 @@ class _SingleTaskCard extends StatefulWidget {
     required this.task,
     required this.isDark,
     required this.onClose,
+    this.onStartNavigation,
     this.index,
     this.totalCount,
   });
@@ -1017,24 +1311,21 @@ class _SingleTaskCard extends StatefulWidget {
 class _SingleTaskCardState extends State<_SingleTaskCard> {
   bool _navLoading = false;
 
-  Future<void> _launchNavigation() async {
-    Uri uri;
-    if (widget.task.partnerLat != 0.0 && widget.task.partnerLng != 0.0) {
-      uri = Uri.parse('google.navigation:q=${widget.task.partnerLat},${widget.task.partnerLng}&mode=d');
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri);
-        return;
-      }
-      uri = Uri.parse('https://www.google.com/maps/dir/?api=1&destination=${widget.task.partnerLat},${widget.task.partnerLng}');
-    } else if (widget.task.partnerAddress.isNotEmpty) {
-      uri = Uri.parse('https://www.google.com/maps/dir/?api=1&destination=${Uri.encodeComponent(widget.task.partnerAddress)}');
-    } else {
+  void _startNavigation() {
+    final hasLocation = (widget.task.partnerLat != 0.0 &&
+            widget.task.partnerLng != 0.0) ||
+        widget.task.partnerAddress.isNotEmpty;
+    if (!hasLocation) {
+      CustomSnackbar.showWarning(
+          context, 'No location available for this task');
       return;
     }
-
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (widget.task.partnerLat == 0.0 && widget.task.partnerLng == 0.0) {
+      CustomSnackbar.showInfo(context,
+          'Task has no coordinates — open in Google Maps instead');
+      return;
     }
+    widget.onStartNavigation?.call();
   }
 
   Future<void> _openTask() async {
@@ -1191,7 +1482,7 @@ class _SingleTaskCardState extends State<_SingleTaskCard> {
                     const SizedBox(width: 8),
                     Expanded(
                       flex: 3,
-                      child: _NavigateButton(onTap: _launchNavigation),
+                      child: _NavigateButton(onTap: _startNavigation),
                     ),
                   ],
                 ),
@@ -1215,11 +1506,13 @@ class _ClusterSingleTaskSwiper extends StatefulWidget {
   final TaskCluster cluster;
   final bool isDark;
   final VoidCallback onClose;
+  final void Function(DashboardTask)? onStartNavigation;
 
   const _ClusterSingleTaskSwiper({
     required this.cluster,
     required this.isDark,
     required this.onClose,
+    this.onStartNavigation,
   });
 
   @override
@@ -1309,6 +1602,9 @@ class _ClusterSingleTaskSwiperState extends State<_ClusterSingleTaskSwiper> {
         task: tasks.first,
         isDark: widget.isDark,
         onClose: widget.onClose,
+        onStartNavigation: widget.onStartNavigation == null
+            ? null
+            : () => widget.onStartNavigation!(tasks.first),
       );
     }
 
@@ -1340,6 +1636,9 @@ class _ClusterSingleTaskSwiperState extends State<_ClusterSingleTaskSwiper> {
                   onClose: widget.onClose,
                   index: index,
                   totalCount: tasks.length,
+                  onStartNavigation: widget.onStartNavigation == null
+                      ? null
+                      : () => widget.onStartNavigation!(tasks[index]),
                 ),
               );
             },
@@ -1799,25 +2098,222 @@ class _NavigateButton extends StatelessWidget {
       height: 44,
       child: OutlinedButton(
         onPressed: onTap,
-        style: OutlinedButton.styleFrom(
-          side: const BorderSide(color: primaryColor, width: 1.5),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.white,
           foregroundColor: primaryColor,
           elevation: 0,
+          side: const BorderSide(color: primaryColor, width: 1),
           shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12)),
+              borderRadius: BorderRadius.circular(12)
+          ),
+
           minimumSize: const Size.fromHeight(44),
         ),
         child: const Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(Icons.navigation_rounded, size: 16),
-            SizedBox(width: 4),
-            Text('Open Map',
+            SizedBox(width: 6),
+            Text('Start',
                 style: TextStyle(
                     fontWeight: FontWeight.w600, fontSize: 14)),
           ],
         ),
       ),
+    );
+  }
+}
+
+String _formatDistance(double meters) {
+  if (meters <= 0) return '—';
+  if (meters < 1000) return '${meters.round()} m';
+  final km = meters / 1000;
+  return km < 10 ? '${km.toStringAsFixed(1)} km' : '${km.round()} km';
+}
+
+String _formatDuration(double seconds) {
+  if (seconds <= 0) return '—';
+  final mins = (seconds / 60).round();
+  if (mins < 60) return '$mins min';
+  final h = mins ~/ 60;
+  final m = mins % 60;
+  return m == 0 ? '${h}h' : '${h}h ${m}m';
+}
+
+String _formatEta(double seconds) {
+  if (seconds <= 0) return '';
+  final arrival = DateTime.now().add(Duration(seconds: seconds.round()));
+  final h = arrival.hour;
+  final m = arrival.minute.toString().padLeft(2, '0');
+  final suffix = h >= 12 ? 'PM' : 'AM';
+  final hr12 = h % 12 == 0 ? 12 : h % 12;
+  return '$hr12:$m $suffix';
+}
+
+class _NavTopBanner extends StatelessWidget {
+  final DashboardTask? task;
+  final double distanceMeters;
+  final double durationSeconds;
+  final bool isDark;
+  final VoidCallback onClose;
+
+  const _NavTopBanner({
+    required this.task,
+    required this.distanceMeters,
+    required this.durationSeconds,
+    required this.isDark,
+    required this.onClose,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bg = isDark ? const Color(0xFF1E2028) : Colors.white;
+    final eta = _formatEta(durationSeconds);
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 12, 10, 12),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.4 : 0.15),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: const Color(0xFF22C55E).withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Center(
+              child: Icon(Icons.navigation_rounded,
+                  color: Color(0xFF22C55E), size: 22),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      _formatDuration(durationSeconds),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: isDark ? Colors.white : Colors.black87,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      '• ${_formatDistance(distanceMeters)}',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: isDark ? Colors.white54 : Colors.black54,
+                      ),
+                    ),
+                    if (eta.isNotEmpty) ...[
+                      const SizedBox(width: 8),
+                      Text(
+                        '• ETA $eta',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: isDark ? Colors.white54 : Colors.black54,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  task?.partnerName.isNotEmpty == true
+                      ? task!.partnerName
+                      : (task?.partnerAddress ?? 'Destination'),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: isDark ? Colors.white60 : Colors.black54,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            onPressed: onClose,
+            icon: Icon(Icons.close_rounded,
+                color: isDark ? Colors.white70 : Colors.black54),
+            tooltip: 'Stop navigation',
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NavBottomBar extends StatelessWidget {
+  final bool isDark;
+  final VoidCallback onStop;
+  final VoidCallback onExternal;
+
+  const _NavBottomBar({
+    required this.isDark,
+    required this.onStop,
+    required this.onExternal,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: ElevatedButton.icon(
+            onPressed: onStop,
+            icon: const Icon(Icons.stop_rounded, size: 18),
+            label: const Text('Stop Navigation'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: primaryColor,
+              foregroundColor: Colors.white,
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14)),
+              textStyle:
+                  const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+            ),
+          ),
+        ),
+        // const SizedBox(width: 10),
+        // Expanded(
+        //   flex: 2,
+        //   child: ElevatedButton.icon(
+        //     onPressed: onExternal,
+        //     icon: const Icon(Icons.assistant_direction_rounded, size: 18),
+        //     label: const Text('Open in Google Maps'),
+        //     style: ElevatedButton.styleFrom(
+        //       backgroundColor: primaryColor,
+        //       foregroundColor: Colors.white,
+        //       elevation: 0,
+        //       padding: const EdgeInsets.symmetric(vertical: 14),
+        //       shape: RoundedRectangleBorder(
+        //           borderRadius: BorderRadius.circular(14)),
+        //       textStyle:
+        //           const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+        //     ),
+        //   ),
+        // ),
+      ],
     );
   }
 }

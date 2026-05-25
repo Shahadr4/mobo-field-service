@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:geolocator/geolocator.dart';
@@ -9,6 +10,17 @@ import '../../dashboard/services/dashboard_task_service.dart';
 
 enum MapLoadState { idle, loading, loaded, error, permissionDenied }
 enum MapViewMode { map, list }
+enum NavStartResult { ok, noCoords, noUserLocation, routeUnavailable }
+
+bool _isValidLatLng(double lat, double lng) {
+  return lat.isFinite &&
+      lng.isFinite &&
+      lat >= -90 &&
+      lat <= 90 &&
+      lng >= -180 &&
+      lng <= 180 &&
+      !(lat == 0.0 && lng == 0.0);
+}
 
 /// A group of tasks that share (approximately) the same map location.
 class TaskCluster {
@@ -27,9 +39,12 @@ class MapProvider extends ChangeNotifier {
   Position? _userPosition;
   Position? get userPosition => _userPosition;
 
-  LatLng? get userLatLng => _userPosition != null
-      ? LatLng(_userPosition!.latitude, _userPosition!.longitude)
-      : null;
+  LatLng? get userLatLng {
+    final p = _userPosition;
+    if (p == null) return null;
+    if (!_isValidLatLng(p.latitude, p.longitude)) return null;
+    return LatLng(p.latitude, p.longitude);
+  }
 
   List<LatLng> _routePoints = [];
   List<LatLng> get routePoints => _routePoints;
@@ -108,21 +123,190 @@ class MapProvider extends ChangeNotifier {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
         if (data['routes'] != null && data['routes'].isNotEmpty) {
-          final geometry = data['routes'][0]['geometry'];
+          final route = data['routes'][0];
+          final geometry = route['geometry'];
           final coordinates = geometry['coordinates'] as List;
           _routePoints = coordinates
-              .map((c) => LatLng(
-                    (c[1] as num).toDouble(),
-                    (c[0] as num).toDouble(),
-                  ))
+              .map((c) {
+                final lat = (c[1] as num?)?.toDouble() ?? double.nan;
+                final lng = (c[0] as num?)?.toDouble() ?? double.nan;
+                return _isValidLatLng(lat, lng) ? LatLng(lat, lng) : null;
+              })
+              .whereType<LatLng>()
               .toList();
+          _routeDistanceMeters = (route['distance'] as num?)?.toDouble() ?? 0;
+          _routeDurationSeconds = (route['duration'] as num?)?.toDouble() ?? 0;
           notifyListeners();
         }
       }
     } catch (_) {
       _routePoints = [];
+      _routeDistanceMeters = 0;
+      _routeDurationSeconds = 0;
       notifyListeners();
     }
+  }
+
+  // ── Navigation (follow-me) mode ──────────────────────────────────────────
+
+  /// Result of attempting to start in-app navigation.
+  /// - [ok]: nav started.
+  /// - [noCoords]: task has no lat/lon (can still open external maps if address present).
+  /// - [noUserLocation]: user position unknown.
+  /// - [routeUnavailable]: OSRM couldn't return a route.
+  bool _isNavigating = false;
+  bool get isNavigating => _isNavigating;
+
+  DashboardTask? _navTask;
+  DashboardTask? get navTask => _navTask;
+
+  LatLng? _navDestination;
+  LatLng? get navDestination => _navDestination;
+
+  double _routeDistanceMeters = 0;
+  double get routeDistanceMeters => _routeDistanceMeters;
+
+  double _routeDurationSeconds = 0;
+  double get routeDurationSeconds => _routeDurationSeconds;
+
+  double _userHeading = 0;
+  double get userHeading => _userHeading;
+
+  bool _arrived = false;
+  bool get arrived => _arrived;
+
+  StreamSubscription<Position>? _positionSub;
+  DateTime _lastReroute = DateTime.fromMillisecondsSinceEpoch(0);
+  static const _distance = Distance();
+  static const double _offRouteThresholdMeters = 50;
+  static const double _arrivalThresholdMeters = 30;
+  static const Duration _rerouteCooldown = Duration(seconds: 10);
+
+  Future<NavStartResult> startNavigation(DashboardTask task) async {
+    if (!_isValidLatLng(task.partnerLat, task.partnerLng)) {
+      return NavStartResult.noCoords;
+    }
+    final user = userLatLng;
+    if (user == null || !_isValidLatLng(user.latitude, user.longitude)) {
+      return NavStartResult.noUserLocation;
+    }
+    _navTask = task;
+    _navDestination = LatLng(task.partnerLat, task.partnerLng);
+    _isNavigating = true;
+    _arrived = false;
+    _selectedCluster = null;
+    await fetchRoute(_navDestination!);
+    if (_routePoints.isEmpty) {
+      // Route fetch failed — roll back nav state.
+      _isNavigating = false;
+      _navTask = null;
+      _navDestination = null;
+      notifyListeners();
+      return NavStartResult.routeUnavailable;
+    }
+    _startPositionStream();
+    notifyListeners();
+    return NavStartResult.ok;
+  }
+
+  void stopNavigation() {
+    _isNavigating = false;
+    _navTask = null;
+    _navDestination = null;
+    _routePoints = [];
+    _routeDistanceMeters = 0;
+    _routeDurationSeconds = 0;
+    _arrived = false;
+    _positionSub?.cancel();
+    _positionSub = null;
+    notifyListeners();
+  }
+
+  void _startPositionStream() {
+    _positionSub?.cancel();
+    _positionSub = Geolocator.getPositionStream(
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.bestForNavigation,
+        distanceFilter: 5,
+      ),
+    ).listen(_onPositionUpdate);
+  }
+
+  void _onPositionUpdate(Position pos) {
+    if (!_isValidLatLng(pos.latitude, pos.longitude)) return;
+    _userPosition = pos;
+    if (pos.heading.isFinite && pos.heading >= 0) _userHeading = pos.heading;
+
+    if (_isNavigating && _navDestination != null) {
+      final user = LatLng(pos.latitude, pos.longitude);
+
+      // Arrival check
+      final distToDest = _distance.as(LengthUnit.Meter, user, _navDestination!);
+      if (distToDest <= _arrivalThresholdMeters && !_arrived) {
+        _arrived = true;
+        notifyListeners();
+        return;
+      }
+
+      // Off-route check + cooldown-guarded reroute
+      if (_routePoints.isNotEmpty) {
+        final offBy = _distanceFromRoute(user);
+        final now = DateTime.now();
+        if (offBy > _offRouteThresholdMeters &&
+            now.difference(_lastReroute) > _rerouteCooldown) {
+          _lastReroute = now;
+          fetchRoute(_navDestination!);
+        } else {
+          // Update remaining distance/ETA from current position
+          _updateRemaining(user);
+        }
+      }
+    }
+    notifyListeners();
+  }
+
+  double _distanceFromRoute(LatLng p) {
+    double best = double.infinity;
+    for (final r in _routePoints) {
+      final d = _distance.as(LengthUnit.Meter, p, r);
+      if (d < best) best = d;
+    }
+    return best;
+  }
+
+  void _updateRemaining(LatLng user) {
+    if (_routePoints.length < 2) return;
+    // Find closest segment index, then sum remaining segment lengths.
+    int closest = 0;
+    double bestD = double.infinity;
+    for (var i = 0; i < _routePoints.length; i++) {
+      final d = _distance.as(LengthUnit.Meter, user, _routePoints[i]);
+      if (d < bestD) {
+        bestD = d;
+        closest = i;
+      }
+    }
+    double remaining = bestD;
+    for (var i = closest; i < _routePoints.length - 1; i++) {
+      remaining += _distance.as(
+        LengthUnit.Meter,
+        _routePoints[i],
+        _routePoints[i + 1],
+      );
+    }
+    // Preserve ETA pace using original speed ratio.
+    if (_routeDistanceMeters > 0) {
+      final speed = _routeDistanceMeters /
+          (_routeDurationSeconds == 0 ? 1 : _routeDurationSeconds);
+      _routeDurationSeconds = speed > 0 ? remaining / speed : 0;
+    }
+    _routeDistanceMeters = remaining;
+  }
+
+  @override
+  void dispose() {
+    _positionSub?.cancel();
+    super.dispose();
   }
 
   List<DashboardTask> _tasks = [];
@@ -151,6 +335,7 @@ class MapProvider extends ChangeNotifier {
   List<TaskCluster> _buildClusters(List<DashboardTask> tasks) {
     final Map<String, List<DashboardTask>> map = {};
     for (final t in tasks) {
+      if (!_isValidLatLng(t.partnerLat, t.partnerLng)) continue;
       // Round to 5 decimal places (~1m precision) to group truly co-located tasks
       final key = '${t.partnerLat.toStringAsFixed(5)},${t.partnerLng.toStringAsFixed(5)}';
       map.putIfAbsent(key, () => []).add(t);
@@ -209,20 +394,26 @@ class MapProvider extends ChangeNotifier {
   }
 
   void selectCluster(TaskCluster? cluster) {
+    if (_isNavigating) return;
     _selectedCluster = cluster;
     if (cluster != null) {
       fetchRoute(cluster.position);
     } else {
       _routePoints = [];
+      _routeDistanceMeters = 0;
+      _routeDurationSeconds = 0;
     }
     notifyListeners();
   }
 
   void refresh() {
+    stopNavigation();
     _state = MapLoadState.idle;
     _tasks = [];
     _selectedCluster = null;
     _routePoints = [];
+    _routeDistanceMeters = 0;
+    _routeDurationSeconds = 0;
     _searchQuery = '';
     _currentPage = 1;
     _userPosition = null;
@@ -247,10 +438,13 @@ class MapProvider extends ChangeNotifier {
   }
 
   void reset() {
+    stopNavigation();
     _state = MapLoadState.idle;
     _tasks = [];
     _selectedCluster = null;
     _routePoints = [];
+    _routeDistanceMeters = 0;
+    _routeDurationSeconds = 0;
     _searchQuery = '';
     _currentPage = 1;
     _userPosition = null;
