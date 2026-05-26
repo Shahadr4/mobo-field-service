@@ -54,7 +54,7 @@ class _CustomRatingDialogState extends State<CustomRatingDialog> {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
       backgroundColor: isDark ? const Color(0xFF1A1A1A) : Colors.white,
       child: SingleChildScrollView(
-        // Added to handle keyboard/long content
+        /// Added to handle keyboard/long content
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
           child: Column(
@@ -83,7 +83,7 @@ class _CustomRatingDialogState extends State<CustomRatingDialog> {
               ),
               const SizedBox(height: 32),
 
-              // Star Rating
+              /// Star Rating
               RatingBar.builder(
                 initialRating: 5,
                 minRating: 1,
@@ -100,9 +100,9 @@ class _CustomRatingDialogState extends State<CustomRatingDialog> {
                 },
               ),
 
-              // Conditional Feedback Logic
+              /// Conditional Feedback Logic
               AnimatedSize(
-                // Smoothly expands when textfield appears
+                /// Smoothly expands when textfield appears
                 duration: const Duration(milliseconds: 300),
                 child: Visibility(
                   visible: _rating < 4,
@@ -131,7 +131,7 @@ class _CustomRatingDialogState extends State<CustomRatingDialog> {
 
               const SizedBox(height: 32),
 
-              // Submit Button
+              /// Submit Button
               SizedBox(
                 width: double.infinity,
                 height: 56,
@@ -162,7 +162,7 @@ class _CustomRatingDialogState extends State<CustomRatingDialog> {
               ),
               const SizedBox(height: 16),
 
-              // Skip Button
+              /// Skip Button
               TextButton(
                 onPressed: () => Navigator.pop(context),
                 child: Text(

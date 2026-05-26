@@ -12,16 +12,7 @@ class EmployeeStatsGrid extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final items = [
-      _Item(
-        label: 'Assigned Tasks',
-        description: 'Total tasks assigned to this user',
-        count: stats.assignedTasks,
-        icon: HugeIcons.strokeRoundedClipboard,
-        iconColor: const Color(0xFFF59E0B),
-        bgColor: const Color(0xFFFFFBEB),
-        darkBgColor: const Color(0xFF251E10),
-        darkIconColor: const Color(0xFFFBBF24),
-      ),
+
       _Item(
         label: 'Active Tasks',
         description: 'Tasks currently in progress',
@@ -41,6 +32,16 @@ class EmployeeStatsGrid extends StatelessWidget {
         bgColor: const Color(0xFFF0FDF4),
         darkBgColor: const Color(0xFF112318),
         darkIconColor: const Color(0xFF4ADE80),
+      ),
+      _Item(
+        label: 'Assigned Tasks',
+        description: 'Total tasks assigned to this user',
+        count: stats.assignedTasks,
+        icon: HugeIcons.strokeRoundedClipboard,
+        iconColor: const Color(0xFFF59E0B),
+        bgColor: const Color(0xFFFFFBEB),
+        darkBgColor: const Color(0xFF251E10),
+        darkIconColor: const Color(0xFFFBBF24),
       ),
       _Item(
         label: 'Cancelled',

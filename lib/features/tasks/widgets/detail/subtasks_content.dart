@@ -98,7 +98,7 @@ class _SubtasksContentState extends State<SubtasksContent> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ── Add Subtask button ──
+        /// ── Add Subtask button ──
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
           child: SizedBox(
@@ -315,7 +315,7 @@ class _SubtasksContentState extends State<SubtasksContent> {
       );
 }
 
-// ── Add Subtask Bottom Sheet ──────────────────────────────────────────────────
+/// ── Add Subtask Bottom Sheet ──────────────────────────────────────────────────
 
 class _AddSubtaskSheet extends StatefulWidget {
   final TaskModel parentTask;
@@ -395,7 +395,7 @@ class _AddSubtaskSheetState extends State<_AddSubtaskSheet> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Handle bar
+                  /// Handle bar
                   Center(
                     child: Container(
                       width: 40,
@@ -408,7 +408,7 @@ class _AddSubtaskSheetState extends State<_AddSubtaskSheet> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Header
+                  /// Header
                   Row(
                     children: [
                       Container(
@@ -450,7 +450,7 @@ class _AddSubtaskSheetState extends State<_AddSubtaskSheet> {
                   ),
                   const SizedBox(height: 20),
 
-                  // Name field
+                  /// Name field
                   Text('Task Name *',
                       style: TextStyle(
                           fontSize: 13,
@@ -496,7 +496,7 @@ class _AddSubtaskSheetState extends State<_AddSubtaskSheet> {
                   ),
                   const SizedBox(height: 14),
 
-                  // Description field
+                  /// Description field
                   Text('Description',
                       style: TextStyle(
                           fontSize: 13,
@@ -536,7 +536,7 @@ class _AddSubtaskSheetState extends State<_AddSubtaskSheet> {
                   ),
                   const SizedBox(height: 20),
 
-                  // Action buttons
+                  /// Action buttons
                   Row(
                     children: [
                       Expanded(

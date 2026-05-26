@@ -1,4 +1,3 @@
-import 'dart:developer';
 
 /// Service to manage biometric authentication context
 /// Prevents biometric prompts during account operations and provides grace periods
@@ -19,9 +18,6 @@ class BiometricContextService {
   /// Check if biometric authentication should be skipped
   bool get shouldSkipBiometric {
     if (_isAccountOperation) {
-      log(
-        '[BiometricContext] Skipping biometric - account operation in progress: ${_activeOperations.join(', ')}',
-      );
       return true;
     }
 
@@ -31,9 +27,6 @@ class BiometricContextService {
         _lastAccountOperationTime!,
       );
       if (timeSinceOperation < _accountOperationGracePeriod) {
-        log(
-          '[BiometricContext] Skipping biometric - within grace period (${timeSinceOperation.inSeconds}s)',
-        );
         return true;
       }
     }
@@ -46,9 +39,6 @@ class BiometricContextService {
     _activeOperations.add(operation);
     _isAccountOperation = true;
     _lastAccountOperationTime = DateTime.now();
-    log(
-      '[BiometricContext] Started: $operation (${_activeOperations.length} active operations)',
-    );
   }
 
   /// Mark the end of an account operation
@@ -56,14 +46,10 @@ class BiometricContextService {
     _activeOperations.remove(operation);
     _isAccountOperation = _activeOperations.isNotEmpty;
     _lastAccountOperationTime = DateTime.now();
-    log(
-      '[BiometricContext] Ended: $operation (${_activeOperations.length} remaining operations)',
-    );
   }
 
   /// Reset the biometric context state
   void reset() {
-    log('[BiometricContext] Resetting biometric context');
     _isAccountOperation = false;
     _lastAccountOperationTime = null;
     _activeOperations.clear();

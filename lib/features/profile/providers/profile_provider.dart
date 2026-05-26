@@ -64,12 +64,12 @@ class ProfileProvider extends ChangeNotifier {
     return (s.toLowerCase() == 'false' || s.isEmpty) ? '' : s;
   }
 
-  // Pending offline updates (merged per model)
+  /// Pending offline updates (merged per model)
   Map<String, dynamic> _pendingUserUpdates = {};
   Map<String, dynamic> _pendingPartnerUpdates = {};
 
-  // Normalize partner update keys to match server schema
-  // e.g., map legacy/mobile_phone to standard 'mobile'
+  /// Normalize partner update keys to match server schema
+  /// e.g., map legacy/mobile_phone to standard 'mobile'
   Map<String, dynamic> _normalizePartnerUpdates(Map<String, dynamic> updates) {
     final out = <String, dynamic>{};
     updates.forEach((key, value) {
@@ -86,7 +86,7 @@ class ProfileProvider extends ChangeNotifier {
     if (_partnerMobileFieldNameCache != null)
       return _partnerMobileFieldNameCache;
     try {
-      // Prefer custom 'mobile_phone' if present
+      /// Prefer custom 'mobile_phone' if present
       final hasMobilePhone = await OdooSessionManager.callKwWithCompany({
         'model': 'ir.model.fields',
         'method': 'search_count',
@@ -106,8 +106,8 @@ class ProfileProvider extends ChangeNotifier {
         return _partnerMobileFieldNameCache;
       }
 
-      // Odoo Studio commonly uses x_studio_mobile_phone
-      // Odoo Studio commonly uses x_studio_mobile_phone
+      /// Odoo Studio commonly uses x_studio_mobile_phone
+      /// Odoo Studio commonly uses x_studio_mobile_phone
       final hasStudioMobilePhone = await OdooSessionManager.callKwWithCompany({
         'model': 'ir.model.fields',
         'method': 'search_count',
@@ -127,8 +127,8 @@ class ProfileProvider extends ChangeNotifier {
         return _partnerMobileFieldNameCache;
       }
 
-      // Otherwise check standard 'mobile'
-      // Otherwise check standard 'mobile'
+      /// Otherwise check standard 'mobile'
+      /// Otherwise check standard 'mobile'
       final hasMobile = await OdooSessionManager.callKwWithCompany({
         'model': 'ir.model.fields',
         'method': 'search_count',
@@ -144,7 +144,7 @@ class ProfileProvider extends ChangeNotifier {
       _partnerMobileFieldNameCache = hasM ? 'mobile' : null;
       return _partnerMobileFieldNameCache;
     } catch (_) {
-      // On failure, don't assume a field; we'll fallback to using phone for UI
+      /// On failure, don't assume a field; we'll fallback to using phone for UI
       _partnerMobileFieldNameCache = null;
       return _partnerMobileFieldNameCache;
     }
@@ -153,12 +153,12 @@ class ProfileProvider extends ChangeNotifier {
   Future<Map<String, dynamic>> _preparePartnerUpdatesForServer(
     Map<String, dynamic> normalized,
   ) async {
-    // Map our internal 'mobile' to whichever field server supports
+    /// Map our internal 'mobile' to whichever field server supports
     if (!normalized.containsKey('mobile')) return normalized;
     final fieldName = await _getPartnerMobileFieldName();
     if (fieldName == null) {
-      // Server doesn't support a distinct mobile field; do NOT overwrite phone.
-      // Drop 'mobile' from the payload to avoid merging numbers.
+      /// Server doesn't support a distinct mobile field; do NOT overwrite phone.
+      /// Drop 'mobile' from the payload to avoid merging numbers.
       final copy = Map<String, dynamic>.from(normalized);
       copy.remove('mobile');
       return copy;
@@ -180,10 +180,10 @@ class ProfileProvider extends ChangeNotifier {
         throw Exception('Partner ID not found');
       }
 
-      // Ensure keys are normalized before any processing
+      /// Ensure keys are normalized before any processing
       final normalized = _normalizePartnerUpdates(updates);
 
-      // Offline-first: if no internet, queue changes and apply locally
+      /// Offline-first: if no internet, queue changes and apply locally
       if (!_hasInternet) {
         _mergeInto(_pendingPartnerUpdates, normalized);
         await _savePendingUpdates();
@@ -204,12 +204,11 @@ class ProfileProvider extends ChangeNotifier {
 
       await fetchUserProfile(forceRefresh: true);
     } catch (e) {
-      // Queue on error and update local cache for smooth UX
+      /// Queue on error and update local cache for smooth UX
       final normalized = _normalizePartnerUpdates(updates);
       _mergeInto(_pendingPartnerUpdates, normalized);
       await _savePendingUpdates();
       await _applyLocalUserUpdates(normalized);
-      debugPrint('[ProfileProvider] Offline queue (partner) due to: $e');
     }
   }
 
@@ -233,7 +232,7 @@ class ProfileProvider extends ChangeNotifier {
       }
     });
 
-    // Initial check
+    /// Initial check
     _checkInternet().then((hasNet) {
       _hasInternet = hasNet;
       notifyListeners();
@@ -265,13 +264,12 @@ class ProfileProvider extends ChangeNotifier {
         notifyListeners();
       }
     } catch (e) {
-      debugPrint('[ProfileProvider] Error loading cached user: $e');
     }
   }
 
   Future<void> fetchUserProfile({bool forceRefresh = false}) async {
-    // Only show loading state if we have no cached data
-    // This allows silent background refresh when data exists
+    /// Only show loading state if we have no cached data
+    /// This allows silent background refresh when data exists
     if (_userData == null) {
       _isLoading = true;
     }
@@ -287,7 +285,7 @@ class ProfileProvider extends ChangeNotifier {
       }
 
 
-      // Read basic user fields from res.users (exclude unsupported fields like 'mobile')
+      /// Read basic user fields from res.users (exclude unsupported fields like 'mobile')
       final res = await OdooSessionManager.callKwWithCompany({
         'model': 'res.users',
         'method': 'read',
@@ -297,7 +295,7 @@ class ProfileProvider extends ChangeNotifier {
             'name',
             'login',
             'email',
-            // phone/mobile live on res.partner; we will fetch them from partner below
+            /// phone/mobile live on res.partner; we will fetch them from partner below
             'website',
             'function',
             'image_1920',
@@ -311,11 +309,11 @@ class ProfileProvider extends ChangeNotifier {
       if (res is List && res.isNotEmpty) {
         final data = res.first as Map<String, dynamic>;
 
-        // If partner is linked, fetch phone/mobile from res.partner and merge for UI compatibility
+        /// If partner is linked, fetch phone/mobile from res.partner and merge for UI compatibility
         final partner = data['partner_id'];
         if (partner != null && partner is List && partner.isNotEmpty) {
           try {
-            // Determine which mobile field exists to avoid invalid field errors
+            /// Determine which mobile field exists to avoid invalid field errors
             final mobileFieldName = await _getPartnerMobileFieldName();
             final fields = <String>[
               'phone',
@@ -339,9 +337,9 @@ class ProfileProvider extends ChangeNotifier {
 
             if (partnerRes is List && partnerRes.isNotEmpty) {
               final partnerData = partnerRes.first as Map<String, dynamic>;
-              // Merge phone/mobile (and a few address fields if needed by UI)
+              /// Merge phone/mobile (and a few address fields if needed by UI)
               data['phone'] = partnerData['phone'];
-              // Derive unified 'mobile' for UI using whichever field exists
+              /// Derive unified 'mobile' for UI using whichever field exists
               String? mobileValue;
               if (mobileFieldName != null) {
                 final mv = partnerData[mobileFieldName];
@@ -349,7 +347,7 @@ class ProfileProvider extends ChangeNotifier {
                   mobileValue = mv.toString();
                 }
               }
-              // If server has no mobile field, keep empty so UI treats it as separate and editable
+              /// If server has no mobile field, keep empty so UI treats it as separate and editable
               data['mobile'] = mobileValue ?? '';
               data['street'] = partnerData['street'];
               data['city'] = partnerData['city'];
@@ -358,9 +356,6 @@ class ProfileProvider extends ChangeNotifier {
               data['country_id'] = partnerData['country_id'];
             }
           } catch (e) {
-            debugPrint(
-              '[ProfileProvider] Failed to read partner for phone/mobile: $e',
-            );
           }
         }
 
@@ -377,7 +372,6 @@ class ProfileProvider extends ChangeNotifier {
       }
     } catch (e) {
       _error = 'Failed to fetch user profile: $e';
-      debugPrint('[ProfileProvider] $_error');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -391,7 +385,6 @@ class ProfileProvider extends ChangeNotifier {
     try {
       _countries = await fetchCountries();
     } catch (e) {
-      debugPrint('[ProfileProvider] Error loading countries: $e');
     } finally {
       _isLoadingCountries = false;
       notifyListeners();
@@ -411,7 +404,6 @@ class ProfileProvider extends ChangeNotifier {
       });
       return result is List ? result.cast<Map<String, dynamic>>() : [];
     } catch (e) {
-      debugPrint('[ProfileProvider] Error fetching countries: $e');
       rethrow;
     }
   }
@@ -423,7 +415,6 @@ class ProfileProvider extends ChangeNotifier {
     try {
       _states = await fetchStates(countryId);
     } catch (e) {
-      debugPrint('[ProfileProvider] Error loading states: $e');
     } finally {
       _isLoadingStates = false;
       notifyListeners();
@@ -447,7 +438,6 @@ class ProfileProvider extends ChangeNotifier {
       });
       return result is List ? result.cast<Map<String, dynamic>>() : [];
     } catch (e) {
-      debugPrint('[ProfileProvider] Error fetching states: $e');
       rethrow;
     }
   }
@@ -457,11 +447,11 @@ class ProfileProvider extends ChangeNotifier {
       final session = await OdooSessionManager.getCurrentSession();
       if (session == null || session.userId == null) return;
 
-      // Offline-first: queue and apply locally
+      /// Offline-first: queue and apply locally
       if (!_hasInternet) {
         _pendingUserUpdates['image_1920'] = base64Image;
         await _savePendingUpdates();
-        // Apply locally for instant UI
+        /// Apply locally for instant UI
         try {
           _userAvatar = base64Decode(base64Image);
         } catch (_) {}
@@ -485,7 +475,7 @@ class ProfileProvider extends ChangeNotifier {
 
       await fetchUserProfile(forceRefresh: true);
     } catch (e) {
-      // Queue on failure too
+      /// Queue on failure too
       _pendingUserUpdates['image_1920'] = base64Image;
       await _savePendingUpdates();
       try {
@@ -496,7 +486,6 @@ class ProfileProvider extends ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_cacheKeyUser, jsonEncode(_userData));
       notifyListeners();
-      debugPrint('[ProfileProvider] Offline queue (image) due to: $e');
     }
   }
 
@@ -522,7 +511,6 @@ class ProfileProvider extends ChangeNotifier {
       await fetchUserProfile(forceRefresh: true);
     } catch (e) {
       _error = 'Failed to update $field: $e';
-      debugPrint('[ProfileProvider] $_error');
       rethrow;
     }
   }
@@ -536,7 +524,7 @@ class ProfileProvider extends ChangeNotifier {
         throw Exception('Partner ID not found');
       }
 
-      // Offline-first: queue and apply locally if no internet
+      /// Offline-first: queue and apply locally if no internet
       if (!_hasInternet) {
         _mergeInto(_pendingPartnerUpdates, addressData);
         await _savePendingUpdates();
@@ -556,11 +544,10 @@ class ProfileProvider extends ChangeNotifier {
 
       await fetchUserProfile(forceRefresh: true);
     } catch (e) {
-      // Queue on failure and update local cache
+      /// Queue on failure and update local cache
       _mergeInto(_pendingPartnerUpdates, addressData);
       await _savePendingUpdates();
       await _applyLocalUserUpdates(addressData);
-      debugPrint('[ProfileProvider] Offline queue (address) due to: $e');
     }
   }
 
@@ -591,11 +578,10 @@ class ProfileProvider extends ChangeNotifier {
 
       await fetchUserProfile(forceRefresh: true);
     } catch (e) {
-      // Queue on error and update local cache for smooth UX
+      /// Queue on error and update local cache for smooth UX
       _mergeInto(_pendingUserUpdates, updates);
       await _savePendingUpdates();
       await _applyLocalUserUpdates(updates);
-      debugPrint('[ProfileProvider] Offline queue (users) due to: $e');
     }
   }
 
@@ -633,7 +619,6 @@ class ProfileProvider extends ChangeNotifier {
       }
       return null;
     } catch (e) {
-      debugPrint('[ProfileProvider] Failed to load related company: $e');
       return null;
     }
   }
@@ -661,7 +646,6 @@ class ProfileProvider extends ChangeNotifier {
       await fetchUserProfile(forceRefresh: true);
     } catch (e) {
       _error = 'Failed to update related company: $e';
-      debugPrint('[ProfileProvider] $_error');
       rethrow;
     }
   }
@@ -712,7 +696,6 @@ class ProfileProvider extends ChangeNotifier {
       await prefs.clear();
     } catch (e) {
       _error = 'Logout failed: $e';
-      debugPrint('[ProfileProvider] $_error');
       rethrow;
     }
   }
@@ -735,16 +718,15 @@ class ProfileProvider extends ChangeNotifier {
     _isLoadingCountries = false;
     _isLoadingStates = false;
     notifyListeners();
-    debugPrint('ProfileProvider: State reset');
   }
 
-  // Expose sync status and manual trigger for UI
+  /// Expose sync status and manual trigger for UI
   bool get hasPendingUpdates =>
       _pendingUserUpdates.isNotEmpty || _pendingPartnerUpdates.isNotEmpty;
 
   Future<void> processPendingUpdates() => _processPendingUpdates();
 
-  // ---------- Offline helpers ----------
+  /// ---------- Offline helpers ----------
   void _mergeInto(Map<String, dynamic> target, Map<String, dynamic> src) {
     for (final e in src.entries) {
       target[e.key] = e.value;
@@ -763,7 +745,6 @@ class ProfileProvider extends ChangeNotifier {
         _pendingPartnerUpdates = Map<String, dynamic>.from(jsonDecode(p));
       }
     } catch (e) {
-      debugPrint('[ProfileProvider] Failed to load pending updates: $e');
     }
   }
 
@@ -779,7 +760,6 @@ class ProfileProvider extends ChangeNotifier {
         jsonEncode(_pendingPartnerUpdates),
       );
     } catch (e) {
-      debugPrint('[ProfileProvider] Failed to save pending updates: $e');
     }
   }
 
@@ -802,11 +782,11 @@ class ProfileProvider extends ChangeNotifier {
         _pendingUserUpdates.clear();
       }
 
-      // Apply partner pending
+      /// Apply partner pending
       if (_userData != null && _pendingPartnerUpdates.isNotEmpty) {
         final partnerId = _userData!['partner_id'];
         if (partnerId is List && partnerId.isNotEmpty) {
-          // Normalize any legacy keys before sending
+          /// Normalize any legacy keys before sending
           final normalized = _normalizePartnerUpdates(_pendingPartnerUpdates);
           final toSend = await _preparePartnerUpdatesForServer(normalized);
           await OdooSessionManager.callKwWithCompany({
@@ -825,7 +805,6 @@ class ProfileProvider extends ChangeNotifier {
       await _savePendingUpdates();
       await fetchUserProfile(forceRefresh: true);
     } catch (e) {
-      debugPrint('[ProfileProvider] Failed processing pending updates: $e');
     }
   }
 
@@ -839,7 +818,6 @@ class ProfileProvider extends ChangeNotifier {
       await prefs.setString(_cacheKeyUser, jsonEncode(_userData));
       notifyListeners();
     } catch (e) {
-      debugPrint('[ProfileProvider] Failed to apply local user updates: $e');
     }
   }
 }

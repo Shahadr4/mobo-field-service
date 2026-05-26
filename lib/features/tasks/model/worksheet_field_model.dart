@@ -5,9 +5,9 @@ class WorksheetFieldMeta {
   final String type;
   final bool required;
   final bool readonly;
-  final List<List<dynamic>> selection; // [['value', 'Label'], ...]
-  final String? relation; // for many2one / many2many
-  final int? size; // for char
+  final List<List<dynamic>> selection; /// [['value', 'Label'], ...]
+  final String? relation; /// for many2one / many2many
+  final int? size; /// for char
 
   const WorksheetFieldMeta({
     required this.name,

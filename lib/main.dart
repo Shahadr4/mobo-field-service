@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'app/app_entry.dart';
 import 'core/const/keys/global_keys.dart';
 import 'core/providers/logout_view_model.dart';
 import 'core/services/session_service.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_provider.dart';
 import 'features/company/providers/company_provider.dart';
-import 'features/example_field_delay/providers/example_field_delay_provider.dart';
 import 'features/login/providers/login_provider.dart';
 import 'features/profile/providers/profile_provider.dart';
 import 'features/tasks/provider/task_provider.dart';
@@ -43,7 +41,7 @@ void main() {
       ChangeNotifierProvider(create: (_) => LogoutViewModel()),
       ChangeNotifierProvider(create: (_) => AssigneeProvider()),
       ChangeNotifierProvider(create: (_) => MapProvider()),
-      ChangeNotifierProvider(create: (_) => ExampleFieldDelayProvider()),
+
       ChangeNotifierProvider(create: (_) => TimesheetListProvider()),
       ChangeNotifierProvider<LoginProvider>(
         create: (_) => LoginProvider(),
@@ -52,11 +50,11 @@ void main() {
         value: SessionService.instance,
       ),
 
-      // Provide CompanyProvider globally and initialize companies on app start
+      /// Provide CompanyProvider globally and initialize companies on app start
       ChangeNotifierProvider(
         create: (_) {
           final p = CompanyProvider();
-          // Kick off initial load from server; will show loading in selector
+          /// Kick off initial load from server; will show loading in selector
           p.initialize();
           return p;
         },
@@ -75,13 +73,13 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  // This widget is the root of your application.
+  /// This widget is the root of your application.
 
 
   @override
   void initState() {
     super.initState();
-    // Track app open for review system after a delay to ensure activity is ready
+    /// Track app open for review system after a delay to ensure activity is ready
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Future.delayed(const Duration(seconds: 2), () {
         ReviewService().trackAppOpen();
@@ -99,7 +97,7 @@ class _MyAppState extends State<MyApp> {
             navigatorKey: navigatorKey,
             navigatorObservers: [routeObserver],
             scaffoldMessengerKey: scaffoldMessengerKey,
-          title: 'mobo feild service',
+          title: 'mobo field service',
           theme: AppTheme.lightTheme,
           darkTheme: AppTheme.darkTheme,
           themeMode: provider.themeMode,

@@ -64,7 +64,7 @@ class WorksheetFormController {
               : <int>[];
           out[f.name] = [[6, 0, ids]];
         case 'binary':
-          // binary sent separately via _buildBinaryVals
+          /// binary sent separately via _buildBinaryVals
           break;
         case 'integer':
           out[f.name] = v is int ? v : (int.tryParse(v?.toString() ?? '') ?? 0);
@@ -109,7 +109,7 @@ class WorksheetFormController {
         case 'binary':
           empty = v == null || v.toString().isEmpty;
         case 'boolean':
-          empty = v != true; // required boolean must be checked (true)
+          empty = v != true; /// required boolean must be checked (true)
         default:
           empty = v == null || v.toString().trim().isEmpty || v == false;
       }
@@ -125,7 +125,7 @@ class WorksheetFormController {
     textControllers.clear();
   }
 
-  // ── helpers ──────────────────────────────────────────────────────────────
+  /// helpers
 
   dynamic _coerce(WorksheetFieldMeta f, dynamic raw) {
     if (raw == false || raw == null) return _defaultFor(f);

@@ -1,27 +1,24 @@
 import 'package:flutter/material.dart';
 import 'dailog_box.dart';
 
-
-
 void loadingDialog(
-    BuildContext context,
-    String title,
-    String subTitle,
-    Widget icon,
+  BuildContext context,
+  String title,
+  String subTitle,
+  Widget icon,
+) {
+  dialogBox(
+    context,
+    title,
+    icon,
+    Text(
+      subTitle,
 
-    ){
-  dialogBox(context,title,icon,
-      Text(subTitle,
-
-        style: TextStyle(
-            color: Colors.black54
-        ),
-        textAlign: TextAlign.center,
-      ));
+      style: TextStyle(color: Colors.black54),
+      textAlign: TextAlign.center,
+    ),
+  );
 }
-
-
-
 
 void hideLoadingDialog(BuildContext context) {
   if (Navigator.of(context, rootNavigator: true).canPop()) {

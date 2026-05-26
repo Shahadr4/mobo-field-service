@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:hugeicons/hugeicons.dart';
 
 class FullImageScreen extends StatelessWidget {
   final Uint8List imageBytes;
@@ -21,7 +22,10 @@ class FullImageScreen extends StatelessWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.close, color: Colors.white),
+          icon: HugeIcon(
+            icon: HugeIcons.strokeRoundedArrowLeft01,
+            color: Colors.white,
+          ),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(title, style: const TextStyle(color: Colors.white)),

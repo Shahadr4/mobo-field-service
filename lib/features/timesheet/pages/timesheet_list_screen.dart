@@ -73,9 +73,6 @@ class _TimesheetListScreenState extends State<TimesheetListScreen> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Active timer banner — shown above the list when a timer is running
-// ─────────────────────────────────────────────────────────────────────────────
 
 class _TimerBanner extends StatefulWidget {
   final bool isDark;
@@ -451,10 +448,6 @@ class _SearchBar extends StatelessWidget {
     );
   }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Status row — active filter / group-by pill + pagination
-// ─────────────────────────────────────────────────────────────────────────────
 
 class _StatusRow extends StatelessWidget {
   final bool isDark;

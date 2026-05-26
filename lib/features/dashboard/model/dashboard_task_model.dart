@@ -9,7 +9,7 @@ class DashboardTask {
   final String deadline;
   final String scheduledStart;
   final String scheduledEnd;
-  final int priority; // 0 = normal, 1/2/3 = star levels
+  final int priority; /// 0 = normal, 1/2/3 = star levels
   final double partnerLat;
   final double partnerLng;
 

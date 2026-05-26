@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:hugeicons/hugeicons.dart';
-
 import '../../../core/const/app_colors.dart';
 
 

@@ -16,7 +16,7 @@ class ReviewService {
 
   final InAppReview _inAppReview = InAppReview.instance;
 
-  // Keys for SharedPreferences
+  /// Keys for SharedPreferences
   static const String _keyOpenCount = 'review_open_count';
   static const String _keyEventCount = 'review_event_count';
   static const String _keyFirstOpenDate = 'review_first_open_date';
@@ -24,7 +24,7 @@ class ReviewService {
   static const String _keyNeverAskAgain = 'review_never_ask_again';
   static const String _keyFeedbackGiven = 'review_feedback_given';
 
-  // Thresholds
+  /// Thresholds
   static const int _thresholdOpens = 5;
   static const int _thresholdEvents = 5;
   static const int _thresholdDays = 5;
@@ -34,7 +34,7 @@ class ReviewService {
   Future<void> trackAppOpen() async {
     final prefs = await SharedPreferences.getInstance();
 
-    // 1. First Open Date
+    /// 1. First Open Date
     if (!prefs.containsKey(_keyFirstOpenDate)) {
       await prefs.setInt(
         _keyFirstOpenDate,
@@ -42,7 +42,7 @@ class ReviewService {
       );
     }
 
-    // 2. Increment Open Count
+    /// 2. Increment Open Count
     int currentOpens = prefs.getInt(_keyOpenCount) ?? 0;
     currentOpens++;
     await prefs.setInt(_keyOpenCount, currentOpens);
@@ -51,7 +51,7 @@ class ReviewService {
   Future<void> trackSignificantEvent() async {
     final prefs = await SharedPreferences.getInstance();
 
-    // Increment Event Count
+    /// Increment Event Count
     int currentEvents = prefs.getInt(_keyEventCount) ?? 0;
     currentEvents++;
     await prefs.setInt(_keyEventCount, currentEvents);
@@ -70,19 +70,19 @@ class ReviewService {
     if (await _inAppReview.isAvailable()) {
       bool shouldRequest = false;
 
-      // Criteria 1: Nth usage (open)
+      /// Criteria 1: Nth usage (open)
       int openCount = prefs.getInt(_keyOpenCount) ?? 0;
       if (openCount >= _thresholdOpens) {
         shouldRequest = true;
       }
 
-      // Criteria 2: Nth significant event
+      /// Criteria 2: Nth significant event
       int eventCount = prefs.getInt(_keyEventCount) ?? 0;
       if (eventCount >= _thresholdEvents) {
         shouldRequest = true;
       }
 
-      // Criteria 3: N days usage
+      /// Criteria 3: N days usage
       int? firstOpenEpoch = prefs.getInt(_keyFirstOpenDate);
       if (firstOpenEpoch != null) {
         final firstOpenDate = DateTime.fromMillisecondsSinceEpoch(
@@ -130,7 +130,7 @@ class ReviewService {
   /// Force a review request. If the native dialog is suppressed by Google Play
   /// (due to quotas), it will fall back to opening the Store Listing directly.
   Future<void> forceRequestReview() async {
-    // Show a small snackbar so the user knows the code is working
+    /// Show a small snackbar so the user knows the code is working
     if (navigatorKey.currentContext != null) {
       CustomSnackbar.showInfo(
         navigatorKey.currentContext!,
@@ -141,7 +141,7 @@ class ReviewService {
     try {
       if (await _inAppReview.isAvailable()) {
         _wasRequestedThisRun = true;
-        // Increase delay to 2.5 seconds to ensure stable activity transition
+        /// Increase delay to 2.5 seconds to ensure stable activity transition
         await Future.delayed(const Duration(milliseconds: 2500));
         await _inAppReview.requestReview();
       } else {
@@ -164,7 +164,7 @@ class ReviewService {
     try {
       final Uri emailLaunchUri = Uri(
         scheme: 'mailto',
-        path: 'cybroplay@gmail.com', // Updated support email
+        path: 'cybroplay@gmail.com', /// Updated support email
         query: encodeQueryParameters(<String, String>{
           'subject':
           'Feedback for mobo Sales for Odoo (${rating.toInt()} Stars)',

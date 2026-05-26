@@ -19,23 +19,23 @@ class ServerSetupScreen extends StatefulWidget {
 
 class _ServerSetupScreenState extends State<ServerSetupScreen>
     with TickerProviderStateMixin {
-  // Animation controllers
+  /// Animation controllers
   late AnimationController _databaseFadeController;
   late Animation<double> _databaseFadeAnimation;
 
-  // Control when to show validation messages
+  /// Control when to show validation messages
   bool _shouldValidate = false;
 
-  // Track field-level errors
+  /// Track field-level errors
   bool urlHasError = false;
   bool dbHasError = false;
 
-  // General/inline error shown under fields
+  /// General/inline error shown under fields
   String? inlineError;
 
-  // Debounce timer for auto-fetching databases on URL change
+  /// Debounce timer for auto-fetching databases on URL change
   Timer? _urlDebounce;
-  // Suppress auto-fetch while waiting for explicit suggestion selection
+  /// Suppress auto-fetch while waiting for explicit suggestion selection
   bool _awaitingSuggestionSelection = false;
 
   @override
@@ -64,7 +64,7 @@ class _ServerSetupScreenState extends State<ServerSetupScreen>
     super.dispose();
   }
 
-  // Handle database field animation when databases are fetched
+  /// Handle database field animation when databases are fetched
   void _handleDatabaseFetch(LoginProvider provider) {
     if (provider.urlCheck && provider.dropdownItems.isNotEmpty) {
 
@@ -74,11 +74,8 @@ class _ServerSetupScreenState extends State<ServerSetupScreen>
     }
   }
 
-  // Navigate to credentials screen
+  /// Navigate to credentials screen
   void _goToCredentials(LoginProvider provider) {
-    // FastNavigation.navigateTo(
-    //   context,
-    //   CredentialsScreen(
     Navigator.push(
       context,
       dynamicRoute(
@@ -92,7 +89,7 @@ class _ServerSetupScreenState extends State<ServerSetupScreen>
     );
   }
 
-  // Check if user can proceed to credentials
+  /// Check if user can proceed to credentials
   bool _canProceedToCredentials(LoginProvider provider) {
     return provider.urlController.text.trim().isNotEmpty &&
         provider.database != null &&
@@ -107,10 +104,10 @@ class _ServerSetupScreenState extends State<ServerSetupScreen>
       create: (_) => LoginProvider(),
       child: Consumer<LoginProvider>(
         builder: (context, provider, child) {
-          // Handle database field animation
+          /// Handle database field animation
           _handleDatabaseFetch(provider);
 
-          // Sync inlineError with provider.errorMessage
+          /// Sync inlineError with provider.errorMessage
           if (!provider.isLoadingDatabases &&
               provider.errorMessage != inlineError) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -124,7 +121,7 @@ class _ServerSetupScreenState extends State<ServerSetupScreen>
           return GestureDetector(
             behavior: HitTestBehavior.translucent,
             onTap: () {
-              FocusScope.of(context).unfocus();   // removes focus from text fields
+              FocusScope.of(context).unfocus();   /// removes focus from text fields
             },
             child: LoginLayout(
               title: 'Sign In',
@@ -134,25 +131,25 @@ class _ServerSetupScreenState extends State<ServerSetupScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Server URL field with custom autocomplete
+                    /// Server URL field with custom autocomplete
                     _CustomAutocompleteField(
                       controller: provider.urlController,
                       suggestions: provider.previousUrls,
                       enableSuggestions: !provider.isLoadingDatabases &&
                           !(provider.urlCheck && provider.dropdownItems.isNotEmpty),
                       onSuggestionSelected: (String selection) {
-                        // Use the new helper method to separate protocol and domain
+                        /// Use the new helper method to separate protocol and domain
                         provider.setUrlFromFullUrl(selection);
             
-                        // Immediately seed this URL into history so it persists for future launches
+                        /// Immediately seed this URL into history so it persists for future launches
                         provider.seedUrlToHistory(selection);
             
-                        // Get the domain part for validation
+                        /// Get the domain part for validation
                         final domain = provider.extractDomain(selection);
             
                         setState(() {
                           urlHasError = domain.isEmpty;
-                          // Resume auto-fetching now that user explicitly selected a suggestion
+                          /// Resume auto-fetching now that user explicitly selected a suggestion
                           _awaitingSuggestionSelection = false;
                         });
             
@@ -179,8 +176,8 @@ class _ServerSetupScreenState extends State<ServerSetupScreen>
                         selectedProtocol: provider.selectedProtocol,
                         isLoading: provider.isLoadingDatabases,
                         onProtocolAutoDetected: () {
-                          // A full URL with protocol was typed/pasted; trigger immediate DB fetch
-                          // Normalize current field state and run fetch without requiring suggestion selection
+                          /// A full URL with protocol was typed/pasted; trigger immediate DB fetch
+                          /// Normalize current field state and run fetch without requiring suggestion selection
                           setState(() {
                             _awaitingSuggestionSelection = false;
                             inlineError = null;
@@ -207,8 +204,8 @@ class _ServerSetupScreenState extends State<ServerSetupScreen>
                           return null;
                         },
                         onChanged: (val) {
-                          // Don't set controller.text here as it causes cursor to jump
-                          // The controller already has the correct value from user input
+                          /// Don't set controller.text here as it causes cursor to jump
+                          /// The controller already has the correct value from user input
             
                           final newUrlHasError = val.isEmpty;
                           if (urlHasError != newUrlHasError ||
@@ -224,7 +221,7 @@ class _ServerSetupScreenState extends State<ServerSetupScreen>
                             provider.formKey.currentState?.validate();
                           }
             
-                          // Debounced auto-fetch of databases
+                          /// Debounced auto-fetch of databases
                           _urlDebounce?.cancel();
                           final trimmed = val.trim();
                           if (trimmed.isEmpty) {
@@ -234,7 +231,7 @@ class _ServerSetupScreenState extends State<ServerSetupScreen>
                                 Timer(const Duration(milliseconds: 700), () {
                               if (!mounted) return;
                               if (_awaitingSuggestionSelection) {
-                                // Wait for suggestion selection before fetching
+                                /// Wait for suggestion selection before fetching
                                 return;
                               }
                               if (provider.isValidUrl(trimmed)) {
@@ -252,7 +249,7 @@ class _ServerSetupScreenState extends State<ServerSetupScreen>
                         },
                         onProtocolChanged: (protocol) {
                           provider.setProtocol(protocol);
-                          // Re-fetch databases when protocol changes if URL is valid
+                          /// Re-fetch databases when protocol changes if URL is valid
                           final trimmed = provider.urlController.text.trim();
                           if (trimmed.isNotEmpty &&
                               provider.isValidUrl(trimmed)) {
@@ -261,7 +258,7 @@ class _ServerSetupScreenState extends State<ServerSetupScreen>
                                 Timer(const Duration(milliseconds: 300), () {
                               if (!mounted) return;
                               if (_awaitingSuggestionSelection) {
-                                // Do not fetch while waiting for suggestion selection
+                                /// Do not fetch while waiting for suggestion selection
                                 return;
                               }
                               provider.fetchDatabaseList();
@@ -272,7 +269,7 @@ class _ServerSetupScreenState extends State<ServerSetupScreen>
                     ),
                     const SizedBox(height: 16),
             
-                    // Animated Database dropdown
+                    /// Animated Database dropdown
                     AnimatedBuilder(
                       animation: _databaseFadeAnimation,
                       builder: (context, child) {
@@ -334,10 +331,10 @@ class _ServerSetupScreenState extends State<ServerSetupScreen>
                       },
                     ),
             
-                    // Error display
+                    /// Error display
                     LoginErrorDisplay(error: inlineError),
             
-                    // Next Button
+                    /// Next Button
                     LoginButton(
                       text: 'Next',
                       onPressed: _canProceedToCredentials(provider)
@@ -380,7 +377,7 @@ class _CustomAutocompleteFieldState extends State<_CustomAutocompleteField> {
   List<String> _filteredSuggestions = [];
   late FocusNode _focusNode;
   OverlayEntry? _overlayEntry;
-  // True only after the entry has been physically inserted into the Overlay tree.
+  /// True only after the entry has been physically inserted into the Overlay tree.
   bool _overlayInserted = false;
 
   @override
@@ -394,11 +391,10 @@ class _CustomAutocompleteFieldState extends State<_CustomAutocompleteField> {
   @override
   void didUpdateWidget(_CustomAutocompleteField oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Update suggestions when the suggestions list changes
+    /// Update suggestions when the suggestions list changes
     if (oldWidget.suggestions != widget.suggestions) {
-      debugPrint('[AutocompleteField] Suggestions updated: ${widget.suggestions.length} items');
       if (_focusNode.hasFocus) {
-        // Defer updates to after the current frame to avoid modifying the tree during build
+        /// Defer updates to after the current frame to avoid modifying the tree during build
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (!mounted) return;
           if (!widget.enableSuggestions) {
@@ -409,7 +405,7 @@ class _CustomAutocompleteFieldState extends State<_CustomAutocompleteField> {
           if (_filteredSuggestions.isNotEmpty && _overlayEntry == null) {
             _showSuggestionsOverlay();
           } else if (_overlayEntry != null) {
-            // Safely request overlay rebuild after frame
+            /// Safely request overlay rebuild after frame
             try {
               _overlayEntry!.markNeedsBuild();
             } catch (_) {}
@@ -418,7 +414,7 @@ class _CustomAutocompleteFieldState extends State<_CustomAutocompleteField> {
       }
     }
 
-    // If suggestions were enabled and now disabled, hide overlay immediately
+    /// If suggestions were enabled and now disabled, hide overlay immediately
     if (oldWidget.enableSuggestions && !widget.enableSuggestions) {
       _hideSuggestions();
     }
@@ -457,7 +453,7 @@ class _CustomAutocompleteFieldState extends State<_CustomAutocompleteField> {
         if (_showSuggestions && _filteredSuggestions.isNotEmpty) {
           _overlayEntry!.markNeedsBuild();
         } else {
-          // Hide overlay if no suggestions
+          /// Hide overlay if no suggestions
           _removeOverlay();
         }
       }
@@ -466,7 +462,6 @@ class _CustomAutocompleteFieldState extends State<_CustomAutocompleteField> {
 
   void _updateSuggestions() {
     final text = widget.controller.text.toLowerCase().trim();
-    debugPrint('[AutocompleteField] Updating suggestions. Text: "$text", Available: ${widget.suggestions.length}');
 
     if (!widget.enableSuggestions) {
       _filteredSuggestions = [];
@@ -480,24 +475,23 @@ class _CustomAutocompleteFieldState extends State<_CustomAutocompleteField> {
 
     if (text.isEmpty) {
       _filteredSuggestions = List.from(widget.suggestions);
-      debugPrint('[AutocompleteField] Text empty, showing all ${_filteredSuggestions.length} suggestions');
     } else {
       _filteredSuggestions = widget.suggestions.where((suggestion) {
         final suggestionLower = suggestion.toLowerCase();
 
-        // If user typed a protocol, use startsWith on full string
+        /// If user typed a protocol, use startsWith on full string
         if (text.startsWith('http://') || text.startsWith('https://')) {
           return suggestionLower.startsWith(text);
         }
 
-        // Otherwise, compare by domain portion (ignore protocol), startsWith
+        /// Otherwise, compare by domain portion (ignore protocol), startsWith
         final textDomain = _extractDomainFromUrl(text);
         final suggestionDomain = _extractDomainFromUrl(suggestionLower);
         if (suggestionDomain.startsWith(textDomain)) {
           return true;
         }
 
-        // As a fallback, do a contains match on full suggestion
+        /// As a fallback, do a contains match on full suggestion
         return suggestionLower.contains(textDomain);
       }).toList();
     }
@@ -507,26 +501,22 @@ class _CustomAutocompleteFieldState extends State<_CustomAutocompleteField> {
 
     }
 
-    debugPrint('[AutocompleteField] Final filtered count: ${_filteredSuggestions.length}');
 
     if (!mounted) return;
     setState(() {
       _showSuggestions = _filteredSuggestions.isNotEmpty;
     });
 
-    // Force overlay rebuild or hide it
+    /// Force overlay rebuild or hide it
     if (_overlayEntry != null) {
       if (_filteredSuggestions.isEmpty) {
-        debugPrint('[AutocompleteField] Removing overlay - no suggestions');
         _removeOverlay();
       } else {
-        debugPrint('[AutocompleteField] Rebuilding overlay');
         try {
           _overlayEntry!.markNeedsBuild();
         } catch (_) {}
       }
     } else if (_filteredSuggestions.isNotEmpty) {
-      debugPrint('[AutocompleteField] Creating new overlay');
       _showSuggestionsOverlay();
     }
   }
@@ -541,23 +531,19 @@ class _CustomAutocompleteFieldState extends State<_CustomAutocompleteField> {
   }
 
   void _showSuggestionsOverlay() {
-    debugPrint('[AutocompleteField] _showSuggestionsOverlay called');
     if (_filteredSuggestions.isEmpty || !widget.enableSuggestions) {
-      debugPrint('[AutocompleteField] Cannot show overlay - no suggestions');
       return;
     }
 
     if (_overlayEntry != null) {
-      debugPrint('[AutocompleteField] Overlay already exists');
       return;
     }
 
-    debugPrint('[AutocompleteField] Creating overlay with ${_filteredSuggestions.length} suggestions');
 
-    // ── Snapshot everything from context/state NOW, BEFORE creating the
-    // OverlayEntry.  The builder must NOT close over live references to this
-    // state or its BuildContext; otherwise deactivated InheritedElements keep
-    // _dependents alive and Flutter throws '_dependents.isEmpty'.
+    /// ── Snapshot everything from context/state NOW, BEFORE creating the
+    /// OverlayEntry.  The builder must NOT close over live references to this
+    /// state or its BuildContext; otherwise deactivated InheritedElements keep
+    /// _dependents alive and Flutter throws '_dependents.isEmpty'.
     final renderBox = context.findRenderObject() as RenderBox?;
     final double fieldWidth =
         renderBox?.size.width ?? (MediaQuery.of(context).size.width - 48);
@@ -569,10 +555,10 @@ class _CustomAutocompleteFieldState extends State<_CustomAutocompleteField> {
     final Color borderColor =
         isDark ? Colors.white.withOpacity(0.1) : Colors.black.withOpacity(0.1);
 
-    // Snapshot the list so the builder never reads live mutable state.
+    /// Snapshot the list so the builder never reads live mutable state.
     final List<String> snapshotSuggestions = List.unmodifiable(_filteredSuggestions);
 
-    // Snapshot plain Dart references (no BuildContext dependency).
+    /// Snapshot plain Dart references (no BuildContext dependency).
     final onSelected = widget.onSuggestionSelected;
     final hideFn = _hideSuggestions;
     final focusNode = _focusNode;
@@ -642,27 +628,23 @@ class _CustomAutocompleteFieldState extends State<_CustomAutocompleteField> {
       ),
     );
 
-    debugPrint('[AutocompleteField] Inserting overlay into Overlay');
-    // Defer insertion to post-frame to avoid build-time modifications.
+    /// Defer insertion to post-frame to avoid build-time modifications.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || _overlayEntry == null) return;
-      // If _hideSuggestions was called before this post-frame ran, bail out.
+      /// If _hideSuggestions was called before this post-frame ran, bail out.
       if (_overlayInserted) return;
       final overlayState = Overlay.maybeOf(context);
       if (overlayState != null && overlayState.mounted) {
         overlayState.insert(_overlayEntry!);
         _overlayInserted = true;
-        debugPrint('[AutocompleteField] Overlay inserted successfully');
       } else {
-        // Insertion skipped — discard so _removeOverlay won't try to remove it.
+        /// Insertion skipped — discard so _removeOverlay won't try to remove it.
         _overlayEntry = null;
-        debugPrint('[AutocompleteField] Overlay insertion skipped - overlay not available');
       }
     });
   }
 
   void _hideSuggestions() {
-    debugPrint('[AutocompleteField] Hiding suggestions');
     _removeOverlay();
     if (mounted) {
       setState(() {
@@ -675,15 +657,12 @@ class _CustomAutocompleteFieldState extends State<_CustomAutocompleteField> {
     final entry = _overlayEntry;
     _overlayEntry = null;
     if (entry != null && _overlayInserted) {
-      debugPrint('[AutocompleteField] Removing overlay');
       try {
         entry.remove();
       } catch (e) {
-        debugPrint('[AutocompleteField] Overlay remove error (safe-ignored): $e');
       }
     } else if (entry != null) {
-      // Entry was created but never inserted — just dispose it.
-      debugPrint('[AutocompleteField] Overlay discarded (never inserted)');
+      /// Entry was created but never inserted — just dispose it.
       try {
         entry.dispose();
       } catch (_) {}

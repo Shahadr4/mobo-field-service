@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:developer';
 import 'dart:math' as math;
 import 'package:http/http.dart' as http;
 
@@ -10,7 +9,7 @@ class LocationMapService {
     if (address.trim().isEmpty) return null;
     if (_geocodeCache.containsKey(address)) return _geocodeCache[address];
 
-    // Progressive fallback: full → last 2 parts → last part
+    /// Progressive fallback: full → last 2 parts → last part
     final parts = address.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
     final attempts = <String>[
       address.trim(),
@@ -22,7 +21,6 @@ class LocationMapService {
       final r = await _nominatimSearch(query);
       if (r != null) {
         _geocodeCache[address] = r;
-        log('[LocationMapService] geocoded "$query" → ${r.lat},${r.lon}');
         return r;
       }
     }
@@ -63,7 +61,7 @@ class MapTileInfo {
   final int zoom;
   final int centerX;
   final int centerY;
-  final double pixelOffsetX; // pixel offset of pin within center tile
+  final double pixelOffsetX; /// pixel offset of pin within center tile
   final double pixelOffsetY;
 
   const MapTileInfo({

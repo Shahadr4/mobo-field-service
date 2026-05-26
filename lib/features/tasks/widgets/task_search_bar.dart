@@ -45,7 +45,7 @@ class TaskSearchBar extends StatelessWidget {
               fontSize: 15,
               color: isDark ? Colors.white38 : Colors.grey.shade400,
             ),
-            // ── Filter icon with active dot ───────────────────────
+            /// ── Filter icon with active dot ───────────────────────
             prefixIcon: GestureDetector(
               onTap: () => TaskFilterSheet.show(context),
               child: Padding(

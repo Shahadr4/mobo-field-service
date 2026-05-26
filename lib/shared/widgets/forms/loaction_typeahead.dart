@@ -21,7 +21,7 @@ class LocationTypeAhead extends StatelessWidget {
   final ValueChanged<LocationItem> onLocationSelected;
   final String? hintText;
   final String? Function(String?)? validator;
-  final int? parentLocationId; // For picking mode - filter to warehouse
+  final int? parentLocationId; /// For picking mode - filter to warehouse
 
   const LocationTypeAhead({
     super.key,

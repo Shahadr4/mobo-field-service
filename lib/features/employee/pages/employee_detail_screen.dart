@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:hugeicons/hugeicons.dart';
 import '../../../core/const/app_colors.dart';
 import '../model/employee_model.dart';
 import '../model/employee_stats_model.dart';
@@ -29,6 +30,7 @@ class _EmployeeDetailScreenState extends State<EmployeeDetailScreen> {
     super.initState();
     _loadStats();
   }
+
 
   Future<void> _loadStats() async {
     final stats = await _service.fetchStats(widget.assignee.id);
@@ -60,15 +62,11 @@ class _EmployeeDetailScreenState extends State<EmployeeDetailScreen> {
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
-        leading: GestureDetector(
-          onTap: () => Navigator.pop(context),
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Icon(
-              Icons.arrow_back_ios_new_rounded,
-              size: 18,
-              color: isDark ? Colors.white : Colors.black,
-            ),
+        leading: IconButton(
+          onPressed: () => Navigator.pop(context),
+          icon: HugeIcon(
+            icon: HugeIcons.strokeRoundedArrowLeft01,
+            color: isDark ? Colors.white : Colors.black,
           ),
         ),
         title: Text(
@@ -152,17 +150,16 @@ class _Body extends StatelessWidget {
             shadow: shadow,
           ),
           const SizedBox(height: 16),
+
+          EmployeeStatsGrid(stats: stats),
+
+          const SizedBox(height: 12),
           EmployeeHoursRow(
             stats: stats,
             isDark: isDark,
             cardBg: cardBg,
             shadow: shadow,
           ),
-          const SizedBox(height: 12),
-
-
-
-          EmployeeStatsGrid(stats: stats),
 
         ],
       ),

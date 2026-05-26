@@ -3,7 +3,10 @@ import '../model/task_stats_model.dart';
 import '../services/task_stats_service.dart';
 
 class TaskStatsProvider extends ChangeNotifier {
-  final TaskStatsService _service = TaskStatsService();
+  final TaskStatsService _service;
+
+  TaskStatsProvider({TaskStatsService? service})
+      : _service = service ?? TaskStatsService();
 
   TaskStats _stats = const TaskStats.empty();
   bool _isInitialized = false;
@@ -38,7 +41,6 @@ class TaskStatsProvider extends ChangeNotifier {
       _stats = await _service.fetchTaskStats();
       _isInitialized = true;
     } catch (e) {
-      debugPrint('[TaskStatsProvider] ❌ fetch error: $e');
       _error = 'Failed to load task overview.';
     } finally {
       _isLoading = false;
@@ -57,7 +59,6 @@ class TaskStatsProvider extends ChangeNotifier {
       _stats = await _service.fetchTaskStats();
       _isInitialized = true;
     } catch (e) {
-      debugPrint('[TaskStatsProvider] ❌ refresh error: $e');
       _error = 'Failed to refresh task overview.';
     } finally {
       _isRefreshing = false;

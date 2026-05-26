@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:developer';
 import '../../../core/services/odoo_session_manager.dart';
 import '../model/employee_filter.dart';
 import '../model/employee_model.dart';
@@ -20,14 +19,14 @@ class AssigneeService {
   }) async {
     final session = await OdooSessionManager.getCurrentSession();
 
-    // Base domain: internal active users only
+    /// Base domain: internal active users only
     final domain = <dynamic>[
       ['active', '=', true],
       ['share', '=', false],
     ];
 
     if (filters.contains(AssigneeFilterBy.archived)) {
-      // Replace active=true with active=false
+      /// Replace active=true with active=false
       domain[0] = ['active', '=', false];
     }
 
@@ -43,7 +42,7 @@ class AssigneeService {
           final deptRaw = empRaw.first['department_id'];
           if (deptRaw is List && deptRaw.isNotEmpty) {
             final deptId = (deptRaw[0] as num).toInt();
-            // Get user IDs in this department via hr.employee
+            /// Get user IDs in this department via hr.employee
             final deptEmps = await OdooSessionManager.callKwWithCompany({
               'model': 'hr.employee',
               'method': 'search_read',
@@ -105,7 +104,6 @@ class AssigneeService {
       domain.add(['name', 'ilike', search]);
     }
 
-    log('[AssigneeService] domain=$domain offset=$offset limit=$limit');
 
     try {
       final futures = await Future.wait([
@@ -135,7 +133,7 @@ class AssigneeService {
       final rawList = raw.whereType<Map<String, dynamic>>().toList();
       final userIds = rawList.map((r) => (r['id'] as num).toInt()).toList();
 
-      // Enrich with job_title, department, and manager from hr.employee
+      /// Enrich with job_title, department, and manager from hr.employee
       final empMap = await _fetchEmployeeDetails(userIds);
 
       final assignees = rawList.map((r) {
@@ -149,7 +147,7 @@ class AssigneeService {
         });
       }).toList();
 
-      // Fetch avatars from res.users image_128
+      /// Fetch avatars from res.users image_128
       final avatarMap = await _fetchAvatars(userIds);
       final enriched = assignees
           .map((a) => avatarMap.containsKey(a.id)
@@ -159,11 +157,11 @@ class AssigneeService {
 
       return AssigneePageResult(assignees: enriched, total: total);
     } catch (e) {
-      log('[AssigneeService] error: $e');
       return AssigneePageResult.empty;
     }
   }
 
+  ///fetch users details
   Future<Map<int, Map<String, String>>> _fetchEmployeeDetails(
       List<int> userIds) async {
     if (userIds.isEmpty) return {};
@@ -202,6 +200,8 @@ class AssigneeService {
     }
   }
 
+
+  ///fetch the images of the users
   Future<Map<int, List<int>>> _fetchAvatars(List<int> ids) async {
     if (ids.isEmpty) return {};
     try {

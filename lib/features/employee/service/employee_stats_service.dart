@@ -1,16 +1,18 @@
-import 'dart:developer';
+
 import '../../../core/services/odoo_session_manager.dart';
 import '../model/employee_stats_model.dart';
 
 class EmployeeStatsService {
   Future<EmployeeStats> fetchStats(int userId) async {
-    log('[EmployeeStatsService] fetchStats for user=$userId');
+    final session = await OdooSessionManager.getCurrentSession();
+    final version = session?.version;
 
     final baseDomain = [
       ['is_fsm', '=', true],
       ['user_ids', 'in', [userId]],
       ['project_id', '!=', false],
-      ['has_template_ancestor', '=', false],
+      if (version?.contains('19') == true)
+        ['has_template_ancestor', '=', false],
       ['display_in_project', '=', true],
     ];
 
@@ -52,7 +54,7 @@ class EmployeeStatsService {
           ['user_id', '=', userId],
           ['project_id', '!=', false],
         ]),
-        // 5 — hours this month
+        /// 5 — hours this month
         _sumHours([
           ['task_id.is_fsm', '=', true],
           ['user_id', '=', userId],
@@ -70,7 +72,6 @@ class EmployeeStatsService {
         thisMonthHours: results[5] as double,
       );
     } catch (e) {
-      log('[EmployeeStatsService] ⚠️ error: $e');
       return const EmployeeStats.empty();
     }
   }

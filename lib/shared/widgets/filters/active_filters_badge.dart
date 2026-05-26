@@ -25,7 +25,7 @@ class ActiveFiltersBadge extends StatelessWidget {
 
     if (count == 0) {
       if (hasGroupBy) {
-        // Suppress the text when grouped (match inventory behavior)
+        /// Suppress the text when grouped (match inventory behavior)
         return const SizedBox.shrink();
       }
       return Padding(
@@ -60,7 +60,7 @@ class ActiveFiltersBadge extends StatelessWidget {
             '$count active',
             style: TextStyle(
               fontSize: 12,
-              // Keep exact contrast behavior from reference implementation
+              /// Keep exact contrast behavior from reference implementation
               color: isDark ? Colors.black : Colors.white,
               fontWeight: FontWeight.w500,
             ),

@@ -3,6 +3,7 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:hugeicons/hugeicons.dart';
 import 'package:mobo_feild_service/core/const/app_colors.dart';
 
 import '../model/task_model.dart';
@@ -22,20 +23,20 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
   final _formKey    = GlobalKey<FormState>();
   final _scrollCtrl = ScrollController();
 
-  // Plain text fields
+  /// Plain text fields
   final _titleCtrl = TextEditingController();
   final _hoursCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
   final _descriptionCtrl = TextEditingController();
 
-  // Meta lists loaded once
+  /// Meta lists loaded once
   List<Map<String, dynamic>> _projects   = [];
   List<Map<String, dynamic>> _stages     = [];
   List<Map<String, dynamic>> _worksheets = [];
   List<Map<String, dynamic>> _users      = [];
   List<Map<String, dynamic>> _tags       = [];
 
-  // Selections
+  /// Selections
   Map<String, dynamic>? _selectedProject;
   Map<String, dynamic>? _selectedStage;
   Map<String, dynamic>? _selectedWorksheet;
@@ -120,27 +121,26 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
       _assigneeIds.isNotEmpty &&
       _hasChanges;
 
-  // ── Typeahead controllers / focus / links ─────────────────────────────────
 
-  // Project
+  /// Project
   final _projectCtrl  = TextEditingController();
   final _projectFocus = FocusNode();
   final _projectLink  = LayerLink();
   OverlayEntry? _projectOverlay;
 
-  // Stage
+  /// Stage
   final _stageCtrl  = TextEditingController();
   final _stageFocus = FocusNode();
   final _stageLink  = LayerLink();
   OverlayEntry? _stageOverlay;
 
-  // Worksheet
+  /// Worksheet
   final _worksheetCtrl  = TextEditingController();
   final _worksheetFocus = FocusNode();
   final _worksheetLink  = LayerLink();
   OverlayEntry? _worksheetOverlay;
 
-  // Customer
+  /// Customer
   final _customerCtrl  = TextEditingController();
   final _customerFocus = FocusNode();
   final _customerLink  = LayerLink();
@@ -149,15 +149,14 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
   List<Map<String, dynamic>> _customerResults = [];
   Timer? _customerDebounce;
 
-  // Assignee / Tag links
+  /// Assignee / Tag links
   final _assigneeLink = LayerLink();
   final _tagLink      = LayerLink();
   OverlayEntry? _assigneeOverlay;
   OverlayEntry? _tagOverlay;
   final _tagFocus = FocusNode();
 
-  // ── Init state ─────────────────────────────────────────────────────────────
-
+  /// ── Init state
   @override
   void initState() {
     super.initState();
@@ -165,22 +164,20 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
     _descriptionCtrl.text = widget.task.description;
     _hoursCtrl.text = widget.task.allocatedHours > 0 ? widget.task.allocatedHours.toString() : '';
     _plannedStart = widget.task.plannedDateBegin;
-    log("planned date end ==> ${ widget.task.plannedDateEnd}") ;
-    log("planned date start ==> ${ widget.task.plannedDateBegin}") ;
     _plannedEnd = widget.task.plannedDateEnd;
     _underWarranty = widget.task.underWarranty;
     _priority = widget.task.priority;
     _assigneeIds.addAll(widget.task.assigneeIds);
     _tagIds.addAll(widget.task.tagIds);
 
-    // Initial setup for controller listeners
+    /// Initial setup for controller listeners
     _titleCtrl.addListener(_rebuild);
     _projectCtrl.addListener(_rebuild);
     _hoursCtrl.addListener(_rebuild);
     _phoneCtrl.addListener(_rebuild);
     _descriptionCtrl.addListener(_rebuild);
 
-    // Setup focus node behaviors
+    /// Setup focus node behaviors
     _projectFocus.addListener(() {
       if (!_projectFocus.hasFocus) {
         _projectOverlay?.remove();
@@ -300,7 +297,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
     );
   }
 
-  // ── Load meta ──────────────────────────────────────────────────────────────
+  /// ── Load meta ──────────────────────────────────────────────────────────────
 
   Future<void> _loadMeta() async {
     final results = await Future.wait([
@@ -321,7 +318,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
       _showWarrantySection   = fsmSettings.warrantyEnabled;
       _loadingMeta           = false;
 
-      // Pre-populate worksheet from task
+      /// Pre-populate worksheet from task
       if (widget.task.worksheetTemplateId != null) {
         final match = (results[1] as List<Map<String, dynamic>>).firstWhere(
           (w) => (w['id'] as num).toInt() == widget.task.worksheetTemplateId,
@@ -335,7 +332,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
       }
     });
 
-    // Match selected project from task
+    /// Match selected project from task
     if (widget.task.projectId != null) {
       final matchedProj = _projects.firstWhere(
         (p) => (p['id'] as num).toInt() == widget.task.projectId,
@@ -346,7 +343,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
         _projectCtrl.text = matchedProj['name']?.toString() ?? '';
       });
 
-      // Load stages for that project
+      /// Load stages for that project
       final stages = await _service.fetchStageObjects(projectId: widget.task.projectId);
       if (!mounted) return;
       setState(() {
@@ -362,7 +359,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
       });
     }
 
-    // Match customer from task
+    /// Match customer from task
     if (widget.task.partnerId != null) {
       setState(() {
         _selectedCustomer = {
@@ -405,7 +402,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
     });
   }
 
-  // ── Filter helpers ─────────────────────────────────────────────────────────
+  /// ── Filter helpers ─────────────────────────────────────────────────────────
 
   List<Map<String, dynamic>> _filterList(
       List<Map<String, dynamic>> list, String q) {
@@ -428,7 +425,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
     return primaryColor;
   }
 
-  // ── Submit ─────────────────────────────────────────────────────────────────
+  /// ── Submit ─────────────────────────────────────────────────────────────────
 
   Future<void> _submit() async {
     if (!_canSubmit || _saving) return;
@@ -535,7 +532,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
     }
   }
 
-  // ── Build ──────────────────────────────────────────────────────────────────
+  /// ── Build ──────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -554,9 +551,10 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
           backgroundColor: bg,
           surfaceTintColor: Colors.transparent,
           leading: IconButton(
-            icon: Icon(Icons.arrow_back_ios_new_rounded,
-                size: 18,
-                color: isDark ? Colors.white : Colors.black87),
+            icon: HugeIcon(
+              icon: HugeIcons.strokeRoundedArrowLeft01,
+              color: isDark ? Colors.white : Colors.black87,
+            ),
             onPressed: () => Navigator.pop(context),
           ),
           title: Text('Edit Task',
@@ -575,7 +573,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
                   controller: _scrollCtrl,
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
                   children: [
-                    // ── Main card ──────────────────────────────────────
+                    /// ── Main card ──────────────────────────────────────
                     _card(
                       isDark: isDark,
                       title: 'General',
@@ -667,7 +665,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
                     ]),
                     const SizedBox(height: 16),
 
-                    // ── Information ────────────────────────────────────
+                    /// ── Information ────────────────────────────────────
                     _card(
                       isDark: isDark,
                       title: 'Information',
@@ -721,7 +719,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
                     ]),
                     const SizedBox(height: 16),
 
-                    // ── Description ────────────────────────────────────
+                    /// ── Description ────────────────────────────────────
                     _card(
                       isDark: isDark,
                       title: 'Description',
@@ -737,7 +735,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // ── Schedule ───────────────────────────────────────
+                    /// ── Schedule ───────────────────────────────────────
                     _card(
                       isDark: isDark,
                       title: 'Schedule',
@@ -774,9 +772,8 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
     );
   }
 
-  // ── Field widgets ──────────────────────────────────────────────────────────
 
-  // Generic typeahead field (project / status / worksheet)
+  /// Generic typeahead field (project / status / worksheet)
   Widget _typeaheadField({
     required bool isDark,
     required TextEditingController ctrl,
@@ -831,7 +828,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
     );
   }
 
-  // Assignees multi-select (checkbox overlay — same pattern as tags)
+  /// Assignees multi-select (checkbox overlay — same pattern as tags)
   Widget _assigneeField(bool isDark) {
     final selected = _users
         .where((u) => _assigneeIds.contains((u['id'] as num).toInt()))
@@ -889,7 +886,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
     );
   }
 
-  // Dynamic Customer Search Field
+  /// Dynamic Customer Search Field
   Widget _customerField(bool isDark) {
     return CompositedTransformTarget(
       link: _customerLink,
@@ -949,7 +946,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
     );
   }
 
-  // Tags field — shows selected chips + tap to open checkbox overlay
+  /// Tags field — shows selected chips + tap to open checkbox overlay
   Widget _tagsField(bool isDark) {
     final selected =
         _tags.where((t) => _tagIds.contains((t['id'] as num).toInt())).toList();
@@ -1013,7 +1010,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
     );
   }
 
-  // ── Shared small widgets ───────────────────────────────────────────────────
+  /// ── Shared small widgets ───────────────────────────────────────────────────
 
   Widget _plainInput(
     bool isDark,
@@ -1262,7 +1259,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
     );
   }
 
-  // ── Overlay implementation ──────────────────────────────────────────────────
+  /// ── Overlay implementation ──────────────────────────────────────────────────
 
   void _showSimpleOverlay({
     required LayerLink link,
@@ -1336,7 +1333,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
     overlayRef(entry);
   }
 
-  // Multi-select assignee checkbox overlay
+  /// Multi-select assignee checkbox overlay
   void _openAssigneeOverlay() {
     if (_assigneeOverlay != null) {
       _assigneeOverlay?.remove();
@@ -1447,7 +1444,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
     _assigneeOverlay = entry;
   }
 
-  // Multi-select tags checkbox overlay
+  /// Multi-select tags checkbox overlay
   void _openTagOverlay() {
     if (_tagOverlay != null) {
       _tagOverlay?.remove();
@@ -1558,7 +1555,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
     _tagOverlay = entry;
   }
 
-  // ── DateTime Picker ────────────────────────────────────────────────────────
+  /// ── DateTime Picker ────────────────────────────────────────────────────────
 
   Future<void> _pickDateTime({required bool isStart}) async {
     final now = DateTime.now();
@@ -1672,7 +1669,7 @@ class _EditTaskScreenState extends State<EditTaskScreen> {
     }
   }
 
-  // ── Customer search debounce ────────────────────────────────────────────────
+  /// ── Customer search debounce ────────────────────────────────────────────────
 
   void _onCustomerChanged(String val) {
     _customerDebounce?.cancel();

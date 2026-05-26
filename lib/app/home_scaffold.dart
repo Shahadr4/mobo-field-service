@@ -14,8 +14,6 @@ import '../features/dashboard/widget/project_picker_sheet.dart';
 import '../features/timesheet/pages/add_timesheet_screen.dart';
 import '../features/timesheet/provider/timesheet_list_provider.dart';
 import '../shared/widgets/snackbars/custom_snackbar.dart' show CustomSnackbar;
-
-
 import '../features/dashboard/pages/dashboard_screen.dart';
 import '../features/dashboard/provider/check_in_provider.dart';
 import '../features/dashboard/provider/dashboard_task_provider.dart';
@@ -54,7 +52,7 @@ class _HomeScaffoldState extends State<HomeScaffold>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    // Start connectivity/internet monitoring and seed current server URL
+    /// Start connectivity/internet monitoring and seed current server URL
     ConnectivityService.instance.startMonitoring();
     OdooSessionManager.getCurrentSession().then((session) {
       ConnectivityService.instance.setCurrentServerUrl(session?.serverUrl);
@@ -68,7 +66,7 @@ class _HomeScaffoldState extends State<HomeScaffold>
       await ReviewService().checkAndShowRating(context);
     });
 
-    // Ensure ProfileProvider fetches user data on app start
+    /// Ensure ProfileProvider fetches user data on app start
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         context.read<CompanyProvider>().initialize();
@@ -88,9 +86,8 @@ class _HomeScaffoldState extends State<HomeScaffold>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
     if (state == AppLifecycleState.resumed) {
-      debugPrint('[HomeScaffold] App resumed, validating session');
       _validateSession();
-      // Refresh profile data (including avatar) when app resumes
+      /// Refresh profile data (including avatar) when app resumes
       if (mounted) {
         context.read<ProfileProvider>().fetchUserProfile(forceRefresh: true);
       }
@@ -101,12 +98,11 @@ class _HomeScaffoldState extends State<HomeScaffold>
     try {
       final isValid = await OdooSessionManager.isSessionValid();
       if (!isValid && mounted) {
-        debugPrint('[HomeScaffold] Session invalid, redirecting to login');
         Navigator.of(
           context,
         ).pushNamedAndRemoveUntil('/server_setup', (route) => false);
       } else if (mounted) {
-        // Refresh permission check on resume
+        /// Refresh permission check on resume
         final session = await OdooSessionManager.getCurrentSession();
         if (session != null && session.isStockUser != _isStockUser) {
           setState(() {
@@ -115,7 +111,6 @@ class _HomeScaffoldState extends State<HomeScaffold>
         }
       }
     } catch (e) {
-      debugPrint('[HomeScaffold] Error validating session: $e');
     }
   }
   static const List<String> _titles = [
@@ -132,7 +127,7 @@ class _HomeScaffoldState extends State<HomeScaffold>
 
   @override
   Widget build(BuildContext context) {
-    // CompanyProvider is now provided globally in main.dart
+    /// CompanyProvider is now provided globally in main.dart
     return Scaffold(body: _buildScreenWithAppBar(Container()));
   }
 
@@ -147,11 +142,10 @@ class _HomeScaffoldState extends State<HomeScaffold>
             automaticallyImplyLeading: false,
             title: Text(
               _titles[activeIndex],
-              style: TextStyle(
-                color: isDark ? Colors.white : Colors.black,
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
+              style:TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                  color: isDark ? Colors.white : Colors.black87)
             ),
             actions: _buildProfileActions(context),
             backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -201,7 +195,7 @@ class _HomeScaffoldState extends State<HomeScaffold>
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return [
-      // Company selector
+      /// Company selector
     CompanySelectorWidget(
       onCompanyChanged: () async {
         if (!mounted) return;
@@ -218,7 +212,7 @@ class _HomeScaffoldState extends State<HomeScaffold>
         final mapProv = context.read<MapProvider>();
         final timesheetList = context.read<TimesheetListProvider>();
 
-        // Clear stale data immediately — shimmer shows while fresh data loads
+        /// Clear stale data immediately — shimmer shows while fresh data loads
         checkIn.reset();
         taskStats.reset();
         dashTasks.reset();
@@ -227,9 +221,9 @@ class _HomeScaffoldState extends State<HomeScaffold>
         timesheetList.reset();
         mapProv.resetTab();
 
-        // Reload all data sources for the new company/account.
-        // tasks/employees/timesheetList reset() triggers their screen listeners
-        // to auto-call init()/fetchAssignees()/init() from Odoo.
+        /// Reload all data sources for the new company/account.
+        /// tasks/employees/timesheetList reset() triggers their screen listeners
+        /// to auto-call init()/fetchAssignees()/init() from Odoo.
         mapProv.refresh();
         unawaited(Future.wait([
           checkIn.init(),
@@ -325,10 +319,6 @@ class _HomeScaffoldState extends State<HomeScaffold>
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Dashboard expandable FAB
-// ─────────────────────────────────────────────────────────────────────────────
-
 class _DashboardFab extends StatefulWidget {
   const _DashboardFab();
 
@@ -378,7 +368,7 @@ class _DashboardFabState extends State<_DashboardFab> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        // Option buttons
+        /// Option buttons
         if (_open) ...[
           _FabOption(
             label: 'Timer Recording',
@@ -412,7 +402,7 @@ class _DashboardFabState extends State<_DashboardFab> {
           const SizedBox(height: 16),
         ],
 
-        // Main FAB
+        /// Main FAB
         FloatingActionButton(
           onPressed: _toggle,
           backgroundColor: primaryColor,
@@ -425,9 +415,6 @@ class _DashboardFabState extends State<_DashboardFab> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Timesheet expandable FAB
-// ─────────────────────────────────────────────────────────────────────────────
 
 class _TimesheetFab extends StatefulWidget {
   const _TimesheetFab();
@@ -478,7 +465,7 @@ class _TimesheetFabState extends State<_TimesheetFab> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        // Option buttons
+        /// Option buttons
         if (_open) ...[
           _FabOption(
             label: 'Timer Recording',
@@ -504,7 +491,7 @@ class _TimesheetFabState extends State<_TimesheetFab> {
           const SizedBox(height: 16),
         ],
 
-        // Main FAB
+        /// Main FAB
         FloatingActionButton(
           onPressed: _toggle,
           backgroundColor: primaryColor,
@@ -539,7 +526,7 @@ class _FabOption extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Label pill
+          /// Label pill
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
@@ -563,7 +550,7 @@ class _FabOption extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          // Mini FAB
+          /// Mini FAB
           Container(
             width: 44,
             height: 44,

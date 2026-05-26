@@ -23,6 +23,7 @@ class TaskModel {
   final bool underWarranty;
   final int? worksheetTemplateId;
   final String worksheetTemplateName;
+  final bool displayTimesheetTimer;
   final bool displaySendReport;
   final bool displaySignReport;
   final bool displayMarkAsDone;
@@ -65,6 +66,7 @@ class TaskModel {
     required this.underWarranty,
     this.worksheetTemplateId,
     this.worksheetTemplateName = '',
+    this.displayTimesheetTimer = true,
     this.displaySendReport = false,
     this.displaySignReport = false,
     this.displayMarkAsDone = false,
@@ -108,6 +110,7 @@ class TaskModel {
     bool? underWarranty,
     int? worksheetTemplateId,
     String? worksheetTemplateName,
+    bool? displayTimesheetTimer,
     bool? displaySendReport,
     bool? displaySignReport,
     bool? displayMarkAsDone,
@@ -150,6 +153,7 @@ class TaskModel {
       underWarranty: underWarranty ?? this.underWarranty,
       worksheetTemplateId: worksheetTemplateId ?? this.worksheetTemplateId,
       worksheetTemplateName: worksheetTemplateName ?? this.worksheetTemplateName,
+      displayTimesheetTimer: displayTimesheetTimer ?? this.displayTimesheetTimer,
       displaySendReport: displaySendReport ?? this.displaySendReport,
       displaySignReport: displaySignReport ?? this.displaySignReport,
       displayMarkAsDone: displayMarkAsDone ?? this.displayMarkAsDone,
@@ -248,6 +252,7 @@ class TaskModel {
       underWarranty: map['under_warranty'] == true,
       worksheetTemplateId: rawId(map['worksheet_template_id']),
       worksheetTemplateName: rel(map['worksheet_template_id']),
+      displayTimesheetTimer: map['display_timesheet_timer'] != false,
       displaySendReport: map['display_send_report_secondary'] == true,
       displaySignReport: map['display_sign_report_secondary'] == true,
       displayMarkAsDone: map['display_mark_as_done_secondary'] == true,

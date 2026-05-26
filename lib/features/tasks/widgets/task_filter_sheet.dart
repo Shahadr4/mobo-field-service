@@ -66,7 +66,7 @@ class _TaskFilterSheetState extends State<TaskFilterSheet> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Drag handle ──────────────────────────────────────────
+          /// ── Drag handle ──────────────────────────────────────────
           Center(
             child: Padding(
               padding: const EdgeInsets.only(top: 12, bottom: 8),
@@ -80,7 +80,7 @@ class _TaskFilterSheetState extends State<TaskFilterSheet> {
             ),
           ),
 
-          // ── Title row ────────────────────────────────────────────
+          /// ── Title row ────────────────────────────────────────────
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 4, 16, 16),
             child: Row(
@@ -116,7 +116,7 @@ class _TaskFilterSheetState extends State<TaskFilterSheet> {
             ),
           ),
 
-          // ── Tab toggle ───────────────────────────────────────────
+          /// ── Tab toggle ───────────────────────────────────────────
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
             child: Container(
@@ -155,7 +155,7 @@ class _TaskFilterSheetState extends State<TaskFilterSheet> {
             ),
           ),
 
-          // ── Body ─────────────────────────────────────────────────
+          /// ── Body ─────────────────────────────────────────────────
           Expanded(
             child: _tab == 0
                 ? _FilterBody(
@@ -174,7 +174,7 @@ class _TaskFilterSheetState extends State<TaskFilterSheet> {
                   ),
           ),
 
-          // ── Bottom action buttons ────────────────────────────────
+          /// ── Bottom action buttons ────────────────────────────────
           Container(
             color: isDark ? const Color(0xFF1E2028) : Colors.white,
             padding: EdgeInsets.fromLTRB(20, 14, 20, 14 + bottomPad),
@@ -232,7 +232,7 @@ class _TaskFilterSheetState extends State<TaskFilterSheet> {
   }
 }
 
-// ── Tab button ────────────────────────────────────────────────────────────────
+/// ── Tab button ────────────────────────────────────────────────────────────────
 
 class _TabButton extends StatelessWidget {
   final String label;
@@ -276,7 +276,7 @@ class _TabButton extends StatelessWidget {
   }
 }
 
-// ── Filter body ───────────────────────────────────────────────────────────────
+/// ── Filter body ───────────────────────────────────────────────────────────────
 
 class _FilterBody extends StatelessWidget {
   final Set<TaskFilterBy> selected;
@@ -320,7 +320,7 @@ class _FilterBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final divColor = isDark ? const Color(0xFF2A2D36) : const Color(0xFFF0F0F0);
 
-    // All active filter items flattened across sections
+    /// All active filter items flattened across sections
     final activeItems = _sections
         .expand((s) => s.$2)
         .where((e) => selected.contains(e.$1))
@@ -331,7 +331,7 @@ class _FilterBody extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Active filters — flat list, no section headings
+          /// Active filters — flat list, no section headings
           if (activeItems.isNotEmpty) ...[
             Text(
               'Active Filters',
@@ -356,7 +356,7 @@ class _FilterBody extends StatelessWidget {
             const SizedBox(height: 16),
           ],
 
-          // Sectioned filter chips
+          /// Sectioned filter chips
           ..._sections.expand((section) {
             final heading = section.$1;
             final items   = section.$2;
@@ -491,7 +491,7 @@ class _FilterChip extends StatelessWidget {
   }
 }
 
-// ── Group By body ─────────────────────────────────────────────────────────────
+/// ── Group By body ─────────────────────────────────────────────────────────────
 
 class _GroupByBody extends StatelessWidget {
   final TaskGroupBy selected;

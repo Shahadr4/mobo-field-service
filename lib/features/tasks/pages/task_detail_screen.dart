@@ -40,7 +40,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
   bool _isUpdated = false;
   String? _overlayLoadingMessage;
 
-  // FSM feature flags — false until confirmed by settings fetch
+  /// FSM feature flags — false until confirmed by settings fetch
   bool _showWarrantySection   = false;
   bool _showWorksheetSection  = false;
 
@@ -141,9 +141,9 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
 
   void _handleLocation() {
     final mapProvider = Provider.of<MapProvider>(context, listen: false);
-    mapProvider.setActiveHomeTab(3); // Switch to Map tab
-    mapProvider.setPendingJumpTaskId(_task.id); // Queue the task ID to jump to
-    Navigator.pop(context); // Close the detail screen
+    mapProvider.setActiveHomeTab(3); /// Switch to Map tab
+    mapProvider.setPendingJumpTaskId(_task.id); /// Queue the task ID to jump to
+    Navigator.pop(context); /// Close the detail screen
   }
 
   Future<void> _handleSignReport() async {
@@ -217,7 +217,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
       offset: const Offset(0, 4),
     );
 
-    // Bottom sheet height: 2 rows × 48 + remaining row 60 + safe area bottom
+    /// Bottom sheet height: 2 rows × 48 + remaining row 60 + safe area bottom
     final bottomSheetH =
         48.0 + 48.0 + 60.0 + MediaQuery.of(context).padding.bottom;
 
@@ -229,15 +229,11 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
-        leading: GestureDetector(
-          onTap: () => Navigator.pop(context, _isUpdated ? _task : null),
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Icon(
-              Icons.arrow_back_ios_new_rounded,
-              size: 18,
-              color: isDark ? Colors.white : Colors.black,
-            ),
+        leading: IconButton(
+          onPressed: () => Navigator.pop(context, _isUpdated ? _task : null),
+          icon: HugeIcon(
+            icon: HugeIcons.strokeRoundedArrowLeft01,
+            color: isDark ? Colors.white : Colors.black,
           ),
         ),
         title: Text(
@@ -328,7 +324,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Info card
+                          /// Info card
                           TaskInfoCard(
                             task: _task,
                             isDark: isDark,
@@ -337,7 +333,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                           ),
                           const SizedBox(height: 16),
 
-                          // Pill tabs
+                          /// Pill tabs
                           SingleChildScrollView(
                             scrollDirection: Axis.horizontal,
                             child: Row(

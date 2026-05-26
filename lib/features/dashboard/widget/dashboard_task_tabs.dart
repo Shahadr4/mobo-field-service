@@ -34,8 +34,7 @@ class _DashboardTaskTabsView extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ── Section header ────────────────────────────────────────
-        Padding(
+         Padding(
           padding: const EdgeInsets.all(12),
           child: Row(
             children: [
@@ -51,8 +50,7 @@ class _DashboardTaskTabsView extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 10),
-        // ── Tab bar ──────────────────────────────────────────────
-        SingleChildScrollView(
+         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           padding: const EdgeInsets.fromLTRB(12, 0, 12, 0),
           child: Row(
@@ -68,8 +66,7 @@ class _DashboardTaskTabsView extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        // ── Content ──────────────────────────────────────────────
-        _TabContent(p: p, isDark: isDark),
+         _TabContent(p: p, isDark: isDark),
         const SizedBox(height: 16),
       ],
     );
@@ -269,7 +266,7 @@ class _LoadMoreCard extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                'Show next 5 tasks',
+                'Show more tasks',
                 style: TextStyle(
                   fontSize: 11,
                   color: isDark ? Colors.white38 : Colors.black45,
@@ -307,7 +304,7 @@ class _ShimmerTaskCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Map image placeholder
+              /// Map image placeholder
               Container(
                 height: 140,
                 width: double.infinity,
@@ -322,7 +319,7 @@ class _ShimmerTaskCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Stage badge row
+                      /// Stage badge row
                       Row(
                         children: [
                           Container(
@@ -345,28 +342,28 @@ class _ShimmerTaskCard extends StatelessWidget {
                         ],
                       ),
                       const SizedBox(height: 10),
-                      // Title line 1
+                      /// Title line 1
                       Container(
                         width: double.infinity,
                         height: 14,
                         color: Colors.white,
                       ),
                       const SizedBox(height: 6),
-                      // Title line 2
+                      /// Title line 2
                       Container(
                         width: 120,
                         height: 14,
                         color: Colors.white,
                       ),
                       const Spacer(),
-                      // Time row
+                      /// Time row
                       Container(
                         width: 140,
                         height: 12,
                         color: Colors.white,
                       ),
                       const SizedBox(height: 8),
-                      // Location row
+                      /// Location row
                       Container(
                         width: 110,
                         height: 12,
@@ -471,7 +468,7 @@ class _DashboardTaskCardState extends State<_DashboardTaskCard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Map image ─────────────────────────────────────────
+            /// Map image
             ClipRRect(
               borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
               child: SizedBox(
@@ -480,7 +477,7 @@ class _DashboardTaskCardState extends State<_DashboardTaskCard> {
                 child: _buildMapImage(isDark, stageColor),
               ),
             ),
-            // ── Info ──────────────────────────────────────────────
+            ///Info
             Expanded(
               child: Padding(
               padding: const EdgeInsets.fromLTRB(12, 10, 12, 12),
@@ -488,7 +485,7 @@ class _DashboardTaskCardState extends State<_DashboardTaskCard> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Stage badge + priority star
+                  /// Stage badge + priority star
                   Row(
                     children: [
                       if (task.stageName.isNotEmpty)
@@ -527,7 +524,7 @@ class _DashboardTaskCardState extends State<_DashboardTaskCard> {
                     ],
                   ),
                   const SizedBox(height: 7),
-                  // Task name
+                  /// Task name
                   Text(
                     task.name,
                     style: TextStyle(
@@ -539,7 +536,7 @@ class _DashboardTaskCardState extends State<_DashboardTaskCard> {
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 8),
-                  // Planned time: "9:00 AM → 11:00 AM"
+                  /// Planned time: "9:00 AM → 11:00 AM"
                   if (task.scheduledStart.isNotEmpty || task.scheduledEnd.isNotEmpty)
                     Row(
                       children: [
@@ -565,7 +562,7 @@ class _DashboardTaskCardState extends State<_DashboardTaskCard> {
                     ),
                   if (task.scheduledStart.isNotEmpty || task.scheduledEnd.isNotEmpty)
                     const SizedBox(height: 5),
-                  // Location line
+                  /// Location line
                   if (task.partnerName.isNotEmpty)
                     Row(
                       children: [
@@ -593,7 +590,7 @@ class _DashboardTaskCardState extends State<_DashboardTaskCard> {
           ],
         ),
           ),
-          // Loading overlay while fetching task detail
+          /// Loading overlay while fetching task detail
           if (_navLoading)
             Positioned.fill(
               child: Padding(
@@ -654,8 +651,8 @@ class _DashboardTaskCardState extends State<_DashboardTaskCard> {
       );
     }
 
-    // 3×3 grid of 256px tiles clipped to card width
-    // Center tile contains the pin location
+    /// 3×3 grid of 256px tiles clipped to card width
+    /// Center tile contains the pin location
     final info = _tileInfo!;
     return ClipRect(
       child: OverflowBox(

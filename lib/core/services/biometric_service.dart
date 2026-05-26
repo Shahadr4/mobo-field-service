@@ -1,4 +1,4 @@
-import 'dart:developer';
+
 import 'package:flutter/services.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -13,7 +13,6 @@ class BiometricService {
     if (!_isInitialized) {
       _localAuth = LocalAuthentication();
       _isInitialized = true;
-      log('BiometricService initialized');
     }
   }
 
@@ -23,30 +22,21 @@ class BiometricService {
       await _ensureInitialized();
 
       if (_localAuth == null) {
-        log('LocalAuth instance is null');
         return false;
       }
 
-      log('Checking device support for biometrics');
       final bool isDeviceSupported = await _localAuth!.isDeviceSupported();
-      log('Device supported: $isDeviceSupported');
 
       if (!isDeviceSupported) {
         return false;
       }
 
-      log('Checking if can check biometrics');
       final bool canCheckBiometrics = await _localAuth!.canCheckBiometrics;
-      log('Can check biometrics: $canCheckBiometrics');
 
       return canCheckBiometrics;
     } on PlatformException catch (e) {
-      log(
-        'Platform exception checking biometric availability: ${e.code} - ${e.message}',
-      );
       return false;
     } catch (e) {
-      log('Unexpected error checking biometric availability: $e');
       return false;
     }
   }
@@ -59,7 +49,6 @@ class BiometricService {
 
       return await _localAuth!.getAvailableBiometrics();
     } catch (e) {
-      log('Error getting available biometrics: $e');
       return [];
     }
   }
@@ -74,7 +63,6 @@ class BiometricService {
   static Future<void> setBiometricEnabled(bool enabled) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('biometric_enabled', enabled);
-    log('Biometric authentication ${enabled ? 'enabled' : 'disabled'}');
   }
 
   /// Perform biometric authentication
@@ -85,50 +73,40 @@ class BiometricService {
     try {
       await _ensureInitialized();
       if (_localAuth == null) {
-        log('LocalAuth instance is null for authentication');
         return false;
       }
 
       final bool isAvailable = await isBiometricAvailable();
       if (!isAvailable) {
-        log('Biometric authentication not available');
         return false;
       }
 
       final bool didAuthenticate = await _localAuth!.authenticate(
         localizedReason: reason,
         options: const AuthenticationOptions(
-          biometricOnly: false, // Allow PIN/Pattern as fallback
+          biometricOnly: false, /// Allow PIN/Pattern as fallback
           stickyAuth: true,
           useErrorDialogs: true,
         ),
       );
 
-      log('Biometric authentication result: $didAuthenticate');
       return didAuthenticate;
     } on PlatformException catch (e) {
-      log('Biometric authentication error: ${e.message}');
 
-      // Handle specific error cases
+      /// Handle specific error cases
       switch (e.code) {
         case 'NotAvailable':
-          log('Biometric authentication not available');
           break;
         case 'NotEnrolled':
-          log('No biometrics enrolled');
           break;
         case 'LockedOut':
-          log('Biometric authentication locked out');
           break;
         case 'PermanentlyLockedOut':
-          log('Biometric authentication permanently locked out');
           break;
         default:
-          log('Unknown biometric error: ${e.code}');
       }
       return false;
     } catch (e) {
-      log('Unexpected biometric error: $e');
       return false;
     }
   }
@@ -161,15 +139,12 @@ class BiometricService {
     try {
       final isEnabled = await isBiometricEnabled();
       if (!isEnabled) {
-        log('Biometric not enabled in settings');
         return false;
       }
 
       final isAvailable = await isBiometricAvailable();
-      log('Biometric available: $isAvailable');
       return isAvailable;
     } catch (e) {
-      log('Error checking if should prompt biometric: $e');
       return false;
     }
   }
@@ -200,9 +175,7 @@ class BiometricService {
       await _ensureInitialized();
       // Pre-initialize the local auth instance
       await _localAuth?.isDeviceSupported();
-      log('Biometric service initialized successfully');
     } catch (e) {
-      log('Error initializing biometric service: $e');
     }
   }
 }

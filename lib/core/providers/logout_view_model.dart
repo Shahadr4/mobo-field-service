@@ -163,13 +163,13 @@ class LogoutViewModel extends ChangeNotifier {
       },
     );
 
-    // Small delay to let the dialog render smoothly
+    /// Small delay to let the dialog render smoothly
     await Future.delayed(const Duration(milliseconds: 900));
 
-    // Perform logout using SessionService
+    /// Perform logout using SessionService
     await context.read<SessionService>().logout();
 
-    // Reset all feature providers and bottom nav tab
+    /// Reset all feature providers and bottom nav tab
     if (context.mounted) {
       context.read<TimesheetProvider>().reset();
       context.read<DashboardTaskProvider>().reset();
@@ -182,12 +182,12 @@ class LogoutViewModel extends ChangeNotifier {
       context.read<ProfileProvider>().resetState();
     }
 
-    // Close dialog
+    /// Close dialog
     if (dialogContext != null && dialogContext!.mounted) {
       Navigator.of(dialogContext!).pop();
     }
 
-    // Navigate to AppEntry (root decides next screen based on session state)
+    /// Navigate to AppEntry (root decides next screen based on session state)
     if (context.mounted) {
       Navigator.pushAndRemoveUntil(
         context,

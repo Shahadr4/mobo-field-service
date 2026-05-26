@@ -21,13 +21,11 @@ class CustomSnackbar {
       Duration duration,
       ) {
     if (!context.mounted) {
-      debugPrint('CustomSnackbar: Context not mounted, skipping');
       return;
     }
 
     final messenger = ScaffoldMessenger.maybeOf(context);
     if (messenger == null) {
-      debugPrint('CustomSnackbar: No ScaffoldMessenger found');
       return;
     }
 
@@ -96,7 +94,7 @@ class CustomSnackbar {
     }
   }
 
-  // ===== Helper methods (UNCHANGED) =====
+  /// ===== Helper methods (UNCHANGED) =====
 
   static void showSuccess(BuildContext context, String message) {
     show(

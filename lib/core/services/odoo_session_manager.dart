@@ -17,18 +17,18 @@ enum LoginStatus {
   failed,
 }
 class OdooSessionManager {
-  // Session state
+  /// Session state
   static OdooClient? _client;
   static AppSessionData? _cachedSession;
   static bool _isRefreshing = false;
   static DateTime? _lastAuthTime;
 
-  // Retry configuration
+  /// Retry configuration
   static const int _maxRetries = 3;
   static const Duration _baseDelay = Duration(milliseconds: 500);
   static const Duration _sessionCacheValidDuration = Duration(minutes: 5);
 
-  // Callbacks for session events
+  /// Callbacks for session events
   static Function(AppSessionData)? _onSessionUpdated;
   static Function()? _onSessionCleared;
 
@@ -39,7 +39,6 @@ class OdooSessionManager {
   }) {
     _onSessionUpdated = onSessionUpdated;
     _onSessionCleared = onSessionCleared;
-    debugPrint('[OdooSessionManager] Session callbacks configured');
   }
 
   /// Check if an error is retryable
@@ -56,7 +55,6 @@ class OdooSessionManager {
 
   /// Restore a previously saved session and force a company context
   static Future<bool> restoreSession({required int companyId}) async {
-    debugPrint('[OdooSessionManager] restoreSession(companyId=$companyId)');
     if (companyId <= 0) return false;
 
     final saved = await getCurrentSession();
@@ -66,17 +64,17 @@ class OdooSessionManager {
       await ConnectivityService.instance.ensureInternetOrThrow();
       await ConnectivityService.instance.ensureServerReachable(saved.serverUrl);
 
-      // Create client using stored session ID (no invalid casts)
+      /// Create client using stored session ID (no invalid casts)
       final OdooClient client = OdooClient(
         saved.serverUrl,
         sessionId: saved.odooSession,
       );
 
-      // Ensure allowed companies include the requested one
+      /// Ensure allowed companies include the requested one
       List<int> allowed = [...saved.allowedCompanyIds];
 
-      // If the allowed list is empty, we might need to fetch defaults.
-      // But if it's populated, we trust the user's selection and just ensure the active company is added.
+      /// If the allowed list is empty, we might need to fetch defaults.
+      /// But if it's populated, we trust the user's selection and just ensure the active company is added.
       if (allowed.isEmpty && saved.userId != 0) {
         try {
           final userCompanies = await _fetchUserCompanies(client, saved.userId);
@@ -84,13 +82,10 @@ class OdooSessionManager {
           (userCompanies['company_ids'] as List<int>? ?? []);
           if (loadedAllowed.isNotEmpty) allowed = loadedAllowed;
         } catch (e) {
-          debugPrint(
-            '[OdooSessionManager] restoreSession: company load failed: $e',
-          );
         }
       }
 
-      // Ensure the target company is in the allowed list
+      /// Ensure the target company is in the allowed list
       if (!allowed.contains(companyId)) {
         allowed.add(companyId);
       }
@@ -114,7 +109,6 @@ class OdooSessionManager {
     } on ServerUnreachableException catch (_) {
       return false;
     } catch (e) {
-      debugPrint('[OdooSessionManager] restoreSession failed: $e');
       return false;
     }
   }
@@ -137,14 +131,13 @@ class OdooSessionManager {
 
     if (_cachedSession != null) return _cachedSession;
 
-    // Try to restore from preferences
+    /// Try to restore from preferences
     try {
       final saved = await AppSessionData.fromPrefs();
       if (saved == null) return null;
 
       if(saved.odooSession.id.isNotEmpty){
 
-        log("Sesssion is presene");
         final session  = AppSessionData(
             odooSession: saved.odooSession,
             password: saved.password,
@@ -157,11 +150,8 @@ class OdooSessionManager {
 
 
 
-      log(saved.database);
-      log(saved.userLogin);
-      log(saved.password);
 
-      // Re-authenticate to get fresh session
+      /// Re-authenticate to get fresh session
       final client = OdooClient(saved.serverUrl);
       final odooSession = await client.authenticate(
         saved.database,
@@ -187,7 +177,6 @@ class OdooSessionManager {
 
       return sessionData;
     } catch (e) {
-        debugPrint('[OdooSessionManager] getCurrentSession auth failed: $e');
       return null;
     }
   }
@@ -209,12 +198,12 @@ class OdooSessionManager {
     OdooClient? odooClient,
   }) async {
 
-    // Validate inputs
+    /// Validate inputs
     if (serverUrl.isEmpty || database.isEmpty || userLogin.isEmpty) {
       throw Exception('Invalid login parameters');
     }
 
-    // Normalize server URL
+    /// Normalize server URL
     String normalizedUrl = serverUrl.trim();
     if (!normalizedUrl.startsWith('http://') &&
         !normalizedUrl.startsWith('https://')) {
@@ -222,37 +211,25 @@ class OdooSessionManager {
     }
 
 
-    // Connectivity checks
+    /// Connectivity checks
     try {
       await ConnectivityService.instance.ensureInternetOrThrow();
       await ConnectivityService.instance.ensureServerReachable(normalizedUrl);
     } catch (e) {
-      debugPrint('[OdooSessionManager] Connectivity check failed: $e');
       rethrow;
     }
 
     OdooClient client;
     if(!otp) {
       client = OdooClient(normalizedUrl);
-      log("noototp");
     }else{
-      log("otp");
       client = odooClient!;
-      log("otp");
 
     }
 
-    // Retry authentication on transient failures
+    /// Retry authentication on transient failures
     for (int attempt = 1; attempt <= _maxRetries; attempt++) {
-      log("try -$attempt ,${normalizedUrl}");
       try {
-        debugPrint(
-          '[OdooSessionManager] Authentication attempt $attempt/$_maxRetries',
-        );
-        log("startind");
-        log(database);
-        log(userLogin);
-        log(password);
 
 
         OdooSession odooSession;
@@ -270,13 +247,12 @@ class OdooSessionManager {
 
         if (autoLoadCompanies) {
           try {
-            debugPrint('[OdooSessionManager] Fetching user companies...');
             final userInfo = await _fetchUserCompanies(
               client,
               odooSession.userId,
             );
 
-            // Only override if company 1 is actually allowed, otherwise keep 1 as default.
+            /// Only override if company 1 is actually allowed, otherwise keep 1 as default.
             final fetchedAllowed =
                 (userInfo['company_ids'] as List?)?.cast<int>() ?? [];
 
@@ -290,11 +266,7 @@ class OdooSessionManager {
                   : [userInfo['company_ids']];
             }
 
-            debugPrint('[OdooSessionManager] User companies loaded:');
-            debugPrint('  - Default company: $selectedCompanyId');
-            debugPrint('  - Allowed companies: $allowedCompanyIds');
           } catch (e) {
-            debugPrint('[OdooSessionManager] Failed to fetch companies: $e');
           }
         }
 
@@ -307,8 +279,8 @@ class OdooSessionManager {
           serverUrl: normalizedUrl,
           database: database,
           expiresAt: DateTime.now().add(const Duration(hours: 24)),
-          selectedCompanyId: selectedCompanyId, // will be 1 in your forced case
-          allowedCompanyIds: allowedCompanyIds, // will contain 1
+          selectedCompanyId: selectedCompanyId, ///will be 1 in your forced case
+          allowedCompanyIds: allowedCompanyIds, /// will contain 1
           isStockUser: isStockUser,
           version: odooSession.serverVersion
         );
@@ -326,16 +298,13 @@ class OdooSessionManager {
         ConnectivityService.instance.setCurrentServerUrl(normalizedUrl);
         _onSessionUpdated?.call(sessionData);
 
-        debugPrint('[OdooSessionManager] Login successful');
         return LoginStatus.success;
       } catch (e) {
-        log("erorr =====>${e.toString()}");
 
 
 
-        debugPrint('[OdooSessionManager] Login attempt $attempt failed: $e');
 
-        // Handle HTML response error
+        /// Handle HTML response error
         if (e is FormatException && e.toString().contains('<html>')) {
           throw Exception(
             'Server returned HTML instead of JSON. Please check server URL and ensure Odoo is running.',
@@ -349,33 +318,28 @@ class OdooSessionManager {
             !msg.contains('html') &&
             !msg.contains('502') &&
             !msg.contains('timeout')) {
-          log("errror 2fa");
           return LoginStatus.twoFactorEnabled;
 
         }
 
 
-        // Don't retry credential errors
+        /// Don't retry credential errors
         if (e.toString().toLowerCase().contains('access denied') ||
             e.toString().toLowerCase().contains('wrong login/password') ||
             e.toString().toLowerCase().contains('invalid database')) {
-          debugPrint('[OdooSessionManager] Credential error - not retrying');
 
 
           return LoginStatus.failed;
         }
 
-        // Retry on connection errors
+        /// Retry on connection errors
         if (attempt < _maxRetries && _isRetryableError(e)) {
           final delay = _baseDelay * attempt;
-          debugPrint(
-            '[OdooSessionManager] Retrying in ${delay.inMilliseconds}ms',
-          );
           await Future.delayed(delay);
           continue;
         }
 
-        // Non-retryable error or exhausted retries
+        /// Non-retryable error or exhausted retries
         if (e is NoInternetException || e is ServerUnreachableException) {
           rethrow;
         }
@@ -405,7 +369,7 @@ class OdooSessionManager {
       if (result is List && result.isNotEmpty) {
         final userData = result[0];
 
-        // Extract company_id (can be int or [id, name])
+        /// Extract company_id (can be int or [id, name])
         int? companyId;
         if (userData['company_id'] is int) {
           companyId = userData['company_id'];
@@ -414,7 +378,7 @@ class OdooSessionManager {
           companyId = userData['company_id'][0];
         }
 
-        // Extract company_ids
+        /// Extract company_ids
         List<int> companyIds = [];
         if (userData['company_ids'] is List) {
           companyIds = (userData['company_ids'] as List)
@@ -430,7 +394,6 @@ class OdooSessionManager {
 
       return {};
     } catch (e) {
-      debugPrint('[OdooSessionManager] Error fetching user companies: $e');
       return {};
     }
   }
@@ -442,7 +405,6 @@ class OdooSessionManager {
     required String username,
     required String password,
   }) async {
-    debugPrint('[OdooSessionManager] Authenticating user: $username');
 
     if (serverUrl.isEmpty || database.isEmpty || username.isEmpty) {
       throw Exception('Invalid authentication parameters');
@@ -452,7 +414,7 @@ class OdooSessionManager {
       throw Exception('Empty password - account needs re-authentication');
     }
 
-    // Normalize server URL
+    /// Normalize server URL
     String normalizedUrl = serverUrl.trim();
     if (!normalizedUrl.startsWith('http://') &&
         !normalizedUrl.startsWith('https://')) {
@@ -487,7 +449,6 @@ class OdooSessionManager {
         await prefs.setString('lastServerUrl', normalizedUrl);
         await prefs.setString('lastDatabase', database);
 
-        debugPrint('[OdooSessionManager] Authentication successful');
         return sessionData;
       } catch (e) {
         if (e is FormatException && e.toString().contains('<html>')) {
@@ -516,36 +477,28 @@ class OdooSessionManager {
 
   /// Update current session (for account switching)
   static Future<void> updateSession(AppSessionData newSession) async {
-    debugPrint(
-      '[OdooSessionManager] Updating session to: ${newSession.userLogin}',
-    );
     _cachedSession = newSession;
     await newSession.saveToPrefs();
 
-    // Clear client to force re-authentication
+    /// Clear client to force re-authentication
     _client = null;
     _lastAuthTime = null;
 
     ConnectivityService.instance.setCurrentServerUrl(newSession.serverUrl);
     _onSessionUpdated?.call(newSession);
 
-    debugPrint('[OdooSessionManager] Session updated successfully');
   }
 
   /// Refresh expired session by re-authenticating
   static Future<bool> refreshSession() async {
-    // Prevent concurrent refresh attempts
+    /// Prevent concurrent refresh attempts
     if (_isRefreshing) {
-      debugPrint(
-        '[OdooSessionManager] Refresh already in progress, waiting...',
-      );
       await Future.delayed(const Duration(milliseconds: 500));
       return await isSessionValid();
     }
 
     _isRefreshing = true;
     try {
-      debugPrint('[OdooSessionManager] Refreshing session');
       final session = await getCurrentSession();
 
       if (session == null) {
@@ -581,15 +534,10 @@ class OdooSessionManager {
           refreshedSession.serverUrl,
         );
 
-        debugPrint('[OdooSessionManager] Session refreshed successfully');
         return true;
       } on NoInternetException catch (e) {
-        debugPrint('[OdooSessionManager] Cannot refresh - no internet: $e');
         return false;
       } on ServerUnreachableException catch (e) {
-        debugPrint(
-          '[OdooSessionManager] Cannot refresh - server unreachable: $e',
-        );
         return false;
       }
     } finally {
@@ -602,7 +550,6 @@ class OdooSessionManager {
     try {
       return await getClientEnsured();
     } catch (e) {
-      debugPrint('[OdooSessionManager] getClient error: $e');
       return null;
     }
   }
@@ -617,12 +564,8 @@ class OdooSessionManager {
 
     // Check if session is expired
     if (session.isExpired) {
-      debugPrint('[OdooSessionManager] Session expired, refreshing...');
       final refreshed = await refreshSession();
       if (!refreshed) {
-        debugPrint(
-          '[OdooSessionManager] Refresh failed, using cached client for offline mode',
-        );
         if (_client == null) {
           _client = OdooClient(session.serverUrl);
         }
@@ -634,28 +577,23 @@ class OdooSessionManager {
 
 
 
-    // Reuse existing client if valid
+    /// Reuse existing client if valid
     if (_client != null &&
         _lastAuthTime != null &&
         DateTime.now().difference(_lastAuthTime!) <
             _sessionCacheValidDuration) {
-      debugPrint('[OdooSessionManager] Reusing cached client');
-      log("reusing===================>");
-      log("reusing===================>");
-      log("reusing===================>");
       return _client!;
     }
 
 
 
-    // Create new authenticated client
+    /// Create new authenticated client
     try {
       await ConnectivityService.instance.ensureInternetOrThrow();
       await ConnectivityService.instance.ensureServerReachable(
         session.serverUrl,
       );
 
-      debugPrint('[OdooSessionManager] Creating new authenticated client');
       OdooClient client ;
       final saved = await AppSessionData.fromPrefs();
       if(saved != null){
@@ -667,7 +605,7 @@ class OdooSessionManager {
         client= OdooClient(session.serverUrl);
 
 
-        // Retry authentication on transient failures
+        /// Retry authentication on transient failures
         for (int attempt = 1; attempt <= _maxRetries; attempt++) {
           try {
             await client.authenticate(
@@ -679,9 +617,6 @@ class OdooSessionManager {
           } catch (e) {
             if (attempt >= _maxRetries || !_isRetryableError(e)) rethrow;
             final delay = _baseDelay * attempt;
-            debugPrint(
-              '[OdooSessionManager] Auth retry in ${delay.inMilliseconds}ms',
-            );
             await Future.delayed(delay);
           }
         }
@@ -690,22 +625,19 @@ class OdooSessionManager {
       _client = client;
       _lastAuthTime = DateTime.now();
 
-      // Update session expiry
+      /// Update session expiry
       final updatedSession = session.copyWith(
         expiresAt: DateTime.now().add(const Duration(hours: 24)),
       );
       _cachedSession = updatedSession;
       await updatedSession.saveToPrefs();
 
-      debugPrint('[OdooSessionManager] Client authenticated successfully');
       return client;
     } on NoInternetException catch (e) {
-      debugPrint('[OdooSessionManager] No internet - offline mode: $e');
       final client = OdooClient(session.serverUrl);
       _client = client;
       return client;
     } on ServerUnreachableException catch (e) {
-      debugPrint('[OdooSessionManager] Server unreachable - offline mode: $e');
       final client = OdooClient(session.serverUrl);
       _client = client;
       return client;
@@ -721,22 +653,19 @@ class OdooSessionManager {
     try {
       return await action(client);
     } catch (e) {
-      // Don't retry on connectivity issues
+      /// Don't retry on connectivity issues
       if (e is NoInternetException || e is ServerUnreachableException) {
         rethrow;
       }
 
-      // Retry once on auth errors
+      /// Retry once on auth errors
       if (_isAuthError(e)) {
-        debugPrint('[OdooSessionManager] Auth error detected, refreshing: $e');
 
         final refreshed = await refreshSession();
         if (refreshed) {
-          debugPrint('[OdooSessionManager] Refresh successful, retrying');
           final newClient = await getClientEnsured();
           return await action(newClient);
         } else {
-          debugPrint('[OdooSessionManager] Refresh failed due to connectivity');
         }
       }
 
@@ -778,12 +707,12 @@ class OdooSessionManager {
       final session = await getCurrentSession();
       if (session == null) return [];
 
-      // 1) Get the allowed company IDs from the user record
+      /// 1) Get the allowed company IDs from the user record
       final info = await _fetchUserCompanies(client, session.userId);
       final ids = (info['company_ids'] as List?)?.cast<int>() ?? [];
 
       if (ids.isEmpty) {
-        // Fallback to current company if allowed list is empty
+        /// Fallback to current company if allowed list is empty
         final currentId = info['company_id'] as int?;
         if (currentId != null) {
           ids.add(currentId);
@@ -792,7 +721,7 @@ class OdooSessionManager {
         }
       }
 
-      // 2) Fetch details for ONLY those specific IDs
+      /// 2) Fetch details for ONLY those specific IDs
       final companiesRes = await safeCallKwWithoutCompany({
         'model': 'res.company',
         'method': 'search_read',
@@ -812,7 +741,6 @@ class OdooSessionManager {
       }
       return [];
     } catch (e) {
-      debugPrint('[OdooSessionManager] Error in getAllowedCompaniesList: $e');
       return [];
     }
   }
@@ -865,21 +793,17 @@ class OdooSessionManager {
                     ).toLowerCase().contains('<!doctype html'));
 
         if (isHtml && attempt < _maxRetries) {
-          debugPrint('[OdooSessionManager] HTML received, refreshing session');
           await refreshSession();
           final delay = _baseDelay * attempt;
           await Future.delayed(delay);
           continue;
         }
 
-        // Retry on server errors
+        /// Retry on server errors
         if ([502, 503, 504].contains(response.statusCode) &&
             attempt < _maxRetries) {
           lastResponse = response;
           final delay = _baseDelay * attempt;
-          debugPrint(
-            '[OdooSessionManager] HTTP ${response.statusCode}, retrying in ${delay.inMilliseconds}ms',
-          );
           await Future.delayed(delay);
           continue;
         }
@@ -888,9 +812,6 @@ class OdooSessionManager {
       } catch (e) {
         if (attempt >= _maxRetries || !_isRetryableError(e)) rethrow;
         final delay = _baseDelay * attempt;
-        debugPrint(
-          '[OdooSessionManager] Request error: $e, retrying in ${delay.inMilliseconds}ms',
-        );
         await Future.delayed(delay);
       }
     }
@@ -907,7 +828,7 @@ class OdooSessionManager {
       return session!.companyId;
     }
 
-    // Fallback to reading from preferences directly
+    /// Fallback to reading from preferences directly
     try {
       final prefs = await SharedPreferences.getInstance();
       return prefs.getInt('selected_company_id');
@@ -924,7 +845,7 @@ class OdooSessionManager {
       return session.allowedCompanyIds;
     }
 
-    // Fallback to reading from preferences directly
+    /// Fallback to reading from preferences directly
     try {
       final prefs = await SharedPreferences.getInstance();
       final raw = prefs.getStringList('selected_allowed_company_ids') ?? [];
@@ -939,23 +860,19 @@ class OdooSessionManager {
     required int companyId,
     required List<int> allowedCompanyIds,
   }) async {
-    debugPrint('[OdooSessionManager] Updating company selection');
-    debugPrint('  - Company ID: $companyId');
-    debugPrint('  - Allowed Companies: $allowedCompanyIds');
 
     final session = await getCurrentSession();
     if (session == null) {
-      debugPrint('[OdooSessionManager] No active session to update company');
       return;
     }
 
-    // Ensure selected company is in allowed companies
+    /// Ensure selected company is in allowed companies
     List<int> finalAllowedIds = [...allowedCompanyIds];
     if (!finalAllowedIds.contains(companyId)) {
       finalAllowedIds.add(companyId);
     }
 
-    // Update session with new company info
+    /// Update session with new company info
     final updatedSession = session.copyWith(
       selectedCompanyId: companyId,
       allowedCompanyIds: finalAllowedIds,
@@ -966,12 +883,10 @@ class OdooSessionManager {
 
     _onSessionUpdated?.call(updatedSession);
 
-    debugPrint('[OdooSessionManager] Company selection updated successfully');
   }
 
   /// Clear company selection from session
   static Future<void> clearCompanySelection() async {
-    debugPrint('[OdooSessionManager] Clearing company selection');
 
     final session = await getCurrentSession();
     if (session == null) return;
@@ -986,7 +901,6 @@ class OdooSessionManager {
 
     _onSessionUpdated?.call(updatedSession);
 
-    debugPrint('[OdooSessionManager] Company selection cleared');
   }
 
   /// Call Odoo method with company context
@@ -1010,7 +924,7 @@ class OdooSessionManager {
       ctx = rawCtx.map((key, value) => MapEntry(key.toString(), value));
     }
 
-    // Get company info from parameters, session, or preferences (in that order)
+    /// Get company info from parameters, session, or preferences (in that order)
     int? selectedCompany = companyId;
     List<int>? allowed = allowedCompanyIds;
 
@@ -1025,18 +939,15 @@ class OdooSessionManager {
     if (selectedCompany != null) {
       ctx['company_id'] = selectedCompany;
 
-      // Ensure selected company is in allowed companies
+      /// Ensure selected company is in allowed companies
       List<int> finalAllowed = [...(allowed ?? [])];
       if (!finalAllowed.contains(selectedCompany)) {
         finalAllowed.add(selectedCompany);
       }
 
-      // Deduplicate and set
+      /// Deduplicate and set
       ctx['allowed_company_ids'] = <int>{...finalAllowed}.toList();
 
-      debugPrint('[OdooSessionManager] Injecting company context:');
-      debugPrint('  - company_id: $selectedCompany');
-      debugPrint('  - allowed_company_ids: ${ctx['allowed_company_ids']}');
     }
 
     kwargs['context'] = ctx;
@@ -1047,7 +958,6 @@ class OdooSessionManager {
 
   /// Logout and clear session
   static Future<void> logout() async {
-    debugPrint('[OdooSessionManager] Logging out');
 
     // Clear password from secure storage
     final session = _cachedSession ?? await getCurrentSession();
@@ -1066,7 +976,7 @@ class OdooSessionManager {
 
     final prefs = await SharedPreferences.getInstance();
 
-    // Only remove session-related keys to preserve app settings
+    /// Only remove session-related keys to preserve app settings
     const keysToRemove = [
       'sessionId',
       'userLogin',
@@ -1084,12 +994,10 @@ class OdooSessionManager {
     }
 
     _onSessionCleared?.call();
-    debugPrint('[OdooSessionManager] Logout complete');
   }
 
   /// Clear cached client
   static void clearClientCache() {
-    debugPrint('[OdooSessionManager] Clearing client cache');
     _client = null;
     _lastAuthTime = null;
   }
@@ -1124,10 +1032,9 @@ class OdooSessionManager {
       String password
       ) async {
 
-    log("started=================================>");
     final sessionData = AppSessionData(
       odooSession: session,
-      password: password, // ❌ no password
+      password: password, ///  no password
       serverUrl: serverUrl,
       database: session.dbName,
       expiresAt: DateTime.now().add(const Duration(hours: 24)),
@@ -1151,7 +1058,6 @@ class OdooSessionManager {
 
 
 
-    debugPrint('[OdooSessionManager] Session restored successfully');
   }
 
 }

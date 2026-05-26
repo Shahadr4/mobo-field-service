@@ -1,9 +1,9 @@
-import 'dart:developer';
+
 import '../../../core/services/odoo_session_manager.dart';
 import '../model/worksheet_field_model.dart';
 
-// Fields we never render — system internals + the task back-link
-// (task is already known from navigation context).
+/// Fields we never render — system internals + the task back-link
+/// (task is already known from navigation context).
 const _kSkipFields = {
   'id',
   'create_uid',
@@ -19,11 +19,11 @@ const _kSkipFields = {
 
 /// Returns true for fields that should never be shown regardless of context.
 bool _isJunkField(String name) {
-  // Odoo auto-generates a companion *_filename char field for every binary field.
-  // These are internal storage helpers, not user-facing.
+  /// Odoo auto-generates a companion *_filename char field for every binary field.
+  /// These are internal storage helpers, not user-facing.
   if (name.startsWith('x_studio_binary_')) return true;
-  // Many-to-one field that Odoo adds as a task link — already excluded via skip
-  // set but guard here too.
+  /// Many-to-one field that Odoo adds as a task link — already excluded via skip
+  /// set but guard here too.
   if (name.endsWith('_id') && name.startsWith('x_') && name.contains('task')) {
     return true;
   }
@@ -69,8 +69,8 @@ class WorksheetService {
           : <String, dynamic>{};
       final views = m['views'] is List ? m['views'] as List : [];
 
-      // Detect task link field from context: Odoo sets default_<field> = taskId
-      // e.g. {'default_x_project_task_id': 12}
+      /// Detect task link field from context: Odoo sets default_<field> = taskId
+      /// e.g. {'default_x_project_task_id': 12}
       String taskLinkField = 'x_project_task_id';
       for (final key in ctx.keys) {
         if (key.startsWith('default_') && ctx[key] == taskId) {
@@ -86,7 +86,6 @@ class WorksheetService {
         taskLinkField: taskLinkField,
       );
     } catch (e) {
-      log('[WorksheetService] fetchWorksheetAction error: $e');
       return null;
     }
   }
@@ -96,7 +95,7 @@ class WorksheetService {
   /// Returns field names in the order they appear in the form, or empty set
   /// if neither call succeeds (caller falls back to all fields_get fields).
   Future<List<String>> fetchFormViewFieldOrder(String model) async {
-    // Try get_views first (Odoo 16+)
+    /// Try get_views first (Odoo 16+)
     try {
       final result = await OdooSessionManager.callKwWithCompany({
         'model': model,
@@ -118,7 +117,7 @@ class WorksheetService {
       }
     } catch (_) {}
 
-    // Fallback: fields_view_get (Odoo 14/15)
+    /// Fallback: fields_view_get (Odoo 14/15)
     try {
       final result = await OdooSessionManager.callKwWithCompany({
         'model': model,
@@ -138,7 +137,7 @@ class WorksheetService {
   /// Parse field names in order from an XML arch string.
   List<String> _parseFieldsFromArch(String arch) {
     final names = <String>[];
-    // Match <field name="xxx" ...> — order-preserving
+    /// Match <field name="xxx" ...> — order-preserving
     final re = RegExp(r'<field[^>]+name="([^"]+)"', unicode: true);
     for (final m in re.allMatches(arch)) {
       final name = m.group(1)!;
@@ -151,7 +150,7 @@ class WorksheetService {
 
   /// Step 2b — get field metadata, filtered and ordered by the form view.
   Future<List<WorksheetFieldMeta>> fetchFieldsMeta(String model) async {
-    // Get form-view field order first
+    /// Get form-view field order first
     final viewOrder = await fetchFormViewFieldOrder(model);
 
     try {
@@ -185,17 +184,16 @@ class WorksheetService {
       });
 
       if (viewOrder.isNotEmpty) {
-        // Return only fields present in the form view, in view order
+        /// Return only fields present in the form view, in view order
         return viewOrder
             .where((name) => allMeta.containsKey(name))
             .map((name) => allMeta[name]!)
             .toList();
       }
 
-      // Fallback: return all non-system fields
+      /// Fallback: return all non-system fields
       return allMeta.values.toList();
     } catch (e) {
-      log('[WorksheetService] fetchFieldsMeta error: $e');
       return [];
     }
   }
@@ -210,7 +208,7 @@ class WorksheetService {
   ) async {
     final fieldNames = ['id', ...fields.map((f) => f.name)];
 
-    // Try with the detected task-link field first, then common fallbacks.
+    /// Try with the detected task-link field first, then common fallbacks.
     final candidates = <String>{
       taskLinkField,
       'x_project_task_id',
@@ -232,10 +230,10 @@ class WorksheetService {
         if (result is List && result.isNotEmpty) {
           return Map<String, dynamic>.from(result.first as Map);
         }
-        // search succeeded but returned empty — record not created yet
+        /// search succeeded but returned empty — record not created yet
         if (result is List) return null;
       } catch (_) {
-        // field doesn't exist on this model — try next candidate
+        /// field doesn't exist on this model — try next candidate
       }
     }
     return null;
@@ -272,7 +270,6 @@ class WorksheetService {
               ))
           .toList();
     } catch (e) {
-      log('[WorksheetService] fetchRelationOptions error: $e');
       return [];
     }
   }
@@ -295,7 +292,6 @@ class WorksheetService {
       });
       return result == true ? null : 'Failed to save worksheet.';
     } catch (e) {
-      log('[WorksheetService] writeRecord error: $e');
       return e.toString();
     }
   }
@@ -316,7 +312,6 @@ class WorksheetService {
       if (result is num) return (error: null, id: result.toInt());
       return (error: 'Unexpected create response.', id: null);
     } catch (e) {
-      log('[WorksheetService] createRecord error: $e');
       return (error: e.toString(), id: null);
     }
   }

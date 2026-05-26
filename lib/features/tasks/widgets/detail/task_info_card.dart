@@ -438,10 +438,12 @@ class _TaskInfoCardState extends State<TaskInfoCard>
               ),
             ),
           ],
-          const SizedBox(height: 16),
-          Divider(color: isDark ? Colors.grey[800] : Colors.grey[200]),
-          const SizedBox(height: 12),
-          _buildTimerSection(isDark, timerProv),
+          if (task.displayTimesheetTimer) ...[
+            const SizedBox(height: 16),
+            Divider(color: isDark ? Colors.grey[800] : Colors.grey[200]),
+            const SizedBox(height: 12),
+            _buildTimerSection(isDark, timerProv),
+          ],
         ],
       ),
     );

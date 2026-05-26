@@ -11,17 +11,16 @@ class LocationService {
     required int companyId,
     String? search,
     int limit = 100,
-    int? parentLocationId, // For picking mode - filter to warehouse hierarchy
+    int? parentLocationId, /// For picking mode - filter to warehouse hierarchy
   }) async {
     try {
-      log("parentLocationId : $parentLocationId");
       final List<dynamic> domain = [];
 
       if (parentLocationId != null) {
-        // Picking mode: filter to locations within parent (warehouse) hierarchy
+        /// Picking mode: filter to locations within parent (warehouse) hierarchy
         domain.add(['id', 'child_of', parentLocationId]);
       } else {
-        // Normal inventory mode: internal and transit locations
+        /// Normal inventory mode: internal and transit locations
         domain.add([
           'usage',
           'in',
@@ -58,7 +57,6 @@ class LocationService {
       }
       return [];
     } catch (e) {
-      debugPrint('[LocationService] Error fetching locations: $e');
       rethrow;
     }
   }

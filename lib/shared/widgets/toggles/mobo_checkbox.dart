@@ -55,10 +55,10 @@ class _MoboCheckboxState extends State<MoboCheckbox> {
               width: 2,
             ),
             color: widget.value
-                ? primary // ✅ selected
+                ? primary ///selected
                 : (_hovering
-                ? primary.withOpacity(0.10) // ✅ hover
-                : Colors.transparent), // ✅ default
+                ? primary.withOpacity(0.10) /// hover
+                : Colors.transparent), ///default
           ),
           child: widget.value
               ? const Icon(

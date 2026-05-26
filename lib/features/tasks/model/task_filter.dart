@@ -1,20 +1,20 @@
 enum TaskFilterBy {
-  // Status
+  /// Status
   openTasks,
   closedTasks,
   myTasks,
   unassigned,
-  // Stage
+  /// Stage
   stageNew,
   stagePlanned,
   stageInProgress,
   stageDone,
   stageCancelled,
-  // Priority
+  /// Priority
   priorityHigh,
   priorityMedium,
   priorityNormal,
-  // Time
+  /// Time
   withDeadline,
   overdue,
   dueToday,

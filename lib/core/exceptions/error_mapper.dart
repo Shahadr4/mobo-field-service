@@ -5,7 +5,7 @@ import 'dart:async';
 
 class ErrorMapper {
   static AppException toAppException(Object error, [StackTrace? stack]) {
-    // Connectivity
+    /// Connectivity
     if (error is NoInternetException) {
       return NetworkException(error.message, cause: error);
     }
@@ -13,7 +13,7 @@ class ErrorMapper {
       return ServerException(error.message, cause: error);
     }
 
-    // Dart IO exceptions
+    /// Dart IO exceptions
     if (error is SocketException) {
       if (error.message.contains('Failed host lookup')) {
         return ServerException(
@@ -34,7 +34,7 @@ class ErrorMapper {
       );
     }
 
-    // Common auth/server patterns (extend as needed)
+    /// Common auth/server patterns (extend as needed)
     final msg = error.toString();
     if (msg.contains('Session expired') || msg.contains('Unauthorized')) {
       return AuthException(

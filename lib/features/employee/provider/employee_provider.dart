@@ -1,11 +1,14 @@
-import 'dart:developer';
+
 import 'package:flutter/foundation.dart';
 import '../model/employee_filter.dart';
 import '../model/employee_model.dart';
 import '../service/employee_service.dart';
 
 class AssigneeProvider extends ChangeNotifier {
-  final _service = AssigneeService();
+  final AssigneeService _service;
+
+  AssigneeProvider({AssigneeService? service})
+      : _service = service ?? AssigneeService();
 
   static const int _pageSize = 40;
 
@@ -72,7 +75,6 @@ class AssigneeProvider extends ChangeNotifier {
     _error = null;
     notifyListeners();
     try {
-      log('[AssigneeProvider] fetch page=$_currentPage');
       final result = await _service.fetchAssigneesPaged(
         search: _search,
         filters: _filters,

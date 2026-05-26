@@ -160,7 +160,7 @@ class InfoContent extends StatelessWidget {
           ),
         ],
 
-        // ── Description section ──────────────────────────────────
+        /// ── Description section
         if (description.isNotEmpty) ...[
           Padding(
             padding: const EdgeInsets.fromLTRB(18, 14, 18, 6),

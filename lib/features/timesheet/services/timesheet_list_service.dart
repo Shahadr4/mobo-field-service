@@ -16,12 +16,12 @@ class TimesheetListService {
     if (session == null) return (0, <TimesheetEntry>[]);
 
     final userId = session.userId;
-    final domain = _buildDomain(userId, search, dateFilter);
+    final domain = _buildDomain(userId, search, dateFilter, session.version);
 
     try {
       final offset = (page - 1) * pageSize;
 
-      // Run count and data fetch in parallel
+      /// Run count and data fetch in parallel
       final results = await Future.wait([
         OdooSessionManager.callKwWithCompany({
           'model': 'account.analytic.line',
@@ -56,7 +56,6 @@ class TimesheetListService {
 
       return (count, entries);
     } catch (e) {
-      log('[TimesheetListService] fetchPaged error: $e');
       return (0, <TimesheetEntry>[]);
     }
   }
@@ -65,17 +64,19 @@ class TimesheetListService {
     int userId,
     String search,
     TimesheetDateFilter dateFilter,
+    String? version,
   ) {
-    // Base: FSM tasks only, assigned to current user
+    /// Base: FSM tasks only, assigned to current user
     final domain = <dynamic>[
       ['task_id.is_fsm', '=', true],
       ['task_id.project_id', '!=', false],
-      ['task_id.has_template_ancestor', '=', false],
+      if (version?.contains('17') != true && version?.contains('18') != true)
+        ['task_id.has_template_ancestor', '=', false],
       ['task_id.display_in_project', '=', true],
       ['user_id', '=', userId],
     ];
 
-    // Search by task name or description
+    /// Search by task name or description
     if (search.trim().isNotEmpty) {
       final q = search.trim();
       domain.addAll(<dynamic>[
@@ -85,7 +86,7 @@ class TimesheetListService {
       ]);
     }
 
-    // Date filter
+    /// Date filter
     final dateRange = _dateRange(dateFilter);
     if (dateRange != null) {
       domain.add(['date', '>=', dateRange.$1]);
@@ -118,6 +119,7 @@ class TimesheetListService {
     }
   }
 
+  ///update timesheets
   Future<bool> updateEntry({
     required int id,
     required double hours,
@@ -140,14 +142,13 @@ class TimesheetListService {
         ],
         'kwargs': {},
       });
-      log('[TimesheetListService] updated id=$id');
       return true;
     } catch (e) {
-      log('[TimesheetListService] updateEntry error: $e');
       return false;
     }
   }
 
+  ///delete entry
   Future<bool> deleteEntry(int id) async {
     try {
       await OdooSessionManager.callKwWithCompany({
@@ -156,10 +157,8 @@ class TimesheetListService {
         'args': [[id]],
         'kwargs': {},
       });
-      log('[TimesheetListService] deleted id=$id');
       return true;
     } catch (e) {
-      log('[TimesheetListService] deleteEntry error: $e');
       return false;
     }
   }

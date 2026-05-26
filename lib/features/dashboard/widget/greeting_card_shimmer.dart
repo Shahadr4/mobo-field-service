@@ -8,7 +8,7 @@ class GreetingCardShimmer extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // Tinted pink to match the primaryColor card behind it
+    /// Tinted pink to match the primaryColor card behind it
     final cardBg  = isDark ? const Color(0xFF2E1A22) : const Color(0xFFC8788E);
     final block1  = isDark ? const Color(0xFF3D2530) : const Color(0xFFD4909F);
     final block2  = isDark ? const Color(0xFF3D2530) : const Color(0xFFD4909F);
@@ -26,12 +26,12 @@ class GreetingCardShimmer extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Left — greeting text lines
+              /// Left — greeting text lines
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // "Good Morning, Name!!!"
+                    /// "Good Morning, Name!!!"
                     Container(
                       height: 18,
                       width: 220,
@@ -41,7 +41,7 @@ class GreetingCardShimmer extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 10),
-                    // "Manage Your Field Service Efficiently"
+                    /// "Manage Your Field Service Efficiently"
                     Container(
                       height: 13,
                       width: 170,
@@ -54,7 +54,7 @@ class GreetingCardShimmer extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 16),
-              // Right — avatar circle
+              /// Right — avatar circle
               Container(
                 height: 68,
                 width: 68,

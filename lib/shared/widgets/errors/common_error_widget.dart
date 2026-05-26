@@ -89,18 +89,7 @@ class CommonErrorWidget extends StatelessWidget {
         title: title,
         subtitle: message,
         lottieAsset:
-            _getAnimationUrl(), // This returns a URL, EmptyState expects an asset path or we need to update EmptyState to support URLs or handle this.
-        // Wait, EmptyState takes lottieAsset (String). CommonErrorWidget uses Lottie.network.
-        // I need to check if EmptyState supports network URLs or if I should update it.
-        // EmptyState uses Lottie.asset.
-        // I should probably update EmptyState to support both or just use assets.
-        // The CommonErrorWidget uses Lottie.network with hardcoded URLs.
-        // I should probably stick to what CommonErrorWidget does for now but maybe just use the design of EmptyState?
-        // Let's look at EmptyState again. It uses Lottie.asset.
-        // I will update CommonErrorWidget to use local assets if possible, or just keep it as is but make sure "No Data" uses EmptyState if I can provide a local asset.
-        // Since I don't have local assets for all these, I will leave CommonErrorWidget mostly alone but make sure it's used correctly.
-        // actually, the user said "use EmptyState widget as common page view properly".
-        // I'll update ViewStockScreen first.
+            _getAnimationUrl(),
       );
     }
 
@@ -113,11 +102,11 @@ class CommonErrorWidget extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Lottie Animation
+            /// Lottie Animation
             SizedBox(width: 200, height: 200, child: _buildAnimation()),
             const SizedBox(height: 24),
 
-            // Title
+            /// Title
             Text(
               title,
               style: theme.textTheme.headlineSmall?.copyWith(
@@ -128,7 +117,7 @@ class CommonErrorWidget extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
-            // Message
+            /// Message
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
@@ -183,7 +172,7 @@ class CommonErrorWidget extends StatelessWidget {
             ),
             const SizedBox(height: 32),
 
-            // Action buttons
+            /// Action buttons
             Wrap(
               spacing: 12,
               runSpacing: 12,
@@ -225,7 +214,7 @@ class CommonErrorWidget extends StatelessWidget {
   }
 
   Widget _buildAnimation() {
-    // Use online Lottie animations from LottieFiles
+    /// Use online Lottie animations from LottieFiles
     final animationUrl = _getAnimationUrl();
 
     return Lottie.network(
@@ -233,7 +222,7 @@ class CommonErrorWidget extends StatelessWidget {
       fit: BoxFit.contain,
       repeat: true,
       errorBuilder: (context, error, stackTrace) {
-        // Fallback to icon if animation fails to load
+        /// Fallback to icon if animation fails to load
         final config = _getErrorConfig();
         return Icon(config.fallbackIcon, size: 100, color: config.primaryColor);
       },
@@ -243,16 +232,16 @@ class CommonErrorWidget extends StatelessWidget {
   String _getAnimationUrl() {
     switch (errorType) {
       case ErrorType.moduleNotInstalled:
-        return 'https://lottie.host/b8c0e0c5-9a5a-4f3e-8b5e-5c5e5e5e5e5e/5e5e5e5e5e.json'; // Plugin/Extension animation
+        return 'https://lottie.host/b8c0e0c5-9a5a-4f3e-8b5e-5c5e5e5e5e5e/5e5e5e5e5e.json'; /// Plugin/Extension animation
       case ErrorType.network:
-        return 'https://lottie.host/647eb023-6040-4b60-a275-e09b8f6f4c1f/kGzWWLWD0J.json'; // No connection animation
+        return 'https://lottie.host/647eb023-6040-4b60-a275-e09b8f6f4c1f/kGzWWLWD0J.json'; /// No connection animation
       case ErrorType.server:
-        return 'https://lottie.host/4b3b3b3b-3b3b-3b3b-3b3b-3b3b3b3b3b3b/3b3b3b3b3b.json'; // Server error animation
+        return 'https://lottie.host/4b3b3b3b-3b3b-3b3b-3b3b-3b3b3b3b3b3b/3b3b3b3b3b.json'; /// Server error animation
       case ErrorType.noData:
-        return 'https://lottie.host/2c2c2c2c-2c2c-2c2c-2c2c-2c2c2c2c2c2c/2c2c2c2c2c.json'; // Empty state animation
+        return 'https://lottie.host/2c2c2c2c-2c2c-2c2c-2c2c-2c2c2c2c2c2c/2c2c2c2c2c.json'; /// Empty state animation
       case ErrorType.general:
       default:
-        return 'https://lottie.host/1a1a1a1a-1a1a-1a1a-1a1a-1a1a1a1a1a1a/1a1a1a1a1a.json'; // General error animation
+        return 'https://lottie.host/1a1a1a1a-1a1a-1a1a-1a1a-1a1a1a1a1a1a/1a1a1a1a1a.json'; /// General error animation
     }
   }
 

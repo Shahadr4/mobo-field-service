@@ -127,7 +127,7 @@ class _AssigneeFilterSheetState extends State<AssigneeFilterSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Drag handle
+          /// Drag handle
           Center(
             child: Padding(
               padding: const EdgeInsets.only(top: 12, bottom: 8),
@@ -142,7 +142,7 @@ class _AssigneeFilterSheetState extends State<AssigneeFilterSheet> {
             ),
           ),
 
-          // Title row
+          /// Title row
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 4, 16, 16),
             child: Row(
@@ -177,7 +177,7 @@ class _AssigneeFilterSheetState extends State<AssigneeFilterSheet> {
             ),
           ),
 
-          // Tab toggle
+          /// Tab toggle
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
             child: Container(
@@ -212,7 +212,7 @@ class _AssigneeFilterSheetState extends State<AssigneeFilterSheet> {
             ),
           ),
 
-          // Body
+          /// Body
           Flexible(
             child: _tab == 0
                 ? _FilterBody(
@@ -229,7 +229,7 @@ class _AssigneeFilterSheetState extends State<AssigneeFilterSheet> {
                   ),
           ),
 
-          // Action Bar
+          /// Action Bar
           _buildActionBar(context, isDark),
         ],
       ),

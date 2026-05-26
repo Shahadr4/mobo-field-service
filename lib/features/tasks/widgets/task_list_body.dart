@@ -90,7 +90,7 @@ class TaskListBody extends StatelessWidget {
   }
 }
 
-// ── Shimmer loading list ──────────────────────────────────────────────────────
+/// ── Shimmer loading list ──────────────────────────────────────────────────────
 
 class _TaskShimmerList extends StatelessWidget {
   final bool isDark;
@@ -167,7 +167,7 @@ class _TaskShimmerList extends StatelessWidget {
   }
 }
 
-// ── Group expansion tile ──────────────────────────────────────────────────────
+/// ── Group expansion tile ──────────────────────────────────────────────────────
 
 class _GroupExpansionTile extends StatefulWidget {
   final String label;
@@ -212,7 +212,7 @@ class _GroupExpansionTileState extends State<_GroupExpansionTile> {
         clipBehavior: Clip.antiAlias,
         child: Column(
           children: [
-            // ── Header ───────────────────────────────────────────
+            /// ── Header ───────────────────────────────────────────
             InkWell(
               onTap: () => setState(() => _expanded = !_expanded),
               child: Padding(
@@ -267,7 +267,7 @@ class _GroupExpansionTileState extends State<_GroupExpansionTile> {
               ),
             ),
 
-            // ── Expandable task rows ──────────────────────────────
+            /// ── Expandable task rows ──────────────────────────────
             AnimatedCrossFade(
               duration: const Duration(milliseconds: 220),
               crossFadeState: _expanded
@@ -302,7 +302,7 @@ class _GroupExpansionTileState extends State<_GroupExpansionTile> {
   }
 }
 
-// ── Flat task row (used inside group tile) ────────────────────────────────────
+/// ── Flat task row (used inside group tile) ────────────────────────────────────
 
 class _TaskRow extends StatelessWidget {
   final TaskModel task;

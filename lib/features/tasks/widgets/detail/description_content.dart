@@ -4,7 +4,7 @@ import 'package:lottie/lottie.dart';
 import '../../model/task_model.dart';
 
 String _stripHtml(String html) {
-  // Replace block-level tags with newlines so paragraphs stay readable
+  /// Replace block-level tags with newlines so paragraphs stay readable
   var text = html
       .replaceAll(RegExp(r'<br\s*/?>',        caseSensitive: false), '\n')
       .replaceAll(RegExp(r'</?p[^>]*>',       caseSensitive: false), '\n')
@@ -13,7 +13,7 @@ String _stripHtml(String html) {
       .replaceAll(RegExp(r'</?(?:ul|ol)[^>]*>', caseSensitive: false), '\n')
       .replaceAll(RegExp(r'<[^>]+>'),          '');   // strip remaining tags
 
-  // Decode common HTML entities
+  /// Decode common HTML entities
   text = text
       .replaceAll('&amp;',  '&')
       .replaceAll('&lt;',   '<')
@@ -23,7 +23,7 @@ String _stripHtml(String html) {
       .replaceAll('&#39;',  "'")
       .replaceAll('&apos;', "'");
 
-  // Collapse 3+ consecutive newlines into 2
+  /// Collapse 3+ consecutive newlines into 2
   text = text.replaceAll(RegExp(r'\n{3,}'), '\n\n');
 
   return text.trim();

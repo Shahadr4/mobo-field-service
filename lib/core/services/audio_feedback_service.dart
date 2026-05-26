@@ -18,27 +18,25 @@ class AudioFeedbackService {
     if (_isInitialized) return;
 
     try {
-      // Create players for each sound type
+      /// Create players for each sound type
       _players['success'] = AudioPlayer();
       _players['error'] = AudioPlayer();
       _players['notify'] = AudioPlayer();
 
-      // Set audio mode for all players
+      /// Set audio mode for all players
       for (final player in _players.values) {
         await player.setReleaseMode(ReleaseMode.stop);
         await player.setVolume(1.0);
       }
 
-      // Preload audio files
+      /// Preload audio files
       await _players['success']?.setSource(AssetSource('audio/success.mp3'));
       await _players['error']?.setSource(AssetSource('audio/error.mp3'));
       await _players['notify']?.setSource(AssetSource('audio/notify.mp3'));
 
       _isInitialized = true;
-      debugPrint('[AudioFeedbackService] Initialized successfully');
     } catch (e) {
-      debugPrint('[AudioFeedbackService] Failed to initialize: $e');
-      // Don't throw - audio is optional, app should work without it
+      /// Don't throw - audio is optional, app should work without it
     }
   }
 
@@ -65,14 +63,13 @@ class AudioFeedbackService {
       final player = _players[type];
       if (player == null) return;
 
-      // Stop current playback if any
+      /// Stop current playback if any
       await player.stop();
 
-      // Play from beginning
+      /// Play from beginning
       await player.resume();
     } catch (e) {
-      debugPrint('[AudioFeedbackService] Error playing $type sound: $e');
-      // Silently fail - don't disrupt user experience
+      /// Silently fail - don't disrupt user experience
     }
   }
 

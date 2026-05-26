@@ -1,4 +1,4 @@
-import 'dart:developer';
+
 
 import 'package:flutter/material.dart';
 import 'package:hugeicons/hugeicons.dart';
@@ -17,9 +17,6 @@ import '../../../shared/widgets/snackbars/custom_snackbar.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../shared/widgets/loaders/loading_widget.dart';
 import '../../../shared/widgets/dialogs/common_dialog.dart';
-// Import all providers for cache clearing
-
-import '../../profile/providers/profile_provider.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -32,7 +29,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _isLoading = false;
   int _cacheUpdateKey = 0;
 
-  // Biometric authentication state
+  /// Biometric authentication state
   bool _isBiometricEnabled = false;
   bool _isBiometricAvailable = false;
   String _authStatusDescription = 'Checking authentication status...';
@@ -67,14 +64,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
         });
       }
     } catch (e) {
-      debugPrint('Error loading biometric settings: $e');
     }
   }
 
   Future<void> _toggleBiometric(bool enabled) async {
     try {
       if (enabled) {
-        // Test authentication before enabling
+        /// Test authentication before enabling
         final canAuthenticate =
             await BiometricService.authenticateWithBiometrics(
               reason: 'Authenticate to enable biometric login',
@@ -91,7 +87,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       }
 
       await BiometricService.setBiometricEnabled(enabled);
-      await _loadBiometricSettings(); // Refresh status
+      await _loadBiometricSettings(); /// Refresh status
 
       if (mounted) {
         if (enabled) {
@@ -170,7 +166,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // Clear all provider caches
+      /// Clear all provider caches
 
 
       await Future.delayed(const Duration(milliseconds: 100));
@@ -254,34 +250,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
     await Future.delayed(const Duration(milliseconds: 500));
 
     try {
-      // Mark as account operation to prevent biometric prompt
+      /// Mark as account operation to prevent biometric prompt
       final biometricContext = BiometricContextService();
       biometricContext.startAccountOperation('logout');
 
-      // Clear Odoo session
+      /// Clear Odoo session
       await OdooSessionManager.logout();
 
-      // Clear all preferences
+      /// Clear all preferences
       final prefs = await SharedPreferences.getInstance();
       await prefs.clear();
 
 
 
-;
 
-
-      // Finish autofill context
+      /// Finish autofill context
       await Future.delayed(const Duration(milliseconds: 100));
 
       if (context.mounted) {
-        Navigator.of(context).pop(); // Close loading dialog
-        log("loggging out perfoerming expense");
+        Navigator.of(context).pop(); /// Close loading dialog
 
 
         Navigator.of(
           context,
         ).pushNamedAndRemoveUntil('/server_setup', (route) => false);
-        // Align with sales_app1 feedback timing
+        /// Align with sales_app1 feedback timing
         Future.delayed(const Duration(milliseconds: 150), () {
           if (context.mounted) {
             CustomSnackbar.showSuccess(context, 'Logged out successfully');
@@ -289,9 +282,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
         });
       }
     } catch (e) {
-      debugPrint('[SettingsScreen] Logout error: $e');
       if (context.mounted) {
-        Navigator.of(context).pop(); // Close loading dialog
+        Navigator.of(context).pop(); /// Close loading dialog
         CustomSnackbar.showError(context, 'Logout failed: $e');
       }
     }
@@ -323,7 +315,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Action items
+          /// Action items
           ActionTile(
             title: 'Visit Website',
             subtitle: 'www.cybrosys.com',
@@ -365,7 +357,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Divider(color: isDark ? Colors.grey[800] : Colors.grey[200]),
           const SizedBox(height: 16),
 
-          // Social links
+          /// Social links
           Center(
             child: Text(
               'Follow Us',
@@ -438,8 +430,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _launchUrlSmart(String url, {String? title}) async {
     final uri = Uri.parse(url);
     try {
-      // On emulators there may be no external browser/email apps.
-      // Use in-app browser for http/https; external for others (mailto:, tel:, etc.).
+      /// On emulators there may be no external browser/email apps.
+      /// Use in-app browser for http/https; external for others (mailto:, tel:, etc.).
       final isWeb = uri.scheme == 'http' || uri.scheme == 'https';
       final mode = isWeb
           ? LaunchMode.inAppBrowserView
@@ -584,30 +576,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               const SizedBox(height: 16),
 
-              // Language & Region Section
+              /// Language & Region Section
               SectionCard(
                 title: 'Language & Region',
                 icon: HugeIcons.strokeRoundedSettings02,
                 headerTrailing: IconButton(
                   tooltip: 'Refresh',
                   onPressed: () async {
-                    // await Future.wait([
-                    //   settingsProvider.fetchAvailableLanguages(
-                    //     markManual: true,
-                    //   ),
-                    //   settingsProvider.fetchAvailableCurrencies(
-                    //     markManual: true,
-                    //   ),
-                    //   settingsProvider.fetchAvailableTimezones(
-                    //     markManual: true,
-                    //   ),
-                    // ]);
-                    // if (mounted) {
-                    //   CustomSnackbar.showInfo(
-                    //     context,
-                    //     'Language & Region refreshed',
-                    //   );
-                    // }
+
                   },
                   icon: const Icon(Icons.refresh, size: 18),
                 ),
@@ -617,27 +593,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     subtitle: 'Select your preferred language',
                     icon: HugeIcons.strokeRoundedTranslate,
                    selectedValue: "English",
-                   // selectedValue: settingsProvider.selectedLanguage,
-                   //  options: settingsProvider.availableLanguages,
-                    options: [],
+                     options: [],
                     isLoading: settingsProvider.isLoadingLanguages,
                     onChanged: (value) async {
-                      // try {
-                      //   await settingsProvider.updateLanguage(value!);
-                      //   if (mounted) {
-                      //     CustomSnackbar.showSuccess(
-                      //       context,
-                      //       'Language updated to ${settingsProvider.getLanguageDisplayName(value)}',
-                      //     );
-                      //   }
-                      // } catch (e) {
-                      //   if (mounted) {
-                      //     CustomSnackbar.showError(
-                      //       context,
-                      //       'Failed to update language: $e',
-                      //     );
-                      //   }
-                      // }
                     },
                     displayKey: 'name',
                     valueKey: 'code',
@@ -703,34 +661,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ],
               ),
-              // const SizedBox(height: 16),
-              // SectionCard(
-              //   title: 'Data & Storage',
-              //   icon: HugeIcons.strokeRoundedDatabase01,
-              //   children: [
-              //     Builder(
-              //       key: ValueKey(_cacheUpdateKey),
-              //       builder: (context) {
-              //         return ActionTile(
-              //           title: 'Clear cache',
-              //           subtitle:
-              //               '${settingsProvider.cacheSize > 0 ? '${settingsProvider.cacheSize} MB' : 'No cache data'} • Free up space by clearing temporary data',
-              //           icon: HugeIcons.strokeRoundedDelete02,
-              //           onTap: _isLoading ? null : () => _clearCache(),
-              //           trailing: _isLoading
-              //               ? const SizedBox(
-              //                   width: 20,
-              //                   height: 20,
-              //                   child: CircularProgressIndicator(
-              //                     strokeWidth: 2,
-              //                   ),
-              //                 )
-              //               : null,
-              //         );
-              //       },
-              //     ),
-              //   ],
-              // ),
+
               const SizedBox(height: 16),
               SectionCard(
                 title: 'Help & Support',

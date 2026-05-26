@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
+import 'package:hugeicons/hugeicons.dart';
 import 'package:mobo_feild_service/core/const/app_colors.dart';
 
 class SignReport extends StatefulWidget {
@@ -48,15 +49,11 @@ class _SignReportState extends State<SignReport> {
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
-        leading: GestureDetector(
-          onTap: () => Navigator.pop(context),
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Icon(
-              Icons.arrow_back_ios_new_rounded,
-              size: 18,
-              color: isDark ? Colors.white : Colors.black,
-            ),
+        leading: IconButton(
+          onPressed: () => Navigator.pop(context),
+          icon: HugeIcon(
+            icon: HugeIcons.strokeRoundedArrowLeft01,
+            color: isDark ? Colors.white : Colors.black,
           ),
         ),
         title: Text(

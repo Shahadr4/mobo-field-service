@@ -22,7 +22,7 @@ class FilterChipWidget extends StatelessWidget {
       selected: isSelected,
       onSelected: onSelected,
 
-      // ✅ Text
+      ///  Text
       label: Text(
         label,
         style: TextStyle(
@@ -34,16 +34,16 @@ class FilterChipWidget extends StatelessWidget {
         ),
       ),
 
-      // ✅ Background
+      ///Background
       backgroundColor:
       isDark ? const Color(0xFF2A2A2A) : const Color(0xFFFCE4EC),
       selectedColor: primaryColor,
 
-      // ✅ Tick
+      ///Tick
       showCheckmark: true,
       checkmarkColor: Colors.white,
 
-      // ✅ Grey border (always)
+      /// Grey border (always)
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(8),
         side: BorderSide(
@@ -52,7 +52,7 @@ class FilterChipWidget extends StatelessWidget {
         ),
       ),
 
-      // ✅ Reduce height
+      /// Reduce height
       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
       visualDensity: VisualDensity.compact,
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),

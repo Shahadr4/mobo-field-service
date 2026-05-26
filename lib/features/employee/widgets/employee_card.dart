@@ -31,14 +31,14 @@ class AssigneeCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Dynamic Top-Aligned Avatar with a premium border-radius
+          /// Dynamic Top-Aligned Avatar with a premium border-radius
           AssigneeAvatar(assignee: assignee, size: 60),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Name and Job Title Row
+                /// Name and Job Title Row
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.center,
@@ -90,7 +90,7 @@ class AssigneeCard extends StatelessWidget {
 
                 const SizedBox(height: 12),
 
-                // Metadata Rows with larger icons and beautifully spaced typography
+                /// Metadata Rows with larger icons and beautifully spaced typography
                 if (assignee.phone.isNotEmpty)
                   _MetaRow(
                     icon: Icons.phone_outlined,
@@ -115,7 +115,7 @@ class AssigneeCard extends StatelessWidget {
   }
 }
 
-// ── Meta row ──────────────────────────────────────────────────────────────────
+/// ── Meta row ──────────────────────────────────────────────────────────────────
 
 class _MetaRow extends StatelessWidget {
   final IconData icon;
@@ -151,7 +151,7 @@ class _MetaRow extends StatelessWidget {
   }
 }
 
-// ── Avatar ────────────────────────────────────────────────────────────────────
+/// ── Avatar ────────────────────────────────────────────────────────────────────
 
 class AssigneeAvatar extends StatelessWidget {
   final AssigneeModel assignee;

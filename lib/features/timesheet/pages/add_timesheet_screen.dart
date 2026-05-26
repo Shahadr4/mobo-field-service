@@ -177,7 +177,7 @@ class _AddTimesheetScreenState extends State<AddTimesheetScreen> {
     }
   }
 
-  // ── Layout helpers (matching create_task_screen pattern) ──────────────────
+  /// ── Layout helpers (matching create_task_screen pattern) ──────────────────
 
   Widget _card({required bool isDark, required String title, required List<Widget> children}) {
     return Container(
@@ -257,9 +257,10 @@ class _AddTimesheetScreenState extends State<AddTimesheetScreen> {
             backgroundColor: bg,
             surfaceTintColor: Colors.transparent,
             leading: IconButton(
-              icon: Icon(Icons.arrow_back_ios_new_rounded,
-                  size: 18,
-                  color: isDark ? Colors.white : Colors.black87),
+              icon: HugeIcon(
+                icon: HugeIcons.strokeRoundedArrowLeft01,
+                color: isDark ? Colors.white : Colors.black87,
+              ),
               onPressed: () => Navigator.pop(context),
             ),
             title: Text('Add Timesheet',
@@ -276,7 +277,7 @@ class _AddTimesheetScreenState extends State<AddTimesheetScreen> {
             child: ListView(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
               children: [
-                // ── Project Details ────────────────────────────────────────
+                /// ── Project Details
                 _card(
                   isDark: isDark,
                   title: 'Project Details',
@@ -375,7 +376,7 @@ class _AddTimesheetScreenState extends State<AddTimesheetScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // ── Time & Date ────────────────────────────────────────────
+                /// ── Time & Date ────────────────────────────────────────────
                 _card(
                   isDark: isDark,
                   title: 'Time & Date',
@@ -383,7 +384,7 @@ class _AddTimesheetScreenState extends State<AddTimesheetScreen> {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Hours
+                        /// Hours
                         Expanded(
                           child: _labeled(
                             isDark,
@@ -439,7 +440,7 @@ class _AddTimesheetScreenState extends State<AddTimesheetScreen> {
                           ),
                         ),
                         const SizedBox(width: 12),
-                        // Date
+                        /// Date
                         Expanded(
                           child: _labeled(
                             isDark,
@@ -479,7 +480,7 @@ class _AddTimesheetScreenState extends State<AddTimesheetScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // ── Description ────────────────────────────────────────────
+                /// ── Description ────────────────────────────────────────────
                 _card(
                   isDark: isDark,
                   title: 'Description',
@@ -657,10 +658,6 @@ class _LogTimeButton extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Task picker bottom sheet (reuses TimesheetProvider)
-// ─────────────────────────────────────────────────────────────────────────────
-
 class _TaskPickerSheet extends StatefulWidget {
   final bool isDark;
   const _TaskPickerSheet({required this.isDark});
@@ -714,7 +711,7 @@ class _TaskPickerSheetState extends State<_TaskPickerSheet> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Handle
+          /// Handle
           Padding(
             padding: const EdgeInsets.only(top: 12, bottom: 4),
             child: Container(
@@ -726,7 +723,7 @@ class _TaskPickerSheetState extends State<_TaskPickerSheet> {
               ),
             ),
           ),
-          // Header
+          /// Header
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 10, 16, 14),
             child: Row(
@@ -749,7 +746,7 @@ class _TaskPickerSheetState extends State<_TaskPickerSheet> {
               ],
             ),
           ),
-          // Search
+          /// Search
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
             child: TextField(
@@ -796,7 +793,7 @@ class _TaskPickerSheetState extends State<_TaskPickerSheet> {
               ),
             ),
           ),
-          // List
+          /// List
           Flexible(child: _PickerList(isDark: isDark)),
         ],
       ),

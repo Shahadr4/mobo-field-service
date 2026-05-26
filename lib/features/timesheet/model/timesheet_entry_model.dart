@@ -4,7 +4,7 @@ class TimesheetEntry {
   final String projectName;
   final String description;
   final double hours;
-  final String date; // 'YYYY-MM-DD'
+  final String date; /// 'YYYY-MM-DD'
   final int taskId;
   final int projectId;
 
@@ -74,7 +74,7 @@ class TimesheetEntry {
   static String _weekLabel(String date) {
     final dt = DateTime.tryParse(date);
     if (dt == null) return date;
-    // Monday of the week
+    /// Monday of the week
     final mon = dt.subtract(Duration(days: dt.weekday - 1));
     final sun = mon.add(const Duration(days: 6));
     return 'Week ${_d(mon)} – ${_d(sun)}';

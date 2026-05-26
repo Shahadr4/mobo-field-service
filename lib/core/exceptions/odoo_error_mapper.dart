@@ -12,11 +12,9 @@ class OdooErrorMapper {
 
     // Connectivity and reachability
     if (error is NoInternetException) {
-      _debug('Mapped NoInternetException');
       return 'No internet connection. Please check Wi‑Fi or mobile data and try again.';
     }
     if (error is ServerUnreachableException) {
-      _debug('Mapped ServerUnreachableException');
       return 'Cannot reach the server. Please verify the server URL and your network connection.';
     }
 
@@ -39,21 +37,19 @@ class OdooErrorMapper {
       message.write(
         '\n\nPlease contact your administrator to install the required app.',
       );
-      _debug('Mapped Odoo KeyError for model: $model');
       return message.toString();
     }
 
     // Check for model not found in error message
     if (raw.contains('model') &&
         (raw.contains('not found') || raw.contains('does not exist'))) {
-      _debug('Mapped model not found error');
       return 'Required module not found. The feature you\'re trying to access requires an Odoo app that is not installed. Please contact your administrator.';
     }
 
     // werkzeug 404 without explicit KeyError
     if (raw.contains('werkzeug.exceptions.NotFound') ||
         raw.contains('404 Not Found')) {
-      _debug('Mapped werkzeug 404 Not Found');
+
       return 'Server resource not found. This may indicate:\n'
           '• Missing Odoo modules/apps\n'
           '• Insufficient permissions\n'
@@ -63,20 +59,19 @@ class OdooErrorMapper {
 
     // Access rights / permissions
     if (raw.contains('Access Denied') || raw.contains('AccessError')) {
-      _debug('Mapped access denied error');
+
       return 'Access Denied. You don\'t have permission to access this feature. Please contact your administrator to grant the necessary access rights.';
     }
 
     // Authentication/session issues
     if (raw.contains('authentication') ||
         (raw.contains('uid') && raw.contains('context'))) {
-      _debug('Mapped authentication-like error');
       return 'Authentication failed or your session is invalid. Please sign in again and retry.';
     }
 
     // Database errors
     if (raw.contains('database') && raw.contains('not exist')) {
-      _debug('Mapped database error');
+
       return 'Database not found. Please verify your database name and server configuration.';
     }
 
@@ -154,7 +149,4 @@ class OdooErrorMapper {
     }
   }
 
-  static void _debug(String msg) {
-    debugPrint('[OdooErrorMapper] $msg');
-  }
 }

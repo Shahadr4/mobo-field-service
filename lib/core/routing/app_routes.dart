@@ -9,10 +9,9 @@
 /// Navigator.pushNamed(context, AppRoutes.login, arguments: {'url': url, 'database': db});
 /// ```
 class AppRoutes {
-  // Private constructor to prevent instantiation
+  /// Private constructor to prevent instantiation
   AppRoutes._();
 
-  // ==================== Auth & Setup Routes ====================
 
   /// Splash screen - shown on app launch
   static const String splash = '/';
@@ -33,7 +32,6 @@ class AppRoutes {
   /// Reset password screen
   static const String resetPassword = '/reset_password';
 
-  // ==================== Main App Routes ====================
 
   /// App entry point - handles authentication check and routing
   static const String app = '/app';
@@ -41,7 +39,6 @@ class AppRoutes {
   /// Home scaffold - main app container with bottom navigation
   static const String home = '/home';
 
-  // ==================== Feature Routes ====================
 
   /// Dashboard screen
   static const String dashboard = '/dashboard';

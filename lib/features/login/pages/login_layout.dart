@@ -23,11 +23,11 @@ class LoginLayout extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // Let Flutter handle system UI automatically
+    /// Let Flutter handle system UI automatically
 
     return Scaffold(
       body: Stack(children: [
-        // Background
+        /// Background
         Positioned.fill(
           child: Container(
             decoration: BoxDecoration(
@@ -47,12 +47,12 @@ class LoginLayout extends StatelessWidget {
           ),
         ),
 
-        // Main content
+        /// Main content
         LayoutBuilder(
           builder: (context, viewportConstraints) {
             return Column(
               children: [
-                // App name and logo at the top
+                /// App name and logo at the top
                 SafeArea(
                   child: Padding(
                     padding: const EdgeInsets.only(top: 68),
@@ -60,13 +60,13 @@ class LoginLayout extends StatelessWidget {
                   ),
                 ),
 
-                // Scrollable content area for sign-in form
+                /// Scrollable content area for sign-in form
                 Expanded(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
                     child: ConstrainedBox(
                       constraints: BoxConstraints(
-                        minHeight: viewportConstraints.maxHeight - 180, // Account for header height
+                        minHeight: viewportConstraints.maxHeight - 180, /// Account for header height
                       ),
                       child: Center(
                         child: ConstrainedBox(
@@ -77,11 +77,11 @@ class LoginLayout extends StatelessWidget {
                               mainAxisAlignment: MainAxisAlignment.center,
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                // Sign In header
+                                /// Sign In header
                                 _buildSignInHeader(),
                                 const SizedBox(height: 40),
 
-                                // Form section with consistent theme
+                                /// Form section with consistent theme
                                 Theme(
                                   data: Theme.of(context).copyWith(
                                     inputDecorationTheme: Theme.of(context)
@@ -129,13 +129,13 @@ class LoginLayout extends StatelessWidget {
           },
         ),
 
-        // Back button (if provided)
+        /// Back button (if provided)
         if (backButton != null) backButton!,
       ]),
     );
   }
 
-  // Build app header (Sales App + logo at top)
+  /// Build app header (Sales App + logo at top)
   Widget _buildAppHeader() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -160,11 +160,11 @@ class LoginLayout extends StatelessWidget {
     );
   }
 
-  // Build sign in header (centered)
+  /// Build sign in header (centered)
   Widget _buildSignInHeader() {
     return Column(
       children: [
-        // "Sign In" text
+        /// "Sign In" text
         Text(
           title,
           style: GoogleFonts.montserrat(
@@ -176,7 +176,7 @@ class LoginLayout extends StatelessWidget {
         ),
         const SizedBox(height: 8),
 
-        // Subtitle text
+        /// Subtitle text
         Text(
           subtitle,
           style: GoogleFonts.manrope(
@@ -191,7 +191,7 @@ class LoginLayout extends StatelessWidget {
   }
 }
 
-// Common text field builder for login screens
+/// Common text field builder for login screens
 class LoginTextField extends StatelessWidget {
   final TextEditingController controller;
   final String hint;
@@ -286,7 +286,7 @@ class LoginTextField extends StatelessWidget {
   }
 }
 
-// Common dropdown field builder for login screens
+/// Common dropdown field builder for login screens
 class LoginDropdownField extends StatefulWidget {
   final String hint;
   final String? value;
@@ -322,10 +322,10 @@ class _LoginDropdownFieldState extends State<LoginDropdownField> {
   }
 
   Future<void> _handleMenuOpen(BuildContext context) async {
-    // Close keyboard immediately
+    /// Close keyboard immediately
     FocusScope.of(context).unfocus();
 
-    // Wait for keyboard to close, then open dropdown
+    /// Wait for keyboard to close, then open dropdown
     await Future.delayed(const Duration(milliseconds: 250));
 
     if (!mounted) return;
@@ -335,22 +335,22 @@ class _LoginDropdownFieldState extends State<LoginDropdownField> {
   void _showDropdownOverlay() {
     final uniqueItems = widget.items.toSet().toList();
     if (uniqueItems.isEmpty) return;
-    if (_overlayEntry != null) return; // already open
+    if (_overlayEntry != null) return; /// already open
 
-    // Calculate field width
+    /// Calculate field width
     final renderBox = context.findRenderObject() as RenderBox?;
     final fieldWidth = renderBox?.size.width ?? (MediaQuery.of(context).size.width - 48);
-    // Calculate dynamic height so the dropdown doesn't hit the bottom of the screen
+    /// Calculate dynamic height so the dropdown doesn't hit the bottom of the screen
     final fieldOffset = renderBox?.localToGlobal(Offset.zero) ?? Offset.zero;
     final screenHeight = MediaQuery.of(context).size.height;
     final fieldHeight = renderBox?.size.height ?? 0;
     final availableBelow = screenHeight - (fieldOffset.dy + fieldHeight) - 16; // keep 16px margin
-    // Limit visible items to 5 rows (others scroll)
+    /// Limit visible items to 5 rows (others scroll)
     const double itemHeight = 44.0; // consistent row height
     const double listVerticalPadding = 16.0; // 8 top + 8 bottom
     final double heightForFiveItems = itemHeight * 5 + listVerticalPadding;
     final double maxDropdownHeight = math.max(
-      120.0, // minimum sensible height (~2 items)
+      120.0, /// minimum sensible height (~2 items)
       math.min(availableBelow, heightForFiveItems),
     );
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -358,7 +358,7 @@ class _LoginDropdownFieldState extends State<LoginDropdownField> {
     _overlayEntry = OverlayEntry(
       builder: (overlayContext) => Stack(
         children: [
-          // Tap outside to dismiss
+          /// Tap outside to dismiss
           Positioned.fill(
             child: GestureDetector(
               behavior: HitTestBehavior.translucent,
@@ -427,7 +427,7 @@ class _LoginDropdownFieldState extends State<LoginDropdownField> {
       ),
     );
 
-    // Insert into overlay layer after build frame
+    /// Insert into overlay layer after build frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || _overlayEntry == null) return;
       final overlayState = Overlay.maybeOf(context);
@@ -459,16 +459,16 @@ class _LoginDropdownFieldState extends State<LoginDropdownField> {
       validator: widget.validator,
       autovalidateMode: widget.autovalidateMode,
       builder: (field) {
-        // Keep the FormField's internal value in sync with the external widget.value
+        /// Keep the FormField's internal value in sync with the external widget.value
         final externalValue = uniqueItems.contains(widget.value) ? widget.value : null;
         if (field.value != externalValue) {
-          // Schedule the change after build to avoid setState during build
+          /// Schedule the change after build to avoid setState during build
           WidgetsBinding.instance.addPostFrameCallback((_) {
             field.didChange(externalValue);
           });
         }
 
-        // Always use the external (provider-backed) value for display
+        /// Always use the external (provider-backed) value for display
         final effectiveValue = externalValue;
         final showErrorIcon =
             widget.hasError && (effectiveValue == null || effectiveValue.isEmpty);
@@ -546,7 +546,7 @@ class _LoginDropdownFieldState extends State<LoginDropdownField> {
   }
 }
 
-// Common error display widget
+/// Common error display widget
 class LoginErrorDisplay extends StatelessWidget {
   final String? error;
 
@@ -592,7 +592,7 @@ class LoginErrorDisplay extends StatelessWidget {
   }
 }
 
-// URL text field with integrated protocol dropdown
+/// URL text field with integrated protocol dropdown
 class LoginUrlTextField extends StatefulWidget {
   final TextEditingController controller;
   final String hint;
@@ -607,7 +607,7 @@ class LoginUrlTextField extends StatefulWidget {
   final String selectedProtocol;
   final ValueChanged<String>? onProtocolChanged;
   final bool isLoading;
-  // Notifies parent when user typed/pasted a full URL with protocol (http/https)
+  /// Notifies parent when user typed/pasted a full URL with protocol (http/https)
   final VoidCallback? onProtocolAutoDetected;
 
   const LoginUrlTextField({
@@ -638,7 +638,7 @@ class _LoginUrlTextFieldState extends State<LoginUrlTextField> {
   @override
   void initState() {
     super.initState();
-    // Listen for user typing/pasting a full URL including protocol
+    /// Listen for user typing/pasting a full URL including protocol
     widget.controller.addListener(_handleTypedProtocolInField);
   }
 
@@ -666,22 +666,22 @@ class _LoginUrlTextFieldState extends State<LoginUrlTextField> {
     }
 
     if (detectedProtocol != null) {
-      // Inform parent that a full URL with protocol was entered
+      /// Inform parent that a full URL with protocol was entered
       widget.onProtocolAutoDetected?.call();
       _isAdjustingText = true;
       try {
-        // Update protocol selector if different
+        /// Update protocol selector if different
         if (widget.onProtocolChanged != null &&
             widget.selectedProtocol != detectedProtocol) {
           widget.onProtocolChanged!(detectedProtocol);
         }
 
-        // Strip protocol from the text field so only domain/host remains
+        /// Strip protocol from the text field so only domain/host remains
         if (domain != raw) {
           widget.controller
             ..text = domain
             ..selection = TextSelection.collapsed(offset: domain.length);
-          // Propagate sanitized value to parent listeners
+          /// Propagate sanitized value to parent listeners
           widget.onChanged?.call(domain);
         }
       } finally {
@@ -691,10 +691,10 @@ class _LoginUrlTextFieldState extends State<LoginUrlTextField> {
   }
 
   Future<void> _handleProtocolMenuOpen(BuildContext context) async {
-    // Close keyboard immediately
+    /// Close keyboard immediately
     FocusScope.of(context).unfocus();
 
-    // Wait for keyboard to close, then open dropdown
+    /// Wait for keyboard to close, then open dropdown
     await Future.delayed(const Duration(milliseconds: 250));
 
     if (!mounted) return;
@@ -748,9 +748,6 @@ class _LoginUrlTextFieldState extends State<LoginUrlTextField> {
   @override
   Widget build(BuildContext context) {
     return TextFormField(
-      // onTapOutside: (event) {
-      //   FocusScope.of(context).unfocus();
-      // },
       cursorColor: Colors.black,
       style: GoogleFonts.manrope(
         fontSize: 14,
@@ -773,7 +770,7 @@ class _LoginUrlTextFieldState extends State<LoginUrlTextField> {
         prefixIcon: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Server icon
+            /// Server icon
             Padding(
               padding: const EdgeInsets.only(left: 12, right: 8),
               child: Icon(
@@ -782,7 +779,7 @@ class _LoginUrlTextFieldState extends State<LoginUrlTextField> {
                 color: widget.enabled ? Colors.black54 : Colors.black26,
               ),
             ),
-            // Protocol dropdown
+            /// Protocol dropdown
             Container(
               decoration: BoxDecoration(
                 border: Border(

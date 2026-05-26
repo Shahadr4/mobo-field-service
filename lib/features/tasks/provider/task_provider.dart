@@ -5,7 +5,10 @@ import '../model/task_model.dart';
 import '../services/task_service.dart';
 
 class TaskProvider extends ChangeNotifier {
-  final TaskService _service = TaskService();
+  final TaskService _service;
+
+  TaskProvider({TaskService? service})
+      : _service = service ?? TaskService();
 
   static const int _pageSize = 40;
 
@@ -116,7 +119,6 @@ class TaskProvider extends ChangeNotifier {
     _error = null;
     notifyListeners();
     try {
-      log('[TaskProvider] fetchTasks page=$_currentPage filters=$_selectedFilters');
       if (!_fsmSettingsFetched) await _loadFsmSettings();
       final result = await _service.fetchTasksPaged(
         search: _search,
@@ -130,10 +132,8 @@ class TaskProvider extends ChangeNotifier {
       _tasks      = result.tasks;
       _totalCount = result.total;
       _hasFetched = true;
-      log('[TaskProvider] got ${_tasks.length} tasks, total=$_totalCount');
     } catch (e) {
       _error = e.toString();
-      log('[TaskProvider] fetchTasks error: $e');
     } finally {
       _isLoading = false;
       notifyListeners();

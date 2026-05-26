@@ -11,7 +11,7 @@ class TaskStatsShimmer extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // "Task Overview" title
+        /// "Task Overview" title
         SkeletonLine(width: 110, height: 16),
         const SizedBox(height: 12),
         GridView.count(
@@ -53,7 +53,7 @@ class _StatCardShimmer extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Left: count + label + description lines
+          /// Left: count + label + description lines
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -70,7 +70,7 @@ class _StatCardShimmer extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 10),
-          // Right: icon badge
+          /// Right: icon badge
           SkeletonBox(
             height: 44,
             width: 44,

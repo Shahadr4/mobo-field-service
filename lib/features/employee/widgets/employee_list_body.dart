@@ -96,7 +96,7 @@ class AssigneeListBody extends StatelessWidget {
   }
 }
 
-// ── Group expandable tile ─────────────────────────────────────────────────────
+/// ── Group expandable tile ─────────────────────────────────────────────────────
 
 class _GroupSection extends StatefulWidget {
   final String label;
@@ -141,7 +141,7 @@ class _GroupSectionState extends State<_GroupSection> {
         clipBehavior: Clip.antiAlias,
         child: Column(
           children: [
-            // Header
+            /// Header
             InkWell(
               onTap: () => setState(() => _expanded = !_expanded),
               child: Padding(
@@ -196,7 +196,7 @@ class _GroupSectionState extends State<_GroupSection> {
               ),
             ),
 
-            // Rows
+            /// Rows
             AnimatedCrossFade(
               duration: const Duration(milliseconds: 220),
               crossFadeState: _expanded
@@ -241,7 +241,7 @@ class _GroupSectionState extends State<_GroupSection> {
   }
 }
 
-// ── Flat row inside group tile ────────────────────────────────────────────────
+/// ── Flat row inside group tile ────────────────────────────────────────────────
 
 class _AssigneeRow extends StatelessWidget {
   final AssigneeModel assignee;

@@ -4,7 +4,7 @@ import 'package:lottie/lottie.dart';
 class EmptyState extends StatelessWidget {
   final String title;
   final String? subtitle;
-  final String? lottieAsset; // e.g. assets/lottie/empty_box.json
+  final String? lottieAsset; /// e.g. assets/lottie/empty_box.json
   final IconData? icon;
   final String? actionLabel;
   final VoidCallback? onAction;

@@ -49,7 +49,7 @@ class _TimesheetEntrySheetState extends State<TimesheetEntrySheet> {
   final _speech = stt.SpeechToText();
   bool _isListening = false;
   bool _speechAvailable = false;
-  String _textBeforeSpeech = ''; // base text before current speech session
+  String _textBeforeSpeech = ''; /// base text before current speech session
 
   @override
   void initState() {
@@ -84,13 +84,13 @@ class _TimesheetEntrySheetState extends State<TimesheetEntrySheet> {
         onResult: (result) {
           final words = result.recognizedWords;
           if (words.isNotEmpty) {
-            // Replace only the speech portion so interim results don't stack up
+            /// Replace only the speech portion so interim results don't stack up
             final base = _textBeforeSpeech;
             _descCtrl.text = base.isEmpty ? words : '$base $words';
             _descCtrl.selection = TextSelection.fromPosition(
               TextPosition(offset: _descCtrl.text.length),
             );
-            // On a final result, lock in the text as the new base
+            /// On a final result, lock in the text as the new base
             if (result.finalResult) {
               _textBeforeSpeech = _descCtrl.text;
             }
@@ -169,7 +169,7 @@ class _TimesheetEntrySheetState extends State<TimesheetEntrySheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Title
+            /// Title
             const Text(
               'Save Timesheet',
               style: TextStyle(
@@ -179,7 +179,7 @@ class _TimesheetEntrySheetState extends State<TimesheetEntrySheet> {
               ),
             ),
             const SizedBox(height: 6),
-            // Duration in pink
+            /// Duration in pink
             Text(
               'Duration: ${_formatElapsed(widget.elapsed)}',
               style: const TextStyle(
@@ -189,7 +189,7 @@ class _TimesheetEntrySheetState extends State<TimesheetEntrySheet> {
               ),
             ),
             const SizedBox(height: 18),
-            // Description field
+            /// Description field
             Stack(
               children: [
                 TextField(
@@ -251,14 +251,14 @@ class _TimesheetEntrySheetState extends State<TimesheetEntrySheet> {
               ],
             ),
             const SizedBox(height: 20),
-            // Buttons
+            /// Buttons
             ValueListenableBuilder<TextEditingValue>(
               valueListenable: _descCtrl,
               builder: (_, value, _) {
                 final hasText = value.text.trim().isNotEmpty;
                 return Row(
                   children: [
-                    // Cancel — outlined
+                    /// Cancel — outlined
                     Expanded(
                       child: OutlinedButton(
                         onPressed: provider.isSubmitting
@@ -282,7 +282,7 @@ class _TimesheetEntrySheetState extends State<TimesheetEntrySheet> {
                       ),
                     ),
                     const SizedBox(width: 12),
-                    // Save — grey when empty, primary pink when typed
+                    /// Save — grey when empty, primary pink when typed
                     Expanded(
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 200),

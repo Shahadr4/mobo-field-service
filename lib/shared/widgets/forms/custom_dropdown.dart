@@ -163,10 +163,9 @@ class ProductTypeAhead extends StatelessWidget {
               );
 
 
-              log("result product ====> ${results.toString()}");
               return results.map((data) {
                 final rawName = data['display_name']?.toString() ?? 'Unknown';
-                // Strip [...] prefix (e.g., [E-COM13] Conference Chair -> Conference Chair)
+                /// Strip [...] prefix (e.g., [E-COM13] Conference Chair -> Conference Chair)
                 final cleanedName = rawName.replaceFirst(
                   RegExp(r'^\[.*?\]\s*'),
                   '',
@@ -200,49 +199,14 @@ class ProductTypeAhead extends StatelessWidget {
                   color: isDark ? Colors.white : Colors.black87,
                 ),
               ),
-              // subtitle: Column(
-              //   crossAxisAlignment: CrossAxisAlignment.start,
-              //   children: [
-              //     if (product.defaultCode != null &&
-              //         product.defaultCode!.isNotEmpty &&
-              //         product.defaultCode!.toLowerCase() != 'false' &&
-              //         product.defaultCode!.toLowerCase() != 'null')
-              //       Text(
-              //         'SKU: ${product.defaultCode}',
-              //         style: GoogleFonts.manrope(
-              //           fontSize: 12,
-              //           fontWeight: FontWeight.w500,
-              //           color: AppTheme.primaryColor,
-              //         ),
-              //       ),
-              //     Text(
-              //       'Price: ${product.listPrice?.toStringAsFixed(2) ?? '0.00'}',
-              //       style: GoogleFonts.manrope(
-              //         fontSize: 12,
-              //         color: isDark ? Colors.white60 : Colors.grey[600],
-              //       ),
-              //     ),
-              //   ],
-              // ),
-              // trailing: product.qtyAvailable != null
-              //     ? Text(
-              //         'Stock: ${product.qtyAvailable?.toStringAsFixed(0) ?? '0'}',
-              //         style: GoogleFonts.manrope(
-              //           fontSize: 12,
-              //           fontWeight: FontWeight.w500,
-              //           color: (product.qtyAvailable ?? 0) > 0
-              //               ? Colors.green
-              //               : Colors.red,
-              //         ),
-              //       )
-              //     : null,
+
             );
           },
           onSelected: (product) {
             controller.text = product.name;
-            // Dismiss keyboard and popup
+            /// Dismiss keyboard and popup
             FocusScope.of(context).unfocus();
-            // Notify parent
+            /// Notify parent
             onProductSelected(product);
           },
           loadingBuilder: (context) => const Padding(
@@ -273,7 +237,7 @@ class ProductTypeAhead extends StatelessWidget {
           ),
         );
         if (compact) {
-          // In compact mode, render only the field to avoid overflow
+          /// In compact mode, render only the field to avoid overflow
           return field;
         }
         return Column(
@@ -316,7 +280,7 @@ class ProductTypeAhead extends StatelessWidget {
           ),
         );
       } catch (e) {
-        // Fallback to icon
+        /// Fallback to icon
       }
     }
 

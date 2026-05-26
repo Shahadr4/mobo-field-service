@@ -7,7 +7,7 @@ class HapticsService {
   HapticsService._();
 
   static Future<void> selection() async {
-    // Subtle feedback for UI selections
+    /// Subtle feedback for UI selections
     await HapticFeedback.selectionClick();
   }
 
@@ -24,8 +24,8 @@ class HapticsService {
   }
 
   static Future<void> success() async {
-    // Try to emulate success feedback. iOS has distinct patterns, Android limited.
-    // Do a medium impact followed by a light click for a pleasant success feel.
+    ///Try to emulate success feedback. iOS has distinct patterns, Android limited.
+    /// Do a medium impact followed by a light click for a pleasant success feel.
     await HapticFeedback.mediumImpact();
     await Future<void>.delayed(const Duration(milliseconds: 30));
     await HapticFeedback.selectionClick();
@@ -36,7 +36,7 @@ class HapticsService {
   }
 
   static Future<void> error() async {
-    // Slightly stronger feedback for errors
+    /// Slightly stronger feedback for errors
     await HapticFeedback.heavyImpact();
   }
 

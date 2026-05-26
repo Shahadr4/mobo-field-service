@@ -33,7 +33,7 @@ class DataLossWarningDialog extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Warning Icon
+            /// Warning Icon
             Container(
               decoration: BoxDecoration(
                 color: isDark ? primaryColor : primaryColor.withOpacity(0.1),
@@ -49,7 +49,7 @@ class DataLossWarningDialog extends StatelessWidget {
             ),
             const SizedBox(height: 20),
 
-            // Title
+            /// Title
             Text(
               title,
               style: TextStyle(
@@ -61,7 +61,7 @@ class DataLossWarningDialog extends StatelessWidget {
             ),
             const SizedBox(height: 12),
 
-            // Message
+            /// Message
             Text(
               message,
               style: TextStyle(
@@ -73,7 +73,7 @@ class DataLossWarningDialog extends StatelessWidget {
             ),
             const SizedBox(height: 24),
 
-            // Action Buttons
+            /// Action Buttons
             Row(
               children: [
                 Expanded(

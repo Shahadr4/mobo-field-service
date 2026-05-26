@@ -29,7 +29,7 @@ class OfflineErrorHandler {
   }
 
   void _startMonitoring() {
-    // Listen to internet connectivity changes
+    /// Listen to internet connectivity changes
     _internetSubscription?.cancel();
     _internetSubscription = ConnectivityService.instance.onInternetChanged
         .listen((isOnline) {
@@ -43,7 +43,7 @@ class OfflineErrorHandler {
           }
         });
 
-    // Listen to server connectivity changes
+    /// Listen to server connectivity changes
     _serverSubscription?.cancel();
     _serverSubscription = ConnectivityService.instance.onServerChanged.listen((
       isReachable,
@@ -93,7 +93,7 @@ class OfflineErrorHandler {
   }) {
     final message = _classifyError(error, fallbackMessage);
 
-    // Show snackbar based on error type
+    /// Show snackbar based on error type
     if (error is NoInternetException) {
       CustomSnackbar.showOffline(context);
     } else if (error is ServerUnreachableException) {
@@ -128,14 +128,14 @@ class OfflineErrorHandler {
       return error.message;
     }
 
-    // Use OdooErrorMapper for Odoo-specific errors
+    /// Use OdooErrorMapper for Odoo-specific errors
     final odooMessage = OdooErrorMapper.toUserMessage(error);
     if (odooMessage !=
         'Unexpected server error. Please try again or contact support.') {
       return odooMessage;
     }
 
-    // Check error string for common patterns
+    /// Check error string for common patterns
     final errorStr = error.toString().toLowerCase();
 
     if (errorStr.contains('socketexception') ||
@@ -183,12 +183,11 @@ class OfflineErrorHandler {
     try {
       return await operation();
     } catch (e) {
-      debugPrint('[OfflineErrorHandler] Error executing operation: $e');
 
       if (showSnackbar) {
         final message = handleError(context, e, fallbackMessage: errorMessage);
 
-        // If there's a retry callback and it's a connectivity issue, show retry option
+        /// If there's a retry callback and it's a connectivity issue, show retry option
         if (onRetry != null && _isConnectivityError(e)) {
           CustomSnackbar.show(
             context: context,
@@ -227,25 +226,22 @@ class OfflineErrorHandler {
     while (attempt < maxAttempts) {
       try {
         attempt++;
-        debugPrint('[OfflineErrorHandler] Retry attempt $attempt/$maxAttempts');
 
-        // Check connectivity before retrying
+        /// Check connectivity before retrying
         final hasInternet = await ConnectivityService.instance
             .hasInternetAccess();
         if (!hasInternet) {
-          debugPrint('[OfflineErrorHandler] No internet, skipping retry');
           throw NoInternetException('No internet connection available');
         }
 
         return await operation();
       } catch (e) {
-        debugPrint('[OfflineErrorHandler] Attempt $attempt failed: $e');
 
         if (attempt >= maxAttempts) {
           rethrow;
         }
 
-        // Wait before next retry with exponential backoff
+        /// Wait before next retry with exponential backoff
         await Future.delayed(delay);
         delay = Duration(
           milliseconds: (delay.inMilliseconds * backoffMultiplier).round(),

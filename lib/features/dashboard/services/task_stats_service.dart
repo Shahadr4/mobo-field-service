@@ -1,4 +1,4 @@
-import 'dart:developer';
+
 import '../../../core/services/odoo_session_manager.dart';
 import '../model/task_stats_model.dart';
 
@@ -6,30 +6,28 @@ class TaskStatsService {
   /// Fetches field service task counts for the current user.
   /// project.task with is_fsm=true is the Odoo Field Service task model.
   Future<TaskStats> fetchTaskStats() async {
-    log('[TaskStatsService] ▶ fetchTaskStats()');
 
     final session = await OdooSessionManager.getCurrentSession();
     if (session == null) {
-      log('[TaskStatsService] ❌ No session');
       return const TaskStats.empty();
     }
 
     final userId = session.userId;
 
-    // Base domain: field service tasks assigned to this user
+    /// Base domain: field service tasks assigned to this user
     final baseDomain = [
       ['is_fsm', '=', true],
       ['user_ids', 'in', [userId]],
       ['project_id', '!=', false],
-      ['has_template_ancestor', '=', false],
+      if (session.version?.contains('19') == true)
+        ['has_template_ancestor', '=', false],
       ['display_in_project', '=', true]
     ];
 
-    // Detect which "done/closed" field exists on this Odoo version:
-    // Odoo 16/17 uses fsm_done, Odoo 18/19 uses state='done' or stage fold.
-    // We probe fsm_done first; if absent fall back to stage_id.fold.
+    /// Detect which "done/closed" field exists on this Odoo version:
+    /// Odoo 16/17 uses fsm_done, Odoo 18/19 uses state='done' or stage fold.
+    /// We probe fsm_done first; if absent fall back to stage_id.fold.
     final hasFsmDone = await _fieldExists('project.task', 'fsm_done');
-    log('[TaskStatsService] hasFsmDone=$hasFsmDone');
 
     final List<dynamic> doneDomain = hasFsmDone
         ? [...baseDomain, ['fsm_done', '=', true]]
@@ -39,7 +37,7 @@ class TaskStatsService {
         ? [...baseDomain, ['fsm_done', '=', false]]
         : [...baseDomain, ['stage_id.fold', '=', false]];
 
-    // Run all 4 counts in parallel
+    /// Run all 4 counts in parallel
     final results = await Future.wait([
       _count(activeDomain),
       _count(baseDomain),
@@ -47,7 +45,8 @@ class TaskStatsService {
       _count([
         ['is_fsm', '=', true],
         ['project_id', '!=', false],
-        ['has_template_ancestor', '=', false],
+        if (session.version?.contains('19') == true)
+          ['has_template_ancestor', '=', false],
         ['display_in_project', '=', true]
       ]),
     ]);
@@ -59,10 +58,6 @@ class TaskStatsService {
       totalTasks:     results[3],
     );
 
-    log('[TaskStatsService] ✅ active=${stats.activeTasks} '
-        'assigned=${stats.assignedTasks} '
-        'done=${stats.completedTasks} '
-        'total=${stats.totalTasks}');
 
     return stats;
   }
@@ -90,10 +85,8 @@ class TaskStatsService {
         'args': [domain],
         'kwargs': {},
       });
-      log("eeee");
       return (result as num?)?.toInt() ?? 0;
     } catch (e) {
-      log('[TaskStatsService] ⚠️ count error: $e');
       return 0;
     }
   }

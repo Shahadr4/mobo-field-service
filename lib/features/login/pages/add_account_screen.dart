@@ -41,7 +41,7 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
     super.initState();
     _loadCurrentSessionInfo();
 
-    // Auto-focus email field
+    /// Auto-focus email field
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         FocusScope.of(context).requestFocus(_emailFocus);
@@ -58,11 +58,7 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
         _serverUrl = currentSession.serverUrl;
         _database = currentSession.database;
       });
-      debugPrint(
-        '[AddAccountScreen] Using current session - URL: $_serverUrl, DB: $_database',
-      );
     } else {
-      debugPrint('[AddAccountScreen] No current session found');
     }
   }
 
@@ -77,7 +73,6 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
 
   Future<void> _addAccount() async {
 
-    log("hhhhh==================>");
 
 
 
@@ -95,10 +90,9 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
     });
 
     try {
-      debugPrint('[AddAccountScreen] Adding new account to same server');
 
 
-      // Authenticate with the new credentials
+      /// Authenticate with the new credentials
       final newSession = await OdooSessionManager.authenticate(
         serverUrl: _serverUrl!,
         database: _database!,
@@ -107,7 +101,6 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
       );
 
       if (newSession == null) {
-        debugPrint('[AddAccountScreen] Authentication failed');
         setState(() {
           _errorMessage =
               'Authentication failed. Please check your credentials.';
@@ -116,27 +109,19 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
         return;
       }
 
-      // Store the new account and switch to it
+      /// Store the new account and switch to it
       final sessionService = SessionService.instance;
       await sessionService.storeAccount(newSession, _passwordController.text);
 
-      // Switch to the newly added account
+      /// Switch to the newly added account
       await sessionService.switchToAccount(newSession);
 
-      debugPrint(
-        '[AddAccountScreen] New account added and switched to successfully',
-      );
 
       if (!mounted) return;
 
-      // Navigate to main app like the switch account flow does
-      // Navigator.pushAndRemoveUntil(
-      //   context,
-      //   MaterialPageRoute(builder: (context) => const AppEntryPoint()),
-      //   (route) => false,
-      // );
 
-      // Show success message after navigation using post-frame callback
+
+      /// Show success message after navigation using post-frame callback
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (context.mounted) {
           CustomSnackbar.showSuccess(
@@ -146,7 +131,6 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
         }
       });
     } catch (e) {
-      debugPrint('[AddAccountScreen] Error adding account: $e');
       setState(() {
         _errorMessage = 'Failed to add account: ${e.toString()}';
         _isLoading = false;
@@ -156,7 +140,7 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Sync inlineError with _errorMessage (same pattern as credentials screen)
+    /// Sync inlineError with _errorMessage (same pattern as credentials screen)
     if (_errorMessage != _inlineError) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
@@ -195,81 +179,7 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Server Info Card
-            // Container(
-            //   padding: const EdgeInsets.all(16),
-            //   decoration: BoxDecoration(
-            //     color: Colors.white.withOpacity(0.1),
-            //     borderRadius: BorderRadius.circular(12),
-            //     border: Border.all(
-            //       color: Colors.white.withOpacity(0.2),
-            //       width: 1,
-            //     ),
-            //   ),
-            //   child: Column(
-            //     crossAxisAlignment: CrossAxisAlignment.start,
-            //     children: [
-            //       Row(
-            //         children: [
-            //           Icon(
-            //             HugeIcons.strokeRoundedServerStack03,
-            //             color: Colors.white70,
-            //             size: 16,
-            //           ),
-            //           const SizedBox(width: 8),
-            //           Text(
-            //             'Server',
-            //             style: GoogleFonts.manrope(
-            //               fontSize: 12,
-            //               fontWeight: FontWeight.w500,
-            //               color: Colors.white70,
-            //             ),
-            //           ),
-            //         ],
-            //       ),
-            //       const SizedBox(height: 4),
-            //       Text(
-            //         _serverUrl ?? 'Loading...',
-            //         style: GoogleFonts.manrope(
-            //           fontSize: 14,
-            //           fontWeight: FontWeight.w600,
-            //           color: Colors.white,
-            //         ),
-            //       ),
-            //       const SizedBox(height: 12),
-            //       Row(
-            //         children: [
-            //           Icon(
-            //             HugeIcons.strokeRoundedDatabase,
-            //             color: Colors.white70,
-            //             size: 16,
-            //           ),
-            //           const SizedBox(width: 8),
-            //           Text(
-            //             'Database',
-            //             style: GoogleFonts.manrope(
-            //               fontSize: 12,
-            //               fontWeight: FontWeight.w500,
-            //               color: Colors.white70,
-            //             ),
-            //           ),
-            //         ],
-            //       ),
-            //       const SizedBox(height: 4),
-            //       Text(
-            //         _database ?? 'Loading...',
-            //         style: GoogleFonts.manrope(
-            //           fontSize: 14,
-            //           fontWeight: FontWeight.w600,
-            //           color: Colors.white,
-            //         ),
-            //       ),
-            //     ],
-            //   ),
-            // ),
-            // const SizedBox(height: 24),
 
-            // Email Field
             LoginTextField(
               controller: _emailController,
               hint: 'Email',
@@ -299,7 +209,7 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
             ),
             const SizedBox(height: 16),
 
-            // Password Field
+            /// Password Field
             LoginTextField(
               controller: _passwordController,
               hint: 'Password',
@@ -346,10 +256,10 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
             ),
             SizedBox(height: _inlineError != null ? 16 : 0),
 
-            // Error display
+            /// Error display
             LoginErrorDisplay(error: _inlineError),
 
-            // Add Account Button
+            /// Add Account Button
             LoginButton(
               text: 'Add Account',
               isLoading: _isLoading,
@@ -395,7 +305,7 @@ class _AddAccountScreenState extends State<AddAccountScreen> {
 
                       await _addAccount();
 
-                      // Handle error feedback with haptic response (same as credentials screen)
+                      /// Handle error feedback with haptic response (same as credentials screen)
                       if (!mounted) return;
                       if (_errorMessage != null) {
                         await HapticFeedback.heavyImpact();

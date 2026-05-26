@@ -23,11 +23,9 @@ class OdooMetadataService {
       });
       final ok = (res is int ? res : 0) > 0;
       _modelCache[model] = ok;
-      debugPrint('[OdooMetadataService] hasModel("$model") => $ok');
       return ok;
     } catch (e) {
-      // If access to ir.model is restricted (AccessError), attempt a direct probe on the target model
-      debugPrint('[OdooMetadataService] hasModel("$model") via ir.model failed: $e');
+      /// If access to ir.model is restricted (AccessError), attempt a direct probe on the target model
       try {
         final res = await OdooSessionManager.callKwWithCompany({
           'model': model,
@@ -39,11 +37,9 @@ class OdooMetadataService {
         });
         final ok = res is Map<String, dynamic> && res.isNotEmpty;
         _modelCache[model] = ok;
-        debugPrint('[OdooMetadataService] fields_get("$model") => $ok');
         return ok;
       } catch (e2) {
-        // If fields_get also fails (e.g., truly missing model), mark as false
-        debugPrint('[OdooMetadataService] fields_get("$model") failed: $e2');
+        /// If fields_get also fails (e.g., truly missing model), mark as false
         _modelCache[model] = false;
         return false;
       }

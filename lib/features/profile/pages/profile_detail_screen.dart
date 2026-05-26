@@ -33,12 +33,12 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
   File? _pickedImageFile;
   String? _pickedImageBase64;
   final ImagePicker _picker = ImagePicker();
-  // Removed local connectivity tracking; we rely on ProfileProvider.hasInternet
+  /// Removed local connectivity tracking; we rely on ProfileProvider.hasInternet
 
-  // Form key for validation
+  /// Form key for validation
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
-  // Text controllers for editable fields
+  /// Text controllers for editable fields
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
@@ -46,11 +46,11 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
   final TextEditingController _websiteController = TextEditingController();
   final TextEditingController _functionController = TextEditingController();
 
-  // Related company state
+  /// Related company state
   int? _relatedCompanyId;
   String? _relatedCompanyName;
 
-  // Responsive scaler: baseline iPhone 12 width (390)
+  /// Responsive scaler: baseline iPhone 12 width (390)
   double _rs(BuildContext context, double size) {
     final w = MediaQuery.of(context).size.width;
     final scale = (w / 390.0).clamp(0.85, 1.2);
@@ -69,7 +69,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Update controllers whenever the provider data changes
+    /// Update controllers whenever the provider data changes
     if (mounted) {
       _updateControllers();
     }
@@ -86,7 +86,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
     super.dispose();
   }
 
-  // Connectivity is managed by ProfileProvider.hasInternet
+  ///Connectivity is managed by ProfileProvider.hasInternet
 
   String _normalizeForEdit(dynamic value) {
     if (value == null) return '';
@@ -287,7 +287,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
       }
       if (_mobileController.text.trim() !=
           _normalizeForEdit(userData['mobile'])) {
-        // Correct mapping: Work Mobile -> res.partner.mobile
+        /// Correct mapping: Work Mobile -> res.partner.mobile
         partnerUpdates['mobile'] = _mobileController.text.trim();
       }
       if (_websiteController.text.trim() !=
@@ -314,13 +314,13 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
     } finally {
       if (!mounted) return;
 
-      // FIRST close loading dialog
+      /// FIRST close loading dialog
       if (_isShowingLoadingDialog) {
         _isShowingLoadingDialog = false;
         Navigator.of(context).pop();
       }
 
-      // THEN show snackbar
+      /// THEN show snackbar
       if (isSuccess) {
         if (HapticsService.isSupported) {
           await HapticsService.success();
@@ -816,7 +816,6 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
         companies = (res as List).cast<Map<String, dynamic>>();
       } catch (e) {
         companies = [];
-        debugPrint('Failed to fetch companies: $e');
       } finally {
         loading = false;
       }
@@ -1397,9 +1396,9 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    // Allow editing while offline; provider will queue updates for sync
+    /// Allow editing while offline; provider will queue updates for sync
     final bool isEditingDisabled = false;
-    // Use class-level _rs(context, size) for responsive text
+    /// Use class-level _rs(context, size) for responsive text
 
     return PopScope(
       canPop: false,
@@ -1428,7 +1427,7 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
             ),
           ),
           actions: [
-            // Pending sync action (visible when there are queued updates)
+            /// Pending sync action (visible when there are queued updates)
             Consumer<ProfileProvider>(
               builder: (context, provider, _) {
                 if (!provider.hasPendingUpdates) return const SizedBox.shrink();
@@ -1513,10 +1512,10 @@ class _ProfileDetailScreenState extends State<ProfileDetailScreen> {
         backgroundColor: isDark ? Colors.grey[900]! : Colors.white,
         body: Consumer<ProfileProvider>(
           builder: (context, provider, child) {
-            // Prefer cached data; avoid shimmer when offline
+            /// Prefer cached data; avoid shimmer when offline
             if (provider.userData == null) {
               if (!provider.hasInternet) {
-                // Offline: no shimmer, show friendly offline placeholder
+                /// Offline: no shimmer, show friendly offline placeholder
                 return Center(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24.0),

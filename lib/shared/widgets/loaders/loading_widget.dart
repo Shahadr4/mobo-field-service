@@ -53,10 +53,10 @@ class LoadingWidget extends StatelessWidget {
 
     if (!overlay) return loader;
 
-    // Overlay mode: dimmed barrier with a card, similar to LoadingDialog
+    /// Overlay mode: dimmed barrier with a card, similar to LoadingDialog
     return Stack(
       children: [
-        // Barrier
+        /// Barrier
         Semantics(
           container: true,
           label: 'Loading overlay',
@@ -65,7 +65,7 @@ class LoadingWidget extends StatelessWidget {
             color: Colors.black.withOpacity(0.2),
           ),
         ),
-        // Centered card
+        /// Centered card
         Center(
           child: Card(
             color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
@@ -123,7 +123,7 @@ class LoadingWidget extends StatelessWidget {
 
   Widget _buildAnimated(Color resolvedColor, bool isDark) {
     if (reduceMotion) {
-      // Static, low-motion fallback
+      /// Static, low-motion fallback
       return Icon(Icons.hourglass_empty_rounded, color: resolvedColor, size: size);
     }
 

@@ -4,8 +4,14 @@ import '../services/dashboard_task_service.dart';
 import '../../tasks/services/task_service.dart';
 
 class DashboardTaskProvider extends ChangeNotifier {
-  final DashboardTaskService _service = DashboardTaskService();
-  final TaskService _taskService = TaskService();
+  final DashboardTaskService _service;
+  final TaskService _taskService;
+
+  DashboardTaskProvider({
+    DashboardTaskService? service,
+    TaskService? taskService,
+  })  : _service = service ?? DashboardTaskService(),
+        _taskService = taskService ?? TaskService();
 
   static const tabs = ['New', 'Nearby','In Progress', 'Planned', 'Done',  'Assigned'];
 
@@ -36,6 +42,7 @@ class DashboardTaskProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
 
+  /// Fetches the FSM settings from the server.
   Future<void> _loadFsmSettings() async {
     if (_fsmSettingsFetched) return;
     final s = await _taskService.fetchFsmSettings();
@@ -53,11 +60,13 @@ class DashboardTaskProvider extends ChangeNotifier {
     }
   }
 
+  /// First load — shows full shimmer skeleton. No-op if already loaded.
   Future<void> init() async {
     if (_cache.containsKey(0) && _fsmSettingsFetched) return;
     await Future.wait([_loadFsmSettings(), _load(0)]);
   }
 
+  /// Resets state so the next init() triggers a fresh load with shimmer.
   void reset() {
     _tabIndex = 0;
     _cache.clear();
@@ -70,12 +79,15 @@ class DashboardTaskProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Pull-to-refresh — clears the cache and loads the first page.
+
   Future<void> refresh() async {
     _cache.clear();
     _visibleCounts[_tabIndex] = 5;
     await _load(_tabIndex);
   }
 
+  /// Selects the given tab and clears the cache.
   Future<void> selectTabAndRefresh(int index) async {
     _tabIndex = index;
     _cache.clear();
@@ -84,6 +96,7 @@ class DashboardTaskProvider extends ChangeNotifier {
     await _load(index);
   }
 
+  /// Loads tasks for the given tab index.
   Future<void> _load(int index) async {
     _isLoading = true;
     _error = null;

@@ -28,7 +28,7 @@ class CheckInShimmer extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Icon box with status dot — matches _StatusIcon
+          /// Icon box with status dot — matches _StatusIcon
           Stack(
             clipBehavior: Clip.none,
             children: [
@@ -58,7 +58,7 @@ class CheckInShimmer extends StatelessWidget {
             ],
           ),
           const SizedBox(width: 14),
-          // Status label + subtitle — matches _StatusInfo
+          /// Status label + subtitle — matches _StatusInfo
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -69,7 +69,7 @@ class CheckInShimmer extends StatelessWidget {
               ],
             ),
           ),
-          // Action button pill — matches _ActionButton
+          /// Action button pill — matches _ActionButton
           SkeletonBox(
             height: 38,
             width: 112,

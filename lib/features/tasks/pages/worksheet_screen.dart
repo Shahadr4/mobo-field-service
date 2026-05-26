@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:ui' as ui;
 
 import 'package:flutter/gestures.dart';
+import 'package:hugeicons/hugeicons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
@@ -60,7 +61,7 @@ class _WorksheetScreenState extends State<WorksheetScreen> {
     super.dispose();
   }
 
-  // ── Data loading ─────────────────────────────────────────────────────────
+  /// ── Data loading ─────────────────────────────────────────────────────────
 
   Future<void> _load() async {
     setState(() {
@@ -106,7 +107,7 @@ class _WorksheetScreenState extends State<WorksheetScreen> {
     } else {
       _formCtrl.loadDefaults();
     }
-    // Always set name field to task name (auto-fill, not user-editable)
+    /// Always set name field to task name (auto-fill, not user-editable)
     _formCtrl.set('name', widget.taskName);
     _formInitialised = true;
 
@@ -131,7 +132,7 @@ class _WorksheetScreenState extends State<WorksheetScreen> {
     });
   }
 
-  // ── Submit ────────────────────────────────────────────────────────────────
+  /// ── Submit ────────────────────────────────────────────────────────────────
 
   Future<void> _submit() async {
     final errors = _formCtrl.validate();
@@ -176,7 +177,7 @@ class _WorksheetScreenState extends State<WorksheetScreen> {
     return true;
   }
 
-  // ── Build ─────────────────────────────────────────────────────────────────
+  /// ── Build ─────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -208,13 +209,11 @@ class _WorksheetScreenState extends State<WorksheetScreen> {
       backgroundColor: bg,
       systemOverlayStyle:
           isDark ? SystemUiOverlayStyle.light : SystemUiOverlayStyle.dark,
-      leading: GestureDetector(
-        onTap: () => Navigator.pop(context),
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Icon(Icons.arrow_back_ios_new_rounded,
-              size: 18,
-              color: isDark ? Colors.white : Colors.black),
+      leading: IconButton(
+        onPressed: () => Navigator.pop(context),
+        icon: HugeIcon(
+          icon: HugeIcons.strokeRoundedArrowLeft01,
+          color: isDark ? Colors.white : Colors.black,
         ),
       ),
       title: Column(
@@ -369,10 +368,10 @@ class _WorksheetScreenState extends State<WorksheetScreen> {
     );
   }
 
-  // ── Per-field row ─────────────────────────────────────────────────────────
+  /// ── Per-field row ─────────────────────────────────────────────────────────
 
   Widget _buildFieldRow(bool isDark, WorksheetFieldMeta f) {
-    // Boolean renders its own label inline — skip the label row
+    /// Boolean renders its own label inline — skip the label row
     if (f.type == 'boolean' && !f.readonly) {
       return _buildFieldWidget(isDark, f);
     }
@@ -459,9 +458,6 @@ class _WorksheetScreenState extends State<WorksheetScreen> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Shared decoration helpers
-// ─────────────────────────────────────────────────────────────────────────────
 
 BoxDecoration _fieldDeco(bool isDark) => BoxDecoration(
       color: isDark ? const Color(0xFF2A2D3E) : const Color(0xFFF1F3F5),
@@ -490,9 +486,6 @@ InputDecoration _inputDeco(bool isDark, String hint) => InputDecoration(
           borderSide: const BorderSide(color: Colors.red, width: 1.2)),
     );
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Readonly display
-// ─────────────────────────────────────────────────────────────────────────────
 
 class _ReadonlyValue extends StatelessWidget {
   final bool isDark;
@@ -537,9 +530,6 @@ class _ReadonlyValue extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// char
-// ─────────────────────────────────────────────────────────────────────────────
 
 class _CharField extends StatelessWidget {
   final bool isDark;
@@ -569,10 +559,6 @@ class _CharField extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// text (multi-line)
-// ─────────────────────────────────────────────────────────────────────────────
-
 class _TextAreaField extends StatelessWidget {
   final bool isDark;
   final WorksheetFieldMeta field;
@@ -601,10 +587,6 @@ class _TextAreaField extends StatelessWidget {
     );
   }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// html
-// ─────────────────────────────────────────────────────────────────────────────
 
 class _HtmlField extends StatelessWidget {
   final bool isDark;
@@ -663,10 +645,6 @@ class _HtmlField extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// integer
-// ─────────────────────────────────────────────────────────────────────────────
-
 class _IntegerField extends StatelessWidget {
   final bool isDark;
   final WorksheetFieldMeta field;
@@ -695,10 +673,6 @@ class _IntegerField extends StatelessWidget {
     );
   }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// float
-// ─────────────────────────────────────────────────────────────────────────────
 
 class _FloatField extends StatelessWidget {
   final bool isDark;
@@ -730,10 +704,6 @@ class _FloatField extends StatelessWidget {
     );
   }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// boolean
-// ─────────────────────────────────────────────────────────────────────────────
 
 class _BooleanField extends StatelessWidget {
   final bool isDark;
@@ -797,10 +767,6 @@ class _BooleanField extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// selection
-// ─────────────────────────────────────────────────────────────────────────────
-
 class _SelectionField extends StatelessWidget {
   final bool isDark;
   final WorksheetFieldMeta field;
@@ -854,10 +820,6 @@ class _SelectionField extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// date
-// ─────────────────────────────────────────────────────────────────────────────
-
 class _DateField extends StatelessWidget {
   final bool isDark;
   final WorksheetFieldMeta field;
@@ -904,10 +866,6 @@ class _DateField extends StatelessWidget {
     );
   }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// datetime
-// ─────────────────────────────────────────────────────────────────────────────
 
 class _DateTimeField extends StatelessWidget {
   final bool isDark;
@@ -969,7 +927,7 @@ class _DateTimeField extends StatelessWidget {
   }
 }
 
-// Shared tappable container for date / datetime
+/// Shared tappable container for date / datetime
 class _DateTimeContainer extends StatelessWidget {
   final bool isDark;
   final String value;
@@ -1026,7 +984,7 @@ class _DateTimeContainer extends StatelessWidget {
   }
 }
 
-// Shared date/time picker theme
+/// Shared date/time picker theme
 Widget _wsPicker(BuildContext context, Widget? child) {
   final isDark = Theme.of(context).brightness == Brightness.dark;
   return Theme(
@@ -1072,10 +1030,6 @@ Widget _wsPicker(BuildContext context, Widget? child) {
     child: child!,
   );
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// many2one
-// ─────────────────────────────────────────────────────────────────────────────
 
 class _Many2oneField extends StatelessWidget {
   final bool isDark;
@@ -1138,9 +1092,6 @@ class _Many2oneField extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// many2many
-// ─────────────────────────────────────────────────────────────────────────────
 
 class _Many2manyField extends StatefulWidget {
   final bool isDark;
@@ -1288,10 +1239,6 @@ class _Many2manyFieldState extends State<_Many2manyField> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// signature (draw or upload)
-// ─────────────────────────────────────────────────────────────────────────────
-
 class _SignatureField extends StatefulWidget {
   final bool isDark;
   final WorksheetFieldMeta field;
@@ -1385,13 +1332,13 @@ class _SignatureFieldState extends State<_SignatureField> {
     final borderColor = isDark ? Colors.white24 : Colors.black12;
     final val = widget.formCtrl.values[widget.field.name];
     final hasSaved = val != null && val.toString().isNotEmpty;
-    // Show saved preview when no new strokes have been drawn yet
+    /// Show saved preview when no new strokes have been drawn yet
     final showPreview = hasSaved && _strokes.isEmpty;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ── Saved signature preview ───────────────────────────────────
+        /// ── Saved signature preview ───────────────────────────────────
         if (showPreview) ...[
           Stack(
             children: [
@@ -1416,7 +1363,7 @@ class _SignatureFieldState extends State<_SignatureField> {
                   ),
                 ),
               ),
-              // "Re-sign" badge overlay
+              /// "Re-sign" badge overlay
               Positioned(
                 top: 8,
                 right: 8,
@@ -1452,7 +1399,7 @@ class _SignatureFieldState extends State<_SignatureField> {
             ],
           ),
         ] else ...[
-          // ── Drawing canvas ──────────────────────────────────────────
+          /// ── Drawing canvas ──────────────────────────────────────────
           RawGestureDetector(
             behavior: HitTestBehavior.opaque,
             gestures: {
@@ -1503,7 +1450,7 @@ class _SignatureFieldState extends State<_SignatureField> {
         ],
         const SizedBox(height: 10),
 
-        // ── Action buttons row ────────────────────────────────────────
+        /// ── Action buttons row ────────────────────────────────────────
         Row(
           children: [
             // Upload
@@ -1520,7 +1467,7 @@ class _SignatureFieldState extends State<_SignatureField> {
             ),
             const SizedBox(width: 8),
 
-            // Clear — clears drawing strokes or saved data
+            /// Clear — clears drawing strokes or saved data
             Expanded(
               child: _SigButton(
                 icon: Icons.close_rounded,
@@ -1622,7 +1569,7 @@ class _SignaturePainter extends CustomPainter {
   bool shouldRepaint(_SignaturePainter old) => true;
 }
 
-// Wins the gesture arena immediately so the parent scroll never steals the drag.
+/// Wins the gesture arena immediately so the parent scroll never steals the drag.
 class _EagerPanGestureRecognizer extends PanGestureRecognizer {
   @override
   void addAllowedPointer(PointerDownEvent event) {
@@ -1630,10 +1577,6 @@ class _EagerPanGestureRecognizer extends PanGestureRecognizer {
     resolve(GestureDisposition.accepted);
   }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// binary (image upload)
-// ─────────────────────────────────────────────────────────────────────────────
 
 class _BinaryField extends StatelessWidget {
   final bool isDark;
@@ -1738,9 +1681,6 @@ class _BinaryField extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Shared loading indicator for relation fields
-// ─────────────────────────────────────────────────────────────────────────────
 
 class _RelationLoader extends StatelessWidget {
   final bool isDark;
@@ -1769,10 +1709,6 @@ class _RelationLoader extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Loading phase
-// ─────────────────────────────────────────────────────────────────────────────
-
 class _LoadingPhase extends StatelessWidget {
   final bool isDark;
   final String message;
@@ -1797,10 +1733,6 @@ class _LoadingPhase extends StatelessWidget {
     );
   }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Error state
-// ─────────────────────────────────────────────────────────────────────────────
 
 class _ErrorState extends StatelessWidget {
   final bool isDark;

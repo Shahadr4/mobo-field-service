@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:hugeicons/hugeicons.dart';
 import 'package:speech_to_text/speech_to_text.dart' as stt;
 
 import '../../../core/const/app_colors.dart';
@@ -41,7 +42,7 @@ class _TimesheetDetailScreenState extends State<TimesheetDetailScreen> {
   String _textBeforeSpeech = '';
   late DateTime _date;
 
-  // Holds the current live values (updated on save)
+  /// Holds the current live values (updated on save)
   late TimesheetEntry _entry;
 
   @override
@@ -170,7 +171,7 @@ class _TimesheetDetailScreenState extends State<TimesheetDetailScreen> {
     if (!mounted) return;
     setState(() => _saving = false);
     if (ok) {
-      // Rebuild local entry with updated values
+      /// Rebuild local entry with updated values
       String pad(int n) => n.toString().padLeft(2, '0');
       _entry = TimesheetEntry(
         id: _entry.id,
@@ -336,9 +337,10 @@ class _TimesheetDetailScreenState extends State<TimesheetDetailScreen> {
         backgroundColor: bg,
         surfaceTintColor: Colors.transparent,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded,
-              size: 18,
-              color: isDark ? Colors.white : Colors.black87),
+          icon: HugeIcon(
+            icon: HugeIcons.strokeRoundedArrowLeft01,
+            color: isDark ? Colors.white : Colors.black87,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(   _editing ? 'Edit Timesheet' : 'Timesheet Detail',
@@ -429,7 +431,7 @@ class _TimesheetDetailScreenState extends State<TimesheetDetailScreen> {
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Hours
+                        /// Hours
                         Expanded(
                           child: _labeled(
                             isDark,
@@ -486,7 +488,7 @@ class _TimesheetDetailScreenState extends State<TimesheetDetailScreen> {
                           ),
                         ),
                         const SizedBox(width: 12),
-                        // Date
+                        /// Date
                         Expanded(
                           child: _labeled(
                             isDark,

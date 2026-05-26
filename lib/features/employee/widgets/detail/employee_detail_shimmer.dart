@@ -21,24 +21,24 @@ class EmployeeDetailShimmer extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Hero card shimmer ──────────────────────────────────────
+          /// ── Hero card shimmer ──────────────────────────────────────
           _CardShell(
             cardBg: cardBg,
             border: border,
             shadow: shadow,
             child: Column(
               children: [
-                // Avatar
+                /// Avatar
                 SkeletonBox(
                   height: 88,
                   width: 88,
                   borderRadius: BorderRadius.circular(88 * 0.22),
                 ),
                 const SizedBox(height: 14),
-                // Name
+                /// Name
                 const SkeletonLine(width: 160, height: 18),
                 const SizedBox(height: 10),
-                // Job title badge
+                /// Job title badge
                 SkeletonBox(
                   height: 26,
                   width: 100,
@@ -47,7 +47,7 @@ class EmployeeDetailShimmer extends StatelessWidget {
                 const SizedBox(height: 16),
                 const Divider(height: 1),
                 const SizedBox(height: 12),
-                // Meta chips row
+                /// Meta chips row
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -62,7 +62,7 @@ class EmployeeDetailShimmer extends StatelessWidget {
 
           const SizedBox(height: 16),
 
-          // ── Contact card shimmer ───────────────────────────────────
+          /// ── Contact card shimmer ───────────────────────────────────
           _CardShell(
             cardBg: cardBg,
             border: border,
@@ -86,11 +86,11 @@ class EmployeeDetailShimmer extends StatelessWidget {
 
           const SizedBox(height: 20),
 
-          // ── Section title shimmer ──────────────────────────────────
+          /// ── Section title shimmer ──────────────────────────────────
           const SkeletonLine(width: 160, height: 16),
           const SizedBox(height: 12),
 
-          // ── Hours row shimmer ──────────────────────────────────────
+          /// ── Hours row shimmer ──────────────────────────────────────
           Row(
             children: [
               Expanded(
@@ -153,7 +153,7 @@ class EmployeeDetailShimmer extends StatelessWidget {
 
           const SizedBox(height: 12),
 
-          // ── Stats grid shimmer (matches dashboard TaskStatsShimmer) ─
+          /// ── Stats grid shimmer (matches dashboard TaskStatsShimmer) ─
           GridView.count(
             crossAxisCount: 2,
             shrinkWrap: true,
@@ -170,7 +170,7 @@ class EmployeeDetailShimmer extends StatelessWidget {
 
           const SizedBox(height: 16),
 
-          // ── Donut chart card shimmer ───────────────────────────────
+          /// ── Donut chart card shimmer ───────────────────────────────
           _CardShell(
             cardBg: cardBg,
             border: border,
@@ -184,7 +184,7 @@ class EmployeeDetailShimmer extends StatelessWidget {
                 const SizedBox(height: 20),
                 Row(
                   children: [
-                    // Donut placeholder
+                    /// Donut placeholder
                     SkeletonBox(
                       height: 130,
                       width: 130,
@@ -214,7 +214,6 @@ class EmployeeDetailShimmer extends StatelessWidget {
   }
 }
 
-// ── Helpers ────────────────────────────────────────────────────────────────────
 
 class _CardShell extends StatelessWidget {
   final Widget child;

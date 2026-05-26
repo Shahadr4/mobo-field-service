@@ -40,8 +40,6 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
   @override
   void initState() {
     super.initState();
-    debugPrint(
-        '[ResetPasswordScreen] initState: url=${widget.url}, db=${widget.database}');
     _successAnimationController = AnimationController(
       duration: const Duration(milliseconds: 600),
       vsync: this,
@@ -73,11 +71,6 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
 
   Future<void> _sendResetEmail() async {
     FocusScope.of(context).unfocus();
-    debugPrint('[ResetPasswordScreen] _sendResetEmail tapped');
-    debugPrint(
-        '[ResetPasswordScreen] Widget params: url=${widget.url}, db=${widget.database}');
-    debugPrint(
-        '[ResetPasswordScreen] Email input: "${_emailController.text.trim()}"');
 
     setState(() {
       _shouldValidate = true;
@@ -86,15 +79,12 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
     });
 
     final formValid = _formKey.currentState?.validate() ?? false;
-    debugPrint(
-        '[ResetPasswordScreen] formValid=$formValid email="${_emailController.text.trim()}"');
     setState(() {
       _emailHasError = _emailController.text.trim().isEmpty ||
           !ResetPasswordService.isValidEmail(_emailController.text.trim());
     });
 
     if (!formValid) {
-      debugPrint('[ResetPasswordScreen] validation failed; aborting send');
       await HapticFeedback.lightImpact();
       return;
     }
@@ -104,22 +94,15 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
     });
 
     try {
-      debugPrint(
-          '[ResetPasswordScreen] ===== STARTING RESET PASSWORD REQUEST =====');
-      debugPrint(
-          '[ResetPasswordScreen] Sending request with url=${widget.url}, db=${widget.database}, login=${_emailController.text.trim()}');
       final result = await ResetPasswordService.sendResetPasswordEmail(
         serverUrl: widget.url ?? '',
         database: widget.database ?? '',
         login: _emailController.text.trim(),
       );
-      debugPrint(
-          '[ResetPasswordScreen] ===== RESET PASSWORD REQUEST COMPLETED =====');
 
       if (!mounted) return;
 
       if (result['success'] == true) {
-        debugPrint('[ResetPasswordScreen] Success: ${result['message']}');
         setState(() {
           _successMessage = result['message'];
           _errorMessage = null;
@@ -127,23 +110,10 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
         _successAnimationController.forward();
         await HapticFeedback.selectionClick();
       } else if (result['requiresWebView'] == true) {
-        debugPrint(
-            '[ResetPasswordScreen] reCAPTCHA detected - launching WebView: ${result['webViewUrl']}');
-        // Navigate to WebView for reCAPTCHA-enabled servers
+        /// Navigate to WebView for reCAPTCHA-enabled servers
         await HapticFeedback.lightImpact();
-        // if (mounted) {
-        //   Navigator.push(
-        //     context,
-        //     MaterialPageRoute(
-        //       builder: (context) => WebViewScreen(
-        //         url: result['webViewUrl'],
-        //         title: 'Reset Password',
-        //       ),
-        //     ),
-        //   );
-        // }
+
       } else {
-        debugPrint('[ResetPasswordScreen] Failure: ${result['message']}');
         setState(() {
           _errorMessage = result['message'];
           _successMessage = null;
@@ -151,7 +121,6 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
         await HapticFeedback.heavyImpact();
       }
     } catch (e) {
-      debugPrint('[ResetPasswordScreen] Exception: $e');
       if (!mounted) return;
       setState(() {
         _errorMessage = 'An unexpected error occurred. Please try again.';
@@ -176,7 +145,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
       child: Scaffold(
         body: Stack(
           children: [
-            // Background
+            /// Background
             Positioned.fill(
               child: Container(
                 decoration: BoxDecoration(
@@ -196,7 +165,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
               ),
             ),
 
-            // Main content (perfectly centered like login page)
+            /// Main content (perfectly centered like login page)
             LayoutBuilder(
               builder: (context, constraints) {
                 return SingleChildScrollView(
@@ -204,7 +173,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
                   physics: const AlwaysScrollableScrollPhysics(),
                   child: ConstrainedBox(
                     constraints: BoxConstraints(
-                      // Ensure the content takes at least full viewport height for vertical centering
+                      /// Ensure the content takes at least full viewport height for vertical centering
                       minHeight: constraints.maxHeight,
                     ),
                     child: Center(
@@ -214,11 +183,11 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
                           mainAxisAlignment: MainAxisAlignment.center,
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            // Header
+                            /// Header
                             _buildHeader(),
                             const SizedBox(height: 48),
 
-                            // Success message (animated)
+                            /// Success message (animated)
                             if (_successMessage != null)
                               AnimatedBuilder(
                                 animation: _successAnimationController,
@@ -233,7 +202,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
                                 },
                               ),
 
-                            // Form or success state
+                            /// Form or success state
                             if (_successMessage == null) ...[
                               _buildForm(),
                             ] else ...[
@@ -249,7 +218,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
               },
             ),
 
-            // Back button
+            /// Back button
             Positioned(
               top: 24,
               left: 0,
@@ -329,7 +298,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Email field
+          /// Email field
           TextFormField(
             controller: _emailController,
             keyboardType: TextInputType.emailAddress,
@@ -342,9 +311,6 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
               if (value == null || value.trim().isEmpty) {
                 return 'Email is required';
               }
-              // if (!ResetPasswordService.isValidEmail(value.trim())) {
-              //   return 'Please enter a valid email address';
-              // }
               return null;
             },
             onChanged: (value) {
@@ -405,7 +371,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
           ),
           const SizedBox(height: 24),
 
-          // Error message
+          /// Error message
           AnimatedContainer(
             duration: const Duration(milliseconds: 300),
             height: _errorMessage != null ? 48 : 0,
@@ -436,7 +402,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen>
 
           const SizedBox(height: 24),
 
-          // Send reset email button
+          /// Send reset email button
           SizedBox(
             height: 48,
             child: ElevatedButton(

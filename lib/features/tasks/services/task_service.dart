@@ -62,7 +62,7 @@ class TaskService {
       case TaskFilterBy.withDeadline:
         return [['date_deadline', '!=', false]];
       case TaskFilterBy.overdue:
-        // AND of two conditions — wrap with explicit '&'
+        /// AND of two conditions — wrap with explicit '&'
         return ['&',
           ['date_deadline', '!=', false],
           ['date_deadline', '<', today],
@@ -100,18 +100,16 @@ class TaskService {
 
     if (exprs.isEmpty) return [];
 
-    // Single filter — just return its expression
+    /// Single filter — just return its expression
     if (exprs.length == 1) {
-      log('[TaskService] filter domain: ${exprs.first}');
       return exprs.first;
     }
 
-    // Multiple filters — prepend (N-1) '&' operators then flatten all expressions
+    /// Multiple filters — prepend (N-1) '&' operators then flatten all expressions
     final result = <dynamic>[
       for (int i = 0; i < exprs.length - 1; i++) '&',
       ...exprs.expand((e) => e),
     ];
-    log('[TaskService] filter domain (AND of ${exprs.length}): $result');
     return result;
   }
 
@@ -130,7 +128,8 @@ class TaskService {
     final domain = <dynamic>[
       ['is_fsm', '=', true],
       ['project_id', '!=', false],
-      ['has_template_ancestor', '=', false],
+      if (session.version?.contains('19') == true)
+        ['has_template_ancestor', '=', false],
       ['display_in_project', '=', true],
     ];
 
@@ -146,10 +145,9 @@ class TaskService {
       domain.addAll(filterClauses);
     }
 
-    log('[TaskService] fetchTasksPaged domain: $domain  offset=$offset limit=$limit');
 
     try {
-      // Fetch total count and page data in parallel
+      /// Fetch total count and page data in parallel
       final futures = await Future.wait([
         OdooSessionManager.callKwWithCompany({
           'model': 'project.task',
@@ -173,7 +171,6 @@ class TaskService {
 
       final total  = (futures[0] as num?)?.toInt() ?? 0;
       final result = futures[1];
-      log("result ---> ${result[0]}");
 
       if (result is! List) return TaskPageResult(tasks: [], total: total);
 
@@ -184,13 +181,12 @@ class TaskService {
         total: total,
       );
     } catch (e) {
-      log('[TaskService] ⚠️ fetchTasksPaged error: $e');
       return const TaskPageResult(tasks: [], total: 0);
     }
   }
 
   Future<void> _enrichTasks(List<Map<String, dynamic>> tasks) async {
-    // Resolve partner addresses
+    /// Resolve partner addresses
     final partnerIds = tasks
         .map((t) => t['partner_id'])
         .where((v) => v is List && v.isNotEmpty)
@@ -234,7 +230,7 @@ class TaskService {
       }
     }
 
-    // Resolve user names for user_ids (Odoo returns flat int list from search_read)
+    /// Resolve user names for user_ids (Odoo returns flat int list from search_read)
     final allUserIds = tasks
         .expand((t) => t['user_ids'] is List ? (t['user_ids'] as List) : <dynamic>[])
         .whereType<int>()
@@ -266,7 +262,7 @@ class TaskService {
       }
     }
 
-    // Resolve tag names
+    /// Resolve tag names
     final allTagIds = tasks
         .expand((t) => t['tag_ids'] is List ? (t['tag_ids'] as List) : <dynamic>[])
         .whereType<int>()
@@ -308,7 +304,8 @@ class TaskService {
     final domain = <dynamic>[
       ['is_fsm', '=', true],
       ['project_id', '!=', false],
-      ['has_template_ancestor', '=', false],
+      if (session.version?.contains('17') != true && session.version?.contains('18') != true)
+        ['has_template_ancestor', '=', false],
       ['display_in_project', '=', true],
     ];
 
@@ -342,10 +339,12 @@ class TaskService {
             'effective_hours',
             'remaining_hours',
             'tag_ids',
+            'display_timesheet_timer',
             'display_send_report_secondary',
             'display_sign_report_secondary',
             'display_mark_as_done_secondary',
-            'has_template_ancestor',
+            if (session.version?.contains('19') == true)
+              'has_template_ancestor',
             'has_project_template',
             'allow_material',
             'is_fsm',
@@ -361,7 +360,7 @@ class TaskService {
 
       final tasks = result.whereType<Map<String, dynamic>>().toList();
 
-      // Collect unique partner IDs
+      /// Collect unique partner IDs
       final partnerIds = tasks
           .map((t) => t['partner_id'])
           .where((v) => v is List && v.isNotEmpty)
@@ -399,7 +398,7 @@ class TaskService {
         }
       }
 
-      // Collect unique tag IDs across all tasks
+      /// Collect unique tag IDs across all tasks
       final allTagIds = tasks
           .expand((t) => t['tag_ids'] is List ? (t['tag_ids'] as List) : <dynamic>[])
           .whereType<int>()
@@ -445,7 +444,6 @@ class TaskService {
         return TaskModel.fromMap(t);
       }).toList();
     } catch (e) {
-      log('[TaskService] ⚠️ fetchTasks error: $e');
       return [];
     }
   }
@@ -497,7 +495,7 @@ class TaskService {
           t['partner_email']   = p['email'] is String ? p['email'] : '';
         }
       }
-      // Resolve user names
+      /// Resolve user names
       final userIds = t['user_ids'];
       if (userIds is List && userIds.isNotEmpty) {
         final ids = userIds.whereType<int>().toList();
@@ -521,7 +519,7 @@ class TaskService {
         }
       }
 
-      // Resolve tag names
+      /// Resolve tag names
       final tagIds = t['tag_ids'];
       if (tagIds is List && tagIds.isNotEmpty) {
         final ids = tagIds.whereType<int>().toList();
@@ -542,7 +540,6 @@ class TaskService {
 
       return TaskModel.fromMap(t);
     } catch (e) {
-      log('[TaskService] ⚠️ fetchTaskById error: $e');
       return null;
     }
   }
@@ -563,7 +560,7 @@ class TaskService {
       if (result is! List) return [];
       final tasks = result.whereType<Map<String, dynamic>>().toList();
 
-      // Resolve user names for subtasks
+      /// Resolve user names for subtasks
       final allUserIds = tasks
           .expand((t) => t['user_ids'] is List ? (t['user_ids'] as List) : <dynamic>[])
           .whereType<int>()
@@ -596,7 +593,6 @@ class TaskService {
 
       return tasks;
     } catch (e) {
-      log('[TaskService] ⚠️ fetchSubtasks error: $e');
       return [];
     }
   }
@@ -617,7 +613,6 @@ class TaskService {
       if (result is! List) return [];
       return result.whereType<Map<String, dynamic>>().toList();
     } catch (e) {
-      log('[TaskService] ⚠️ fetchTimesheets error: $e');
       return [];
     }
   }
@@ -640,7 +635,6 @@ class TaskService {
       if (result is! List) return [];
       return result.whereType<Map<String, dynamic>>().toList();
     } catch (e) {
-      log('[TaskService] ⚠️ fetchProjects error: $e');
       return [];
     }
   }
@@ -670,10 +664,8 @@ class TaskService {
         allowedCompanyIds: [companyid],
       );
       if (result is! List) return [];
-      log("[TaskService] fetchStageObjects result: $result");
       return result.whereType<Map<String, dynamic>>().toList();
     } catch (e) {
-      log('[TaskService] ⚠️ fetchStageObjects error: $e');
       return [];
     }
   }
@@ -690,7 +682,6 @@ class TaskService {
       if (result is! List) return [];
       return result.whereType<Map<String, dynamic>>().toList();
     } catch (e) {
-      log('[TaskService] ⚠️ fetchUsers error: $e');
       return [];
     }
   }
@@ -706,11 +697,9 @@ class TaskService {
         'args': [domain],
         'kwargs': {'fields': ['id', 'name', 'phone'], 'order': 'name asc', 'limit': 100},
       });
-      log("result ==> ${domain}---> ${result.toString()}");
       if (result is! List) return [];
       return result.whereType<Map<String, dynamic>>().toList();
     } catch (e) {
-      log('[TaskService] ⚠️ fetchCustomers error: $e');
       return [];
     }
   }
@@ -727,7 +716,6 @@ class TaskService {
       if (result is! List) return [];
       return result.whereType<Map<String, dynamic>>().toList();
     } catch (e) {
-      log('[TaskService] ⚠️ fetchWorksheetTemplates error: $e');
       return [];
     }
   }
@@ -744,7 +732,6 @@ class TaskService {
       if (result is! List) return [];
       return result.whereType<Map<String, dynamic>>().toList();
     } catch (e) {
-      log('[TaskService] ⚠️ fetchTags error: $e');
       return [];
     }
   }
@@ -803,10 +790,8 @@ class TaskService {
         'args': [vals],
         'kwargs': {},
       });
-      log('[TaskService] createTask result: $result');
       return (result as num?)?.toInt();
     } catch (e) {
-      log('[TaskService] ⚠️ createTask error: $e');
       return null;
     }
   }
@@ -863,7 +848,6 @@ class TaskService {
       if (plannedDateBegin != null) vals['planned_date_begin'] = fmtDt(plannedDateBegin);
 
       if (vals.isEmpty) return null;
-      log("values ==> $vals");
 
       final result = await OdooSessionManager.callKwWithCompany({
         'model': 'project.task',
@@ -874,11 +858,9 @@ class TaskService {
         ],
         'kwargs': {},
       });
-      log('[TaskService] updateTask result: $result');
       if (result == true) return null;
       return 'Failed to update task.';
     } catch (e) {
-      log('[TaskService] ⚠️ updateTask error: $e');
       final errStr = e.toString();
       if (errStr.contains('planned start date must be before') ||
           errStr.contains('planned_dates_check')) {
@@ -907,10 +889,8 @@ class TaskService {
         'args': [[taskId], {'state': '1_done'}],
         'kwargs': {'specification': {}},
       });
-      log('[TaskService] markTaskAsDone: task $taskId marked as done');
       return null;
     } catch (e) {
-      log('[TaskService] ⚠️ markTaskAsDone error: $e');
       return e.toString();
     }
   }
@@ -936,7 +916,6 @@ class TaskService {
           .where((s) => s.isNotEmpty)
           .toList();
     } catch (e) {
-      log('[TaskService] ⚠️ fetchStages error: $e');
       return [];
     }
   }
@@ -951,8 +930,8 @@ class TaskService {
     bool worksheetEnabled = false;
     bool warrantyEnabled  = false;
 
-    // Step 1: probe only the two specific fields — if the module isn't installed
-    // Odoo omits the field from the response rather than erroring.
+    /// Step 1: probe only the two specific fields — if the module isn't installed
+    /// Odoo omits the field from the response rather than erroring.
     try {
       final fields = await OdooSessionManager.callKwWithCompany({
         'model': 'project.task',
@@ -963,14 +942,12 @@ class TaskService {
       if (fields is Map<String, dynamic>) {
         worksheetEnabled = fields.containsKey('worksheet_template_id');
         warrantyEnabled  = fields.containsKey('under_warranty');
-        log('[TaskService] fetchFsmSettings field check: worksheet=$worksheetEnabled, warranty=$warrantyEnabled');
         return (worksheetEnabled: worksheetEnabled, warrantyEnabled: warrantyEnabled);
       }
     } catch (e) {
-      log('[TaskService] fetchFsmSettings field check failed: $e');
     }
 
-    // Step 2: fallback — check res.config.settings with known key variants
+    /// Step 2: fallback — check res.config.settings with known key variants
     try {
       final result = await OdooSessionManager.callKwWithCompany({
         'model': 'res.config.settings',
@@ -979,16 +956,14 @@ class TaskService {
         'kwargs': {},
       });
       if (result is Map<String, dynamic>) {
-        // Try multiple key variants used across Odoo versions
+        /// Try multiple key variants used across Odoo versions
         worksheetEnabled = result['group_worksheet']      == true ||
                            result['group_fsm_worksheet']  == true ||
                            result['module_worksheet']     == true;
         warrantyEnabled  = result['group_fsm_warranty']   == true ||
                            result['module_fsm_warranty']  == true;
-        log('[TaskService] fetchFsmSettings get_values: worksheet=$worksheetEnabled, warranty=$warrantyEnabled');
       }
     } catch (e) {
-      log('[TaskService] fetchFsmSettings get_values failed: $e');
     }
 
     return (worksheetEnabled: worksheetEnabled, warrantyEnabled: warrantyEnabled);
@@ -1007,7 +982,7 @@ class TaskService {
       final baseUrl = session.serverUrl;
       final sessionId = session.sessionId;
 
-      // STEP 1 — CALL action_send_report
+      /// STEP 1 — CALL action_send_report
       final result = await OdooSessionManager.safeCallKw({
         'model': 'project.task',
         'method': 'action_send_report',
@@ -1021,7 +996,7 @@ class TaskService {
         throw Exception("Failed to call action_send_report on task $taskId");
       }
 
-      // STEP 2 — GET REPORT ACTION
+      /// STEP 2 — GET REPORT ACTION
       final contextObj = result['context'];
       if (contextObj == null || contextObj is! Map) {
         throw Exception("Invalid response context from action_send_report");
@@ -1032,7 +1007,7 @@ class TaskService {
         throw Exception("No report action found in response");
       }
 
-      // STEP 3 — GET TEMPLATE ID
+      /// STEP 3 — GET TEMPLATE ID
       final reportActionContext = reportAction['context'];
       if (reportActionContext == null || reportActionContext is! Map) {
         throw Exception("No context found in report action");
@@ -1043,7 +1018,7 @@ class TaskService {
         throw Exception("No default_template_id found in report action");
       }
 
-      // STEP 4 — READ MAIL TEMPLATE
+      /// STEP 4 — READ MAIL TEMPLATE
       final template = await OdooSessionManager.safeCallKw({
         'model': 'mail.template',
         'method': 'read',
@@ -1057,16 +1032,16 @@ class TaskService {
         throw Exception("Failed to read mail template $templateId");
       }
 
-      // STEP 5 — REPORT TEMPLATE IDS
+      /// STEP 5 — REPORT TEMPLATE IDS
       final reportTemplateIds = template[0]['report_template_ids'];
       if (reportTemplateIds == null || reportTemplateIds is! List || reportTemplateIds.isEmpty) {
         throw Exception("No report_template_ids found in mail template $templateId");
       }
 
-      // STEP 6 — REPORT ID
+      /// STEP 6 — REPORT ID
       final reportId = reportTemplateIds[0];
 
-      // STEP 7 — READ REPORT
+      /// STEP 7 — READ REPORT
       final report = await OdooSessionManager.safeCallKw({
         'model': 'ir.actions.report',
         'method': 'read',
@@ -1081,16 +1056,16 @@ class TaskService {
         throw Exception("Failed to read report action $reportId");
       }
 
-      // STEP 8 — REPORT NAME
+      /// STEP 8 — REPORT NAME
       final reportName = report[0]['report_name'];
       if (reportName == null || reportName.toString().isEmpty) {
         throw Exception("Report name is empty for report action $reportId");
       }
 
-      // STEP 9 — BUILD REPORT URL
+      /// STEP 9 — BUILD REPORT URL
       final reportUrl = '$baseUrl/report/pdf/$reportName/$taskId';
 
-      // STEP 10 — DOWNLOAD PDF
+      /// STEP 10 — DOWNLOAD PDF
       final response = await http.get(
         Uri.parse(reportUrl),
         headers: {
@@ -1104,7 +1079,7 @@ class TaskService {
         );
       }
 
-      // STEP 11 — SAVE PDF
+      /// STEP 11 — SAVE PDF
       final dir = await getApplicationDocumentsDirectory();
       final filePath = '${dir.path}/fsm_report_$taskId.pdf';
       final file = File(filePath);
@@ -1112,7 +1087,6 @@ class TaskService {
 
       return file;
     } catch (e) {
-      log('⚠️ [TaskService] downloadTaskReport error: $e');
       rethrow;
     }
   }

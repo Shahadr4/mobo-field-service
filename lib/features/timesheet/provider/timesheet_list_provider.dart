@@ -4,9 +4,12 @@ import '../model/timesheet_entry_model.dart';
 import '../services/timesheet_list_service.dart';
 
 class TimesheetListProvider extends ChangeNotifier {
-  final _service = TimesheetListService();
+  final TimesheetListService _service;
 
-  // ── State ──────────────────────────────────────────────────────────────────
+  TimesheetListProvider({TimesheetListService? service})
+      : _service = service ?? TimesheetListService();
+
+  /// ── State ──────────────────────────────────────────────────────────────────
   List<TimesheetEntry> _entries = [];
   bool _isLoading = false;
   String? _error;
@@ -19,7 +22,7 @@ class TimesheetListProvider extends ChangeNotifier {
   TimesheetDateFilter _dateFilter = TimesheetDateFilter.all;
   TimesheetGroupBy _groupBy = TimesheetGroupBy.none;
 
-  // ── Getters ────────────────────────────────────────────────────────────────
+  /// ── Getters ────────────────────────────────────────────────────────────────
   List<TimesheetEntry> get entries => _entries;
   bool get isLoading => _isLoading;
   String? get error => _error;
@@ -59,7 +62,7 @@ class TimesheetListProvider extends ChangeNotifier {
   double get totalHours =>
       _entries.fold(0.0, (sum, e) => sum + e.hours);
 
-  // ── Init ───────────────────────────────────────────────────────────────────
+  /// ── Init ───────────────────────────────────────────────────────────────────
   Future<void> init() async {
     _currentPage = 1;
     await _load();
@@ -83,7 +86,7 @@ class TimesheetListProvider extends ChangeNotifier {
     await _load();
   }
 
-  // ── Search ─────────────────────────────────────────────────────────────────
+  /// ── Search ─────────────────────────────────────────────────────────────────
   Future<void> setSearch(String value) async {
     if (_search == value) return;
     _search = value;
@@ -91,7 +94,7 @@ class TimesheetListProvider extends ChangeNotifier {
     await _load();
   }
 
-  // ── Date filter ────────────────────────────────────────────────────────────
+  /// ── Date filter ────────────────────────────────────────────────────────────
   Future<void> setDateFilter(TimesheetDateFilter f) async {
     if (_dateFilter == f) return;
     _dateFilter = f;
@@ -99,14 +102,14 @@ class TimesheetListProvider extends ChangeNotifier {
     await _load();
   }
 
-  // ── Group by ───────────────────────────────────────────────────────────────
+  /// ── Group by ───────────────────────────────────────────────────────────────
   void setGroupBy(TimesheetGroupBy g) {
     if (_groupBy == g) return;
     _groupBy = g;
     notifyListeners();
   }
 
-  // ── Pagination ─────────────────────────────────────────────────────────────
+  /// ── Pagination ─────────────────────────────────────────────────────────────
   Future<void> nextPage() async {
     if (!canGoNext) return;
     _currentPage++;
@@ -119,7 +122,7 @@ class TimesheetListProvider extends ChangeNotifier {
     await _load();
   }
 
-  // ── Clear ──────────────────────────────────────────────────────────────────
+  /// ── Clear ──────────────────────────────────────────────────────────────────
   Future<void> clearFilters() async {
     _dateFilter = TimesheetDateFilter.all;
     _search = '';
@@ -134,7 +137,7 @@ class TimesheetListProvider extends ChangeNotifier {
     await _load();
   }
 
-  // ── Internal load ──────────────────────────────────────────────────────────
+  /// ── Internal load ──────────────────────────────────────────────────────────
   Future<void> _load() async {
     _isLoading = true;
     _error = null;

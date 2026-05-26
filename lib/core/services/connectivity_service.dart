@@ -11,7 +11,7 @@ class ConnectivityService {
   final StreamController<bool> _internetController = StreamController<bool>.broadcast();
   final StreamController<bool> _serverController = StreamController<bool>.broadcast();
   bool _lastInternetReachable = false;
-  bool _lastServerReachable = true; // default optimistic until checked
+  bool _lastServerReachable = true; /// default optimistic until checked
   String? _currentServerUrl;
 
   /// Listen to real internet reachability changes (not just network type)
@@ -22,7 +22,7 @@ class ConnectivityService {
 
   /// Start monitoring connectivity (idempotent)
   void startMonitoring() {
-    // Initial probe
+    /// Initial probe
     _probeInternet();
     _probeServer();
     _connectivity.onConnectivityChanged.listen((List<ConnectivityResult> results) async {
@@ -42,9 +42,9 @@ class ConnectivityService {
   Future<void> _probeServer() async {
     final url = _currentServerUrl;
     if (url == null) return;
-    // Only meaningful to probe server if we have internet
+    /// Only meaningful to probe server if we have internet
     if (!_lastInternetReachable) {
-      // When internet is down, we implicitly consider server unreachable, but we don't spam stream unless state changes
+      /// When internet is down, we implicitly consider server unreachable, but we don't spam stream unless state changes
       if (_lastServerReachable != false) {
         _lastServerReachable = false;
         _serverController.add(false);
@@ -112,7 +112,7 @@ class ConnectivityService {
   /// Set current server URL to be monitored for reachability. Pass null to clear.
   void setCurrentServerUrl(String? serverUrl) {
     _currentServerUrl = serverUrl;
-    // Re-probe when server changes
+    /// Re-probe when server changes
     _probeServer();
   }
 

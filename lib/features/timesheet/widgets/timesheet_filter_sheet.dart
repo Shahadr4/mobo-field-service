@@ -129,7 +129,7 @@ class _TimesheetFilterSheetState extends State<TimesheetFilterSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Drag handle
+          /// Drag handle
           Center(
             child: Padding(
               padding: const EdgeInsets.only(top: 12, bottom: 8),
@@ -144,7 +144,7 @@ class _TimesheetFilterSheetState extends State<TimesheetFilterSheet> {
             ),
           ),
 
-          // Title row
+          /// Title row
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 4, 16, 16),
             child: Row(
@@ -181,7 +181,7 @@ class _TimesheetFilterSheetState extends State<TimesheetFilterSheet> {
             ),
           ),
 
-          // Tab toggle
+          /// Tab toggle
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
             child: Container(
@@ -218,7 +218,7 @@ class _TimesheetFilterSheetState extends State<TimesheetFilterSheet> {
             ),
           ),
 
-          // Body — Flexible so sheet wraps content height
+          /// Body — Flexible so sheet wraps content height
           Flexible(
             child: _tab == 0
                 ? _FilterBody(
@@ -240,7 +240,7 @@ class _TimesheetFilterSheetState extends State<TimesheetFilterSheet> {
   }
 }
 
-// ── Tab button ────────────────────────────────────────────────────────────────
+/// ── Tab button ────────────────────────────────────────────────────────────────
 
 class _TabBtn extends StatelessWidget {
   final String label;
@@ -284,7 +284,7 @@ class _TabBtn extends StatelessWidget {
   }
 }
 
-// ── Filter body ───────────────────────────────────────────────────────────────
+/// ── Filter body ───────────────────────────────────────────────────────────────
 
 class _FilterBody extends StatelessWidget {
   final TimesheetDateFilter selected;
@@ -372,7 +372,7 @@ class _FilterBody extends StatelessWidget {
   }
 }
 
-// ── Group by body ─────────────────────────────────────────────────────────────
+/// ── Group by body ─────────────────────────────────────────────────────────────
 
 class _GroupByBody extends StatelessWidget {
   final TimesheetGroupBy selected;
@@ -464,7 +464,7 @@ class _GroupByBody extends StatelessWidget {
   }
 }
 
-// ── Active chip ───────────────────────────────────────────────────────────────
+/// ── Active chip ───────────────────────────────────────────────────────────────
 
 class _ActiveChip extends StatelessWidget {
   final String label;
@@ -505,7 +505,7 @@ class _ActiveChip extends StatelessWidget {
   }
 }
 
-// ── Select chip ───────────────────────────────────────────────────────────────
+/// ── Select chip ───────────────────────────────────────────────────────────────
 
 class _Chip extends StatelessWidget {
   final String label;

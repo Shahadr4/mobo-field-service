@@ -24,7 +24,7 @@ class TaskStatsGrid extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Section header ──────────────────────────────────────────
+            /// ── Section header ──────────────────────────────────────────
             const Text(
               'Task Overview',
               style: TextStyle(
@@ -35,7 +35,7 @@ class TaskStatsGrid extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
-            // ── Stat cards 2×2 ─────────────────────────────────────────
+            /// ── Stat cards 2×2 ─────────────────────────────────────────
             GridView.count(
               crossAxisCount: 2,
               shrinkWrap: true,
@@ -89,7 +89,7 @@ class TaskStatsGrid extends StatelessWidget {
 
             const SizedBox(height: 16),
 
-            // ── Performance chart card ──────────────────────────────────
+            /// ── Performance chart card ──────────────────────────────────
             _PerformanceCard(stats: s),
           ],
         );
@@ -97,10 +97,6 @@ class TaskStatsGrid extends StatelessWidget {
     );
   }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Performance card — ring + bars
-// ─────────────────────────────────────────────────────────────────────────────
 
 class _PerformanceCard extends StatelessWidget {
   final dynamic stats;
@@ -136,7 +132,7 @@ class _PerformanceCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
+          /// Header
           Row(
             children: [
               Container(
@@ -174,16 +170,16 @@ class _PerformanceCard extends StatelessWidget {
 
           const SizedBox(height: 20),
 
-          // Ring + bars side by side
+          /// Ring + bars side by side
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Completion ring
+              /// Completion ring
               _CompletionRing(rate: completionRate, isDark: isDark),
 
               const SizedBox(width: 24),
 
-              // Bar breakdown
+              /// Bar breakdown
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -222,9 +218,7 @@ class _PerformanceCard extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Completion ring
-// ─────────────────────────────────────────────────────────────────────────────
+/// Completion ring
 
 class _CompletionRing extends StatelessWidget {
   final double rate;
@@ -312,10 +306,6 @@ class _RingPainter extends CustomPainter {
   bool shouldRepaint(_RingPainter old) => old.rate != rate;
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Horizontal bar row
-// ─────────────────────────────────────────────────────────────────────────────
-
 class _BarRow extends StatelessWidget {
   final String label;
   final int value;
@@ -394,10 +384,6 @@ class _BarRow extends StatelessWidget {
     );
   }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Stat card
-// ─────────────────────────────────────────────────────────────────────────────
 
 class _StatCard extends StatelessWidget {
   final String label;

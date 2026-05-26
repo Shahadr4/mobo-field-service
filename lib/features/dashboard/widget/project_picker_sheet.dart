@@ -58,7 +58,7 @@ class _ProjectPickerSheetState extends State<ProjectPickerSheet> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Handle
+          /// Handle
           Padding(
             padding: const EdgeInsets.only(top: 12, bottom: 4),
             child: Container(
@@ -70,7 +70,7 @@ class _ProjectPickerSheetState extends State<ProjectPickerSheet> {
               ),
             ),
           ),
-          // Header
+          /// Header
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 10, 16, 14),
             child: Row(
@@ -94,7 +94,7 @@ class _ProjectPickerSheetState extends State<ProjectPickerSheet> {
               ],
             ),
           ),
-          // Search bar
+          /// Search bar
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
             child: TextField(
@@ -142,7 +142,7 @@ class _ProjectPickerSheetState extends State<ProjectPickerSheet> {
               ),
             ),
           ),
-          // List
+          /// List
           Flexible(child: _TaskList(isDark: isDark)),
         ],
       ),
@@ -150,7 +150,7 @@ class _ProjectPickerSheetState extends State<ProjectPickerSheet> {
   }
 }
 
-// ─── Task list ────────────────────────────────────────────────────────────────
+/// ─── Task list
 
 class _TaskList extends StatelessWidget {
   final bool isDark;
@@ -210,8 +210,7 @@ class _TaskList extends StatelessWidget {
   }
 }
 
-// ─── Task tile ────────────────────────────────────────────────────────────────
-
+/// ─── Task tile
 class _TaskTile extends StatelessWidget {
   final ProjectItem task;
   final bool isDark;
@@ -234,7 +233,7 @@ class _TaskTile extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
           child: Row(
             children: [
-              // Orange document icon
+              /// Orange document icon
               Container(
                 width: 52,
                 height: 52,
@@ -251,7 +250,7 @@ class _TaskTile extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 14),
-              // Task name + stage
+              /// Task name + stage
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -283,7 +282,7 @@ class _TaskTile extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 10),
-              // Pink play button
+              /// Pink play button
               Container(
                 width: 30,
                 height: 30,

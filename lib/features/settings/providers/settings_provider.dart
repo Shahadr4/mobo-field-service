@@ -7,18 +7,18 @@ class SettingsProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
 
-  // Loading states for Language & Region
+  /// Loading states for Language & Region
   bool _isLoadingLanguages = false;
   bool _isLoadingCurrencies = false;
   bool _isLoadingTimezones = false;
 
-  // Current settings
+  ///Current settings
   bool _isDarkMode = false;
   bool _enableNotifications = true;
   bool _reduceMotion = false;
   double _cacheSize = 0.0;
 
-  // Language & Region data
+  /// Language & Region data
   List<Map<String, dynamic>> _availableLanguages = [];
   List<Map<String, dynamic>> _availableCurrencies = [];
   List<Map<String, dynamic>> _availableTimezones = [];
@@ -31,7 +31,7 @@ class SettingsProvider extends ChangeNotifier {
   String _selectedCurrency = 'USD';
   String _selectedTimezone = 'UTC';
 
-  // Getters
+  /// Getters
   bool get isLoading => _isLoading;
   String? get error => _error;
   bool get isDarkMode => _isDarkMode;
@@ -39,7 +39,7 @@ class SettingsProvider extends ChangeNotifier {
   bool get reduceMotion => _reduceMotion;
   double get cacheSize => _cacheSize;
 
-  // Language & Region getters
+  /// Language & Region getters
   bool get isLoadingLanguages => _isLoadingLanguages;
   bool get isLoadingCurrencies => _isLoadingCurrencies;
   bool get isLoadingTimezones => _isLoadingTimezones;
@@ -58,7 +58,7 @@ class SettingsProvider extends ChangeNotifier {
 
   Future<void> initialize() async {
     await loadLocalSettings();
-    // Fetch Language & Region data in background
+    /// Fetch Language & Region data in background
     fetchAllLanguageRegionData();
   }
 
@@ -69,12 +69,12 @@ class SettingsProvider extends ChangeNotifier {
       _reduceMotion = prefs.getBool('reduce_motion') ?? false;
       _isDarkMode = prefs.getBool('dark_mode') ?? false;
 
-      // Load Language & Region settings
+      /// Load Language & Region settings
       _selectedLanguage = prefs.getString('selected_language') ?? 'en_US';
       _selectedCurrency = prefs.getString('selected_currency') ?? 'USD';
       _selectedTimezone = prefs.getString('selected_timezone') ?? 'UTC';
 
-      // Load cached data
+      /// Load cached data
       final cachedLangs = prefs.getString('available_languages');
       final cachedCurrencies = prefs.getString('available_currencies');
       final cachedTimezones = prefs.getString('available_timezones');
@@ -101,7 +101,7 @@ class SettingsProvider extends ChangeNotifier {
         } catch (_) {}
       }
 
-      // Load timestamps
+      /// Load timestamps
       final langsTs = prefs.getInt('langs_updated_at');
       final currsTs = prefs.getInt('currs_updated_at');
       final tzTs = prefs.getInt('tz_updated_at');
@@ -130,12 +130,12 @@ class SettingsProvider extends ChangeNotifier {
       await prefs.setBool('reduce_motion', _reduceMotion);
       await prefs.setBool('dark_mode', _isDarkMode);
 
-      // Save Language & Region settings
+      /// Save Language & Region settings
       await prefs.setString('selected_language', _selectedLanguage);
       await prefs.setString('selected_currency', _selectedCurrency);
       await prefs.setString('selected_timezone', _selectedTimezone);
 
-      // Save cached data
+      /// Save cached data
       await prefs.setString(
         'available_languages',
         jsonEncode(_availableLanguages),
@@ -149,7 +149,7 @@ class SettingsProvider extends ChangeNotifier {
         jsonEncode(_availableTimezones),
       );
 
-      // Save timestamps
+      /// Save timestamps
       if (_languagesUpdatedAt != null) {
         await prefs.setInt(
           'langs_updated_at',
@@ -170,7 +170,6 @@ class SettingsProvider extends ChangeNotifier {
       }
     } catch (e) {
       _error = 'Failed to save settings: $e';
-      debugPrint('SettingsProvider: Error saving settings: $e');
     }
   }
 
@@ -210,7 +209,7 @@ class SettingsProvider extends ChangeNotifier {
     }
   }
 
-  // Fetch all Language & Region data
+  /// Fetch all Language & Region data
   Future<void> fetchAllLanguageRegionData() async {
     await Future.wait([
       fetchAvailableLanguages(),
@@ -219,7 +218,7 @@ class SettingsProvider extends ChangeNotifier {
     ]);
   }
 
-  // Fetch available languages from Odoo
+  /// Fetch available languages from Odoo
   Future<void> fetchAvailableLanguages({bool markManual = false}) async {
     _isLoadingLanguages = true;
     notifyListeners();
@@ -243,8 +242,7 @@ class SettingsProvider extends ChangeNotifier {
         await saveLocalSettings();
       }
     } catch (e) {
-      debugPrint('SettingsProvider: Error fetching languages: $e');
-      // Fallback to defaults
+      /// Fallback to defaults
       if (_availableLanguages.isEmpty) {
         _availableLanguages = [
           {'code': 'en_US', 'name': 'English (US)'},
@@ -260,7 +258,7 @@ class SettingsProvider extends ChangeNotifier {
     }
   }
 
-  // Fetch available currencies from Odoo
+  /// Fetch available currencies from Odoo
   Future<void> fetchAvailableCurrencies({bool markManual = false}) async {
     _isLoadingCurrencies = true;
     notifyListeners();
@@ -284,8 +282,7 @@ class SettingsProvider extends ChangeNotifier {
         await saveLocalSettings();
       }
     } catch (e) {
-      debugPrint('SettingsProvider: Error fetching currencies: $e');
-      // Fallback to defaults
+      /// Fallback to defaults
       if (_availableCurrencies.isEmpty) {
         _availableCurrencies = [
           {'name': 'USD', 'full_name': 'US Dollar', 'symbol': '\$'},
@@ -300,7 +297,7 @@ class SettingsProvider extends ChangeNotifier {
     }
   }
 
-  // Fetch available timezones from Odoo
+  /// Fetch available timezones from Odoo
   Future<void> fetchAvailableTimezones({bool markManual = false}) async {
     _isLoadingTimezones = true;
     notifyListeners();
@@ -335,8 +332,7 @@ class SettingsProvider extends ChangeNotifier {
         await saveLocalSettings();
       }
     } catch (e) {
-      debugPrint('SettingsProvider: Error fetching timezones: $e');
-      // Fallback to defaults
+      /// Fallback to defaults
       if (_availableTimezones.isEmpty) {
         _availableTimezones = [
           {'code': 'UTC', 'name': 'UTC'},
@@ -351,24 +347,24 @@ class SettingsProvider extends ChangeNotifier {
     }
   }
 
-  // Update language in Odoo
+  /// Update language in Odoo
   Future<void> updateLanguage(String value) async {
     await updateUserPreferences(language: value);
   }
 
-  // Update currency (local only)
+  /// Update currency (local only)
   Future<void> updateCurrency(String value) async {
     _selectedCurrency = value;
     await saveLocalSettings();
     notifyListeners();
   }
 
-  // Update timezone in Odoo
+  /// Update timezone in Odoo
   Future<void> updateTimezone(String value) async {
     await updateUserPreferences(timezone: value);
   }
 
-  // Update user preferences in Odoo
+  /// Update user preferences in Odoo
   Future<void> updateUserPreferences({
     String? language,
     String? timezone,
@@ -404,12 +400,11 @@ class SettingsProvider extends ChangeNotifier {
       }
     } catch (e) {
       _error = 'Failed to update user preferences: $e';
-      debugPrint('SettingsProvider: Error updating preferences: $e');
       rethrow;
     }
   }
 
-  // Display name helpers
+  /// Display name helpers
   String getLanguageDisplayName(String code) {
     final language = _availableLanguages.firstWhere(
       (lang) => lang['code'] == code,
@@ -435,7 +430,7 @@ class SettingsProvider extends ChangeNotifier {
   }
 
   Future<void> calculateCacheSize() async {
-    // Placeholder for cache size calculation
+    /// Placeholder for cache size calculation
     _cacheSize = 0.0;
     notifyListeners();
   }

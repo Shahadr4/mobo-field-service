@@ -41,7 +41,7 @@ class OdooDropdownTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // Ensure the currently selected value exists in the options list
+    /// Ensure the currently selected value exists in the options list
     final bool hasCurrent = options.any(
       (option) => option[valueKey] == selectedValue,
     );

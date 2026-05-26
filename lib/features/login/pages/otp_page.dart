@@ -50,7 +50,6 @@ class _TotpPageState extends State<TotpPage> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    // final lang = context.watch<LanguageProvider>();
 
     return Scaffold(
       body: Stack(
@@ -228,7 +227,7 @@ class _TotpPageState extends State<TotpPage> {
     }
 
     try {
-      // 1️⃣ Inject TOTP and submit form
+      /// Inject TOTP and submit form
       await _webController!.evaluateJavascript(source: """
       (function() {
         const input = document.querySelector(
@@ -250,10 +249,10 @@ class _TotpPageState extends State<TotpPage> {
       })();
     """);
 
-      // 2️⃣ Wait briefly for server to respond (NO LONG POLLING)
+      /// Wait briefly for server to respond (NO LONG POLLING)
       await Future.delayed(const Duration(milliseconds: 700));
 
-      // 3️⃣ Check session cookie (REAL login signal)
+      /// Check session cookie (REAL login signal)
       final currentUrl = await _webController!.getUrl();
       if (currentUrl == null) {
         throw Exception('Unable to read current URL');
@@ -276,19 +275,17 @@ class _TotpPageState extends State<TotpPage> {
 
       await _saveSessionData();
 
-      // 4️⃣ Navigate IMMEDIATELY (don’t block UX)
+      /// Navigate IMMEDIATELY (don’t block UX)
       if (!mounted) return;
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const AppEntry()),
       );
 
-      // 5️⃣ Save session in background (non-blocking)
+      ///Save session in background (non-blocking)
 
 
     } catch (e, st) {
-      log('TOTP error: $e');
-      log(st.toString());
       setState(() {
         _error = 'Authentication failed. Please try again.';
       });
@@ -302,10 +299,6 @@ class _TotpPageState extends State<TotpPage> {
   Future<void> _finalizeLogin() async {
     try {
 
-      log("hi authenticated====>");
-      log("hi authenticated====>");
-      log("hi authenticated====>");
-      log("hi authenticated====>");
       final result =await OdooSessionManager.loginAndSaveSession(
         serverUrl: widget.serverUrl,
         database: widget.database,
@@ -314,25 +307,16 @@ class _TotpPageState extends State<TotpPage> {
 
       );
 
-      log("=====================Tesstting=====");
-      log(result.toString());
-      log("================testinfg============");
 
       if (!mounted) return;
 
 
 
-      log("hi authenticated====>");
-      log("hi authenticated====>");
-      log("hi authenticated====>");
-      log("hi authenticated====>");
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const AppEntry()),
       );
     } catch (e) {
-      log("failed=================================>");
-      log(e.toString());
       setState(() {
         _error = 'Authentication failed. Please try again.';
       });
@@ -377,8 +361,6 @@ class _TotpPageState extends State<TotpPage> {
   }
 
   Future<void> _saveSessionData() async {
-    log("started __savigns================>");
-    log("started-->");
     final currentUrl = await _webController!.getUrl();
 
     final cookies = await CookieManager.instance().getCookies(url: currentUrl!);
@@ -399,10 +381,6 @@ class _TotpPageState extends State<TotpPage> {
       sessionId: sessionId!,
     );
 
-    log('SESSION INFO => $sessionInfo');
-    log(widget.serverUrl);
-    log(widget.database);
-    log(widget.username);
 
 
 
@@ -574,8 +552,6 @@ class _TotpPageState extends State<TotpPage> {
   }
 
   Widget _buildForm() {
-   // final translationService = context.watch<LanguageProvider>();
-
     return Form(
       key: _formKey,
       child: Column(
@@ -588,7 +564,6 @@ class _TotpPageState extends State<TotpPage> {
             validator: (value) {
               if (value == null || value.trim().isEmpty) {
                 return
-                  // translationService.getCached('TOTP is required') ??
                     'TOTP is required';
               }
               return null;
@@ -608,7 +583,6 @@ class _TotpPageState extends State<TotpPage> {
             ),
             decoration: InputDecoration(
               hintText:
-              // translationService.getCached('Enter TOTP Code') ??
                   'Enter TOTP Code',
               hintStyle: GoogleFonts.manrope(
                 fontSize: 14,

@@ -16,11 +16,10 @@ class ModuleValidationService {
   Future<Map<String, bool>> validateRequiredModules({
     bool forceRefresh = false,
   }) async {
-    // Check cache first
+    ///Check cache first
     if (!forceRefresh) {
       final cached = await _loadCachedStatus();
       if (cached != null) {
-        debugPrint('[ModuleValidation] Using cached module status');
         return cached;
       }
     }
@@ -30,22 +29,15 @@ class ModuleValidationService {
     try {
       final client = await OdooSessionManager.getClientEnsured();
 
-      // Check for Inventory module (stock)
+      /// Check for Inventory module (stock)
       final inventoryInstalled = await _checkModule(client, 'hr_expense');
       results['stock'] = inventoryInstalled;
 
-      // Check for Product module (usually installed with stock)
-      // final productInstalled = await _checkModule(client, 'product');
-      // results['product'] = productInstalled;
 
-      // Cache the results
-      // await _cacheStatus(results);
 
-      debugPrint('[ModuleValidation] Module status: $results');
       return results;
     } catch (e) {
-      debugPrint('[ModuleValidation] Error validating modules: $e');
-      // Return empty map on error - let individual features handle it
+      /// Return empty map on error - let individual features handle it
       return {};
     }
   }
@@ -53,7 +45,7 @@ class ModuleValidationService {
   /// Check if a specific module is installed
   Future<bool> _checkModule(dynamic client, String moduleName) async {
     try {
-      // Try to check if the module exists by querying ir.module.module
+      /// Try to check if the module exists by querying ir.module.module
       final result = await client.callKw({
         'model': 'ir.module.module',
         'method': 'search_count',
@@ -68,9 +60,8 @@ class ModuleValidationService {
 
       return (result as int) > 0;
     } catch (e) {
-      debugPrint('[ModuleValidation] Error checking module $moduleName: $e');
-      // If we can't check, assume it might be installed
-      // Individual features will fail gracefully if not
+      /// If we can't check, assume it might be installed
+      /// Individual features will fail gracefully if not
       return false;
     }
   }
@@ -118,11 +109,11 @@ class ModuleValidationService {
         final lastCheck = DateTime.parse(lastCheckStr);
         final now = DateTime.now();
 
-        // Check if cache is still valid
+        /// Check if cache is still valid
         if (now.difference(lastCheck) < _cacheValidDuration) {
           final statusStr = prefs.getString(_cacheKeyModuleStatus);
           if (statusStr != null) {
-            // Parse the cached status
+            /// Parse the cached status
             final parts = statusStr.split(',');
             final status = <String, bool>{};
             for (final part in parts) {
@@ -136,7 +127,6 @@ class ModuleValidationService {
         }
       }
     } catch (e) {
-      debugPrint('[ModuleValidation] Error loading cached status: $e');
     }
     return null;
   }
@@ -146,7 +136,7 @@ class ModuleValidationService {
     try {
       final prefs = await SharedPreferences.getInstance();
 
-      // Convert map to string for storage
+      /// Convert map to string for storage
       final statusStr = status.entries
           .map((e) => '${e.key}:${e.value}')
           .join(',');
@@ -157,9 +147,7 @@ class ModuleValidationService {
         DateTime.now().toIso8601String(),
       );
 
-      debugPrint('[ModuleValidation] Cached module status');
     } catch (e) {
-      debugPrint('[ModuleValidation] Error caching status: $e');
     }
   }
 
@@ -169,9 +157,7 @@ class ModuleValidationService {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_cacheKeyModuleStatus);
       await prefs.remove(_cacheKeyLastCheck);
-      debugPrint('[ModuleValidation] Cleared cache');
     } catch (e) {
-      debugPrint('[ModuleValidation] Error clearing cache: $e');
     }
   }
 }

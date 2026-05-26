@@ -50,7 +50,7 @@ class _TaskListViewState extends State<_TaskListView> {
   }
 
   void _onProviderChanged() {
-    // When reset() clears tasks and loading stops, re-fetch from Odoo
+    /// When reset() clears tasks and loading stops, re-fetch from Odoo
     if (!_provider.hasFetched && !_provider.isLoading && _provider.error == null) {
       _provider.init();
     }
@@ -73,50 +73,12 @@ class _TaskListViewState extends State<_TaskListView> {
     return Column(
       children: [
         TaskSearchBar(ctrl: _searchCtrl, isDark: isDark),
-        // ── My / All toggle ──────────────────────────────────────
-        // Padding(
-        //   padding: const EdgeInsets.only(left: 16, right: 16, bottom: 8),
-        //   child: Align(
-        //     alignment: Alignment.centerRight,
-        //     child: Container(
-        //       height: 36,
-        //       decoration: BoxDecoration(
-        //         color: isDark ? const Color(0xFF2A2D36) : const Color(0xFFEEEEEE),
-        //         borderRadius: BorderRadius.circular(50),
-        //       ),
-        //       child: Row(
-        //         mainAxisSize: MainAxisSize.min,
-        //         children: [
-        //           _CapsuleTab(
-        //             label: 'My',
-        //             selected: isMyTasks,
-        //             isDark: isDark,
-        //             onTap: () {
-        //               if (!isMyTasks) {
-        //                 context.read<TaskProvider>().toggleMyTasks(true);
-        //               }
-        //             },
-        //           ),
-        //           _CapsuleTab(
-        //             label: 'All',
-        //             selected: !isMyTasks,
-        //             isDark: isDark,
-        //             onTap: () {
-        //               if (isMyTasks) {
-        //                 context.read<TaskProvider>().toggleMyTasks(false);
-        //               }
-        //             },
-        //           ),
-        //         ],
-        //       ),
-        //     ),
-        //   ),
-        // ),
+
         Padding(
           padding: const EdgeInsets.only(left: 16, right: 16, bottom: 6),
           child: Row(
             children: [
-              // ── Filter status indicator ──────────────────────────
+              /// ── Filter status indicator ──────────────────────────
               if (p.selectedFilters.isNotEmpty)
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
@@ -142,7 +104,7 @@ class _TaskListViewState extends State<_TaskListView> {
                   ),
                 ),
               const Spacer(),
-              // ── Pagination controls ──────────────────────────────
+              /// ── Pagination controls ──────────────────────────────
               PaginationControls(
                 canGoToPreviousPage: p.canGoPrev,
                 canGoToNextPage:     p.canGoNext,

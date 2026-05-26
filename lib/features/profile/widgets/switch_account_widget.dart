@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:hugeicons/hugeicons.dart';
 
@@ -71,7 +70,7 @@ class SwitchAccountWidget extends StatelessWidget {
                   account,
                   sessionService,
                   isCurrent:
-                      false, // Always false since we filtered out current
+                      false, /// Always false since we filtered out current
                 ),
               ),
             _buildAddAccountButton(context),
@@ -253,40 +252,6 @@ class SwitchAccountWidget extends StatelessWidget {
           ),
         ),
 
-            // : PopupMenuButton<String>(
-            //     icon: Icon(
-            //       Icons.more_vert,
-            //       color: isDark ? Colors.grey[400] : Colors.grey[600],
-            //       size: 18,
-            //     ),
-            //     onSelected: (value) async {
-            //       if (value == 'remove') {
-            //         await _removeAccount(context, account, sessionService);
-            //       }
-            //     },
-            //     itemBuilder: (context) => [
-            //       PopupMenuItem<String>(
-            //         value: 'remove',
-            //         child: Row(
-            //           children: [
-            //             Icon(
-            //               Icons.delete_outline,
-            //               size: 18,
-            //               color: Colors.red[600],
-            //             ),
-            //             const SizedBox(width: 8),
-            //             Text(
-            //               'Remove',
-            //               style: TextStyle(
-            //                 color: Colors.red[600],
-            //                 fontSize: 14,
-            //               ),
-            //             ),
-            //           ],
-            //         ),
-            //       ),
-            //     ],
-            //   ),
 
       ),
     );
@@ -298,8 +263,7 @@ class SwitchAccountWidget extends StatelessWidget {
       width: double.infinity,
       child: ElevatedButton.icon(
         onPressed: () {
-          log("+++++++++++++++++++  u are in the right position++++++++++");
-          // Use current session's server URL and database like sales_app1
+          /// Use current session's server URL and database like sales_app1
           final sessionService = Provider.of<SessionService>(
             context,
             listen: false,
@@ -308,17 +272,6 @@ class SwitchAccountWidget extends StatelessWidget {
 
           final current = sessionService.currentSession;
 
-          // Navigator.push(
-          //   context,
-          //   dynamicRoute(
-          //     context,
-          //     CredentialsScreen(
-          //       url: current?.serverUrl ?? '',
-          //       database: current?.database ?? '',
-          //       isAddingAccount: true,
-          //     ),
-          //   ),
-          // );
           Navigator.push(context, dynamicRoute(context, ServerSetupScreen(isAddingAccount: true,)));
         },
         icon: const HugeIcon(icon:HugeIcons.strokeRoundedUserAdd01, size: 18),
@@ -342,14 +295,11 @@ class SwitchAccountWidget extends StatelessWidget {
   ) async {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    // Check if account needs re-authentication
+    /// Check if account needs re-authentication
     final needsReauth = account['needsReauth']?.toString() == 'true';
     final hasEmptyPassword = account['password']?.toString().isEmpty == true;
 
     if (needsReauth || hasEmptyPassword) {
-      debugPrint(
-        '[SwitchAccount] Account needs re-authentication, navigating to credentials',
-      );
       Navigator.push(
         context,
         dynamicRoute(
@@ -364,7 +314,7 @@ class SwitchAccountWidget extends StatelessWidget {
       return;
     }
 
-    // Show loading dialog
+    /// Show loading dialog
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -398,7 +348,7 @@ class SwitchAccountWidget extends StatelessWidget {
       if (context.mounted) {
         Navigator.pop(context); // Close loading dialog
 
-        // Handle re-authentication case
+        /// Handle re-authentication case
         if (e.toString().toLowerCase().contains('authentication') ||
             e.toString().toLowerCase().contains('password') ||
             e.toString().toLowerCase().contains('credentials')) {
@@ -519,7 +469,7 @@ class SwitchAccountWidget extends StatelessWidget {
     bool isDark, [
     Map<String, dynamic>? account,
   ]) {
-    // Prefer stored base64 image if available
+    /// Prefer stored base64 image if available
     final imageBase64 = account != null
         ? account['imageBase64'] as String?
         : null;
@@ -541,7 +491,6 @@ class SwitchAccountWidget extends StatelessWidget {
           },
         );
       } catch (e) {
-        debugPrint('[SwitchAccount] Failed to decode base64 avatar: $e');
       }
     }
 
@@ -549,7 +498,7 @@ class SwitchAccountWidget extends StatelessWidget {
       return _buildDefaultAvatar(isCurrent, isDark, account);
     }
 
-    // Try avatar URL
+    /// Try avatar URL
     final timestamp = DateTime.now().millisecondsSinceEpoch;
     final avatarUrl =
         '$serverUrl/web/image?model=res.users&id=$userId&field=image_128&unique=$timestamp';
@@ -633,7 +582,7 @@ class SwitchAccountWidget extends StatelessWidget {
       final username =
           account['username']?.toString() ?? account['userName']?.toString();
 
-      // Try to retrieve password
+      /// Try to retrieve password
       password = await sessionService.retrievePasswordWithMultiplePatterns(
         account,
       );
@@ -674,10 +623,6 @@ class SwitchAccountWidget extends StatelessWidget {
         await fixedSession.saveToPrefs();
         await OdooSessionManager.updateSession(fixedSession);
         sessionService.updateSession(fixedSession);
-        // await context.read<CheckInProvider>().refresh();
-        // await context.read<TaskStatsProvider>().refresh();
-        // await  context.read<DashboardTaskProvider>().refresh();
-
         if (context.mounted) {
 
           context.read<TimesheetProvider>().reset();
@@ -704,7 +649,6 @@ class SwitchAccountWidget extends StatelessWidget {
       }
     } catch (e) {
       biometricContext.endAccountOperation('account_switch');
-      debugPrint('[SwitchAccount] Direct switch failed: $e');
       rethrow;
     }
   }

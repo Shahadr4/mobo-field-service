@@ -15,10 +15,10 @@ class CommonDialog extends StatelessWidget {
   final String? secondaryLabel;
   final VoidCallback? onSecondary;
   final bool destructivePrimary;
-  // When true, renders the icon at the top center with centered title/message
-  // to match the app's confirmation/discard dialog design.
+  /// When true, renders the icon at the top center with centered title/message
+  /// to match the app's confirmation/discard dialog design.
   final bool topIconCentered;
-  // Optional custom body placed between the header and action buttons
+  /// Optional custom body placed between the header and action buttons
   final Widget? body;
 
   const CommonDialog({
@@ -64,9 +64,7 @@ class CommonDialog extends StatelessWidget {
                     decoration: BoxDecoration(
                       color:  primary.withOpacity(0.08),
                       borderRadius: BorderRadius.circular(30),
-                      // border: Border.all(
-                      //   color: (destructivePrimary ? Colors.red : primary).withOpacity(0.2),
-                      // ),
+
                     ),
                     child: HugeIcon(
                      icon:  icon!,

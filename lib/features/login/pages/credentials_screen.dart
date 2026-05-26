@@ -50,17 +50,17 @@ class CredentialsScreen extends StatefulWidget {
 class _CredentialsScreenState extends State<CredentialsScreen> {
   late LoginProvider _provider;
 
-  // Control when to show validation messages
+  /// Control when to show validation messages
   bool _shouldValidate = false;
 
-  // Track field-level errors
+  /// Track field-level errors
   bool emailHasError = false;
   bool passwordHasError = false;
 
-  // General/inline error shown under fields
+  /// General/inline error shown under fields
   String? inlineError;
 
-  // Focus management
+  /// Focus management
   final FocusNode _emailFocus = FocusNode();
   final FocusNode _passwordFocus = FocusNode();
 
@@ -69,18 +69,18 @@ class _CredentialsScreenState extends State<CredentialsScreen> {
     super.initState();
     _provider = LoginProvider();
 
-    // Set the URL and database from the previous screen
+    /// Set the URL and database from the previous screen
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _provider.urlController.text = widget.url;
       _provider.setDatabase(widget.database);
 
-      // Set prefilled username if provided
+      /// Set prefilled username if provided
       if (widget.prefilledUsername != null &&
           widget.prefilledUsername!.isNotEmpty) {
         _provider.emailController.text = widget.prefilledUsername!;
       }
 
-      // Smart autofocus: if email is empty, focus email; otherwise focus password
+      /// Smart autofocus: if email is empty, focus email; otherwise focus password
       if (mounted) {
         if (_provider.emailController.text.isEmpty) {
           FocusScope.of(context).requestFocus(_emailFocus);
@@ -91,9 +91,8 @@ class _CredentialsScreenState extends State<CredentialsScreen> {
     });
   }
 
-  // Unified submit handler used by both the Sign In button and Enter key on password field
+  /// Unified submit handler used by both the Sign In button and Enter key on password field
   Future<void> _handleSubmit(LoginProvider provider) async {
-    log("_handleSubmit");
     FocusScope.of(context).unfocus();
     setState(() {
       _shouldValidate = true;
@@ -115,7 +114,7 @@ class _CredentialsScreenState extends State<CredentialsScreen> {
       final success = await _addNewAccount(provider);
       if (!mounted) return;
       if (success) {
-        // Navigation to HomeScaffold is handled in _addNewAccount
+        /// Navigation to HomeScaffold is handled in _addNewAccount
         setState(() {
           inlineError = null;
         });
@@ -130,9 +129,7 @@ class _CredentialsScreenState extends State<CredentialsScreen> {
       final biometricContext = BiometricContextService();
       biometricContext.startAccountOperation('login');
 
-      debugPrint('[CredentialsScreen] Starting login process');
       final ok = await provider.login(context);
-      debugPrint('[CredentialsScreen] Login result: $ok');
 
 
       if (!mounted) return;
@@ -140,15 +137,12 @@ class _CredentialsScreenState extends State<CredentialsScreen> {
 
       switch(ok){
         case LoginResult.success:
-          debugPrint(
-            '[CredentialsScreen] Login successful, navigating to BasePage',
-          );
           setState(() {
             inlineError = null;
           });
 
           await Future.delayed(const Duration(milliseconds: 100));
-          // Save autofill data and finish autofill context
+          /// Save autofill data and finish autofill context
           TextInput.finishAutofillContext(shouldSave: true);
 
           if (mounted) {
@@ -165,7 +159,7 @@ class _CredentialsScreenState extends State<CredentialsScreen> {
 
           Navigator.of(context).pushAndRemoveUntil(
             dynamicRoute(context, const AppEntry()),
-            // dynamicRoute(context, const OtpPage()),
+            /// dynamicRoute(context, const OtpPage()),
                 (route) => false,
           );
           break;
@@ -193,34 +187,6 @@ class _CredentialsScreenState extends State<CredentialsScreen> {
           break;
       }
 
-
-
-
-      // if (ok) {
-      //   debugPrint(
-      //     '[CredentialsScreen] Login successful, navigating to BasePage',
-      //   );
-      //   setState(() {
-      //     inlineError = null;
-      //   });
-      //
-      //   await Future.delayed(const Duration(milliseconds: 100));
-      //   // Save autofill data and finish autofill context
-      //   TextInput.finishAutofillContext(shouldSave: true);
-      //   final expense = context.read<ExpenseProvider>();
-      //   final commonProvider = context.read<CommonProvider>();
-      //   final bottom = context.read<BottomNavProvider>();
-      //
-      //   expense.reset();
-      //   commonProvider.reset();
-      //   bottom.changeIndex(0);
-      //
-      //   Navigator.of(context).pushAndRemoveUntil(
-      //     dynamicRoute(context, const AppEntry()),
-      //   // dynamicRoute(context, const OtpPage()),
-      //    (route) => false,
-      //   );
-      // }
     }
   }
 
@@ -234,13 +200,12 @@ class _CredentialsScreenState extends State<CredentialsScreen> {
 
   Future<bool> _addNewAccount(LoginProvider provider) async {
     try {
-      debugPrint('[CredentialsScreen] Adding new account');
 
-      // Mark as account operation to prevent biometric prompt
+      /// Mark as account operation to prevent biometric prompt
       final biometricContext = BiometricContextService();
       biometricContext.startAccountOperation('add_account');
 
-      // Derive serverUrl and database from passed params or current session
+      /// Derive serverUrl and database from passed params or current session
       final sessionService = SessionService.instance;
       final current = sessionService.currentSession;
       String serverUrl = widget.url.isNotEmpty
@@ -250,20 +215,18 @@ class _CredentialsScreenState extends State<CredentialsScreen> {
           ? widget.database
           : (current?.database ?? '');
 
-      // Ensure URL has scheme to avoid: Bad state: Cannot use origin without a scheme
+      /// Ensure URL has scheme to avoid: Bad state: Cannot use origin without a scheme
       serverUrl = _ensureScheme(serverUrl);
 
       if (serverUrl.isEmpty || database.isEmpty) {
-        debugPrint('[CredentialsScreen] Missing serverUrl or database');
         provider.errorMessage =
             'Server URL or Database is missing. Please go back and try again.';
         biometricContext.endAccountOperation('add_account');
         return false;
       }
 
-      log("starting authentication while adding");
 
-      // Authenticate with the new credentials
+      /// Authenticate with the new credentials
       final newSession = await OdooSessionManager.authenticate(
         serverUrl: serverUrl,
         database: database,
@@ -272,7 +235,6 @@ class _CredentialsScreenState extends State<CredentialsScreen> {
       );
 
       if (newSession == null) {
-        debugPrint('[CredentialsScreen] Authentication failed for new account');
         provider.errorMessage =
             'Authentication failed. Please check your credentials.';
         biometricContext.endAccountOperation('add_account');
@@ -293,10 +255,10 @@ class _CredentialsScreenState extends State<CredentialsScreen> {
       await fixedSession.saveToPrefs();
       await OdooSessionManager.updateSession(fixedSession);
       sessionService.updateSession(fixedSession);
-      // Persist server URL history and server->database mapping for reuse
+      /// Persist server URL history and server->database mapping for reuse
       try {
         final prefs = await SharedPreferences.getInstance();
-        // Save URL history (keep most recent first, max 10)
+        /// Save URL history (keep most recent first, max 10)
         List<String> urls = prefs.getStringList('previous_server_urls') ?? [];
         if (!urls.contains(serverUrl)) {
           urls.insert(0, serverUrl);
@@ -305,21 +267,18 @@ class _CredentialsScreenState extends State<CredentialsScreen> {
           }
           await prefs.setStringList('previous_server_urls', urls);
         }
-        // Save mapping: server -> database
+        /// Save mapping: server -> database
         await prefs.setString('server_db_$serverUrl', database);
       } catch (_) {
-        // Non-fatal: ignore persistence errors
+        /// Non-fatal: ignore persistence errors
       }
 
-      // Switch to the new account
+      /// Switch to the new account
       await sessionService.switchToAccount(newSession);
 
-      debugPrint(
-        '[CredentialsScreen] New account added and switched successfully',
-      );
 
-      // Navigate to AppEntry so startup checks (including inventory module check)
-      // can run and show MissingInventoryScreen if needed.
+      /// Navigate to AppEntry so startup checks (including inventory module check)
+      /// can run and show MissingInventoryScreen if needed.
 
       if (mounted) {
         context.read<TimesheetProvider>().reset();
@@ -341,8 +300,6 @@ class _CredentialsScreenState extends State<CredentialsScreen> {
       biometricContext.endAccountOperation('add_account');
       return true;
     }  catch (e) {
-      log("++++++EEEEEEEEEEEEEEEEEEEEEE+++++++++++++++++++");
-      debugPrint('[CredentialsScreen] Error adding new account: ${e}');
 
 
       final msg = e.toString().toLowerCase();
@@ -352,7 +309,6 @@ class _CredentialsScreenState extends State<CredentialsScreen> {
           !msg.contains('html') &&
           !msg.contains('502') &&
           !msg.contains('timeout')) {
-        log("errror 2fa");
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -370,7 +326,6 @@ class _CredentialsScreenState extends State<CredentialsScreen> {
 
 
       }
-      log("sdss");
       provider.errorMessage = 'Failed to add account: ${e.toString()}';
       final biometricContext = BiometricContextService();
       biometricContext.endAccountOperation('add_account');
@@ -379,7 +334,7 @@ class _CredentialsScreenState extends State<CredentialsScreen> {
     }
   }
 
-  // Ensures the URL has a scheme (http/https). Defaults to https if missing.
+  /// Ensures the URL has a scheme (http/https). Defaults to https if missing.
   String _ensureScheme(String url) {
     final trimmed = url.trim();
     if (trimmed.isEmpty) return trimmed;
@@ -394,7 +349,7 @@ class _CredentialsScreenState extends State<CredentialsScreen> {
       value: _provider,
       child: Consumer<LoginProvider>(
         builder: (context, provider, child) {
-          // Sync inlineError with provider.errorMessage
+          /// Sync inlineError with provider.errorMessage
           if (provider.errorMessage != inlineError) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               if (!mounted) return;
@@ -436,7 +391,7 @@ class _CredentialsScreenState extends State<CredentialsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Email Field
+                    /// Email Field
                     LoginTextField(
                       autofillHints: const [
                         AutofillHints.username,
@@ -476,7 +431,7 @@ class _CredentialsScreenState extends State<CredentialsScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // Password Field
+                    /// Password Field
                     LoginTextField(
                       autofillHints: const [AutofillHints.password],
                       controller: provider.passwordController,
@@ -529,27 +484,11 @@ class _CredentialsScreenState extends State<CredentialsScreen> {
                     ),
                     const SizedBox(height: 8),
 
-                    // Forgot Password Button
+                    /// Forgot Password Button
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton(
                         onPressed: () {
-                          debugPrint(
-                            '[CredentialsScreen] ===== FORGOT PASSWORD BUTTON TAPPED =====',
-                          );
-                          debugPrint('[CredentialsScreen] Navigation params:');
-                          debugPrint('  • url:      ${widget.url}');
-                          debugPrint('  • database: ${widget.database}');
-                          debugPrint(
-                            '[CredentialsScreen] Navigating to ResetPasswordScreen...',
-                          );
-                          // FastNavigation.navigateTo(
-                          //   context,
-                          //   ResetPasswordScreen(
-                          //     url: widget.url,
-                          //     database: widget.database,
-                          //   ),
-                          //   fromLeft: false,
                           Navigator.push(
                             context,
                             dynamicRoute(
@@ -559,9 +498,6 @@ class _CredentialsScreenState extends State<CredentialsScreen> {
                                 database: widget.database,
                               ),
                             ),
-                          );
-                          debugPrint(
-                            '[CredentialsScreen] Navigation call completed',
                           );
                         },
                         style: TextButton.styleFrom(
@@ -585,10 +521,10 @@ class _CredentialsScreenState extends State<CredentialsScreen> {
                     ),
                     const SizedBox(height: 8),
 
-                    // Error display
+                    /// Error display
                     LoginErrorDisplay(error: inlineError),
 
-                    // Sign In Button
+                    /// Sign In Button
                     LoginButton(
                       text: widget.isAddingAccount ? 'Add Account' : 'Sign In',
                       isLoading: provider.isLoading,

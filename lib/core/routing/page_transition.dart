@@ -2,8 +2,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-// Slide + fade transition used on Android; iOS uses CupertinoPageRoute
-// Set fromLeft to true to animate from left-to-right (e.g., reverse direction)
+/// Slide + fade transition used on Android; iOS uses CupertinoPageRoute
+/// Set fromLeft to true to animate from left-to-right (e.g., reverse direction)
 
 PageRoute<T> slidingPageTransitionRL<T>(BuildContext context, Widget page) {
   const curve = Curves.easeOutCubic;

@@ -75,10 +75,6 @@ class TimesheetListBody extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Flat list
-// ─────────────────────────────────────────────────────────────────────────────
-
 class _FlatList extends StatelessWidget {
   final List<TimesheetEntry> entries;
   final bool isDark;
@@ -99,10 +95,6 @@ class _FlatList extends StatelessWidget {
     );
   }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Grouped list
-// ─────────────────────────────────────────────────────────────────────────────
 
 class _GroupedList extends StatelessWidget {
   final Map<String, List<TimesheetEntry>> grouped;
@@ -126,10 +118,6 @@ class _GroupedList extends StatelessWidget {
     );
   }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Group section — expandable tile (employee list pattern)
-// ─────────────────────────────────────────────────────────────────────────────
 
 class _GroupSection extends StatefulWidget {
   final String label;
@@ -182,7 +170,7 @@ class _GroupSectionState extends State<_GroupSection> {
         clipBehavior: Clip.antiAlias,
         child: Column(
           children: [
-            // ── Header ──────────────────────────────────────────────
+            /// ── Header ──────────────────────────────────────────────
             InkWell(
               onTap: () => setState(() => _expanded = !_expanded),
               child: Padding(
@@ -204,7 +192,7 @@ class _GroupSectionState extends State<_GroupSection> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    // Hours badge
+                    /// Hours badge
                     Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 10, vertical: 3),
@@ -222,7 +210,7 @@ class _GroupSectionState extends State<_GroupSection> {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    // Count badge
+                    /// Count badge
                     Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 8, vertical: 3),
@@ -244,7 +232,7 @@ class _GroupSectionState extends State<_GroupSection> {
                       ),
                     ),
                     const SizedBox(width: 10),
-                    // Animated chevron
+                    /// Animated chevron
                     AnimatedRotation(
                       turns: _expanded ? 0.5 : 0,
                       duration: const Duration(milliseconds: 220),
@@ -261,7 +249,7 @@ class _GroupSectionState extends State<_GroupSection> {
               ),
             ),
 
-            // ── Rows ────────────────────────────────────────────────
+            ///── Rows ────────────────────────────────────────────────
             AnimatedCrossFade(
               duration: const Duration(milliseconds: 220),
               crossFadeState: _expanded
@@ -302,7 +290,7 @@ class _GroupSectionState extends State<_GroupSection> {
   }
 }
 
-// ── Row inside an expandable group ───────────────────────────────────────────
+/// ── Row inside an expandable group ───────────────────────────────────────────
 
 class _EntryRow extends StatelessWidget {
   final TimesheetEntry entry;

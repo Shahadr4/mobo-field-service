@@ -30,7 +30,7 @@ class PaginationControls extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Center pill displaying 1-2/2 style text
+        /// Center pill displaying 1-2/2 style text
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
           decoration: BoxDecoration(
@@ -63,7 +63,7 @@ class PaginationControls extends StatelessWidget {
 
         const SizedBox(width: 12),
 
-        // Prev chevron (to the right of pill as in screenshot)
+        /// Prev chevron (to the right of pill as in screenshot)
         InkWell(
           onTap: canGoToPreviousPage ? onPreviousPage : null,
           customBorder: const CircleBorder(),
@@ -79,7 +79,7 @@ class PaginationControls extends StatelessWidget {
 
         const SizedBox(width: 6),
 
-        // Next chevron
+        /// Next chevron
         InkWell(
           onTap: canGoToNextPage ? onNextPage : null,
           customBorder: const CircleBorder(),

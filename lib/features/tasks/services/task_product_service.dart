@@ -8,7 +8,7 @@ class TaskProductService {
   /// from that order — matching what action_fsm_view_material uses.
   Future<List<TaskProductLine>> fetchLines(int taskId) async {
     try {
-      // Step 1: get sale_order_id from the task
+      /// Step 1: get sale_order_id from the task
       final taskRes = await OdooSessionManager.callKwWithCompany({
         'model': 'project.task',
         'method': 'search_read',
@@ -28,7 +28,7 @@ class TaskProductService {
       }
       if (orderId == null) return [];
 
-      // Step 2: read lines from the sale order, excluding section/note/downpayment
+      /// Step 2: read lines from the sale order, excluding section/note/downpayment
       final result = await OdooSessionManager.callKwWithCompany({
         'model': 'sale.order.line',
         'method': 'search_read',
@@ -57,7 +57,6 @@ class TaskProductService {
           .map(TaskProductLine.fromMap)
           .toList();
     } catch (e) {
-      log('[TaskProductService] fetchLines error: $e');
       return [];
     }
   }
@@ -94,7 +93,6 @@ class TaskProductService {
           .map(ProductSuggestion.fromMap)
           .toList();
     } catch (e) {
-      log('[TaskProductService] searchProducts error: $e');
       return [];
     }
   }
@@ -120,7 +118,6 @@ class TaskProductService {
           'limit': 1,
         },
       });
-      log("project  ===> ${taskRes.toString()}");
       if (taskRes is! List || taskRes.isEmpty) return null;
 
       final rawOrder = taskRes.first['sale_order_id'];
@@ -128,14 +125,13 @@ class TaskProductService {
           ? (rawOrder[0] as num).toInt()
           : null;
 
-      // No sale order yet — create one and link it to the task
+      /// No sale order yet — create one and link it to the task
       if (orderId == null) {
         final rawPartner = taskRes.first['partner_id'];
         final int? partnerId = (rawPartner is List && rawPartner.isNotEmpty)
             ? (rawPartner[0] as num).toInt()
             : null;
         if (partnerId == null) {
-          log('[TaskProductService] addLine: task has no partner, cannot create sale order');
           return null;
         }
 
@@ -157,7 +153,7 @@ class TaskProductService {
         orderId = (newOrderId as num?)?.toInt();
         if (orderId == null) return null;
 
-        // Link the new sale order back to the task
+        /// Link the new sale order back to the task
         await OdooSessionManager.callKwWithCompany({
           'model': 'project.task',
           'method': 'write',
@@ -191,7 +187,6 @@ class TaskProductService {
       });
       return (newId as num?)?.toInt();
     } catch (e) {
-      log('[TaskProductService] addLine error: $e');
       return null;
     }
   }
@@ -217,7 +212,6 @@ class TaskProductService {
       });
       return true;
     } catch (e) {
-      log('[TaskProductService] updateLine error: $e');
       return false;
     }
   }
@@ -237,7 +231,7 @@ class TaskProductService {
         ],
         'kwargs': {},
       });
-      // Attempt hard delete; ignore error if Odoo already removed it or disallows it
+      /// Attempt hard delete; ignore error if Odoo already removed it or disallows it
       try {
         await OdooSessionManager.callKwWithCompany({
           'model': 'sale.order.line',
@@ -248,13 +242,11 @@ class TaskProductService {
           'kwargs': {},
         });
       } catch (e) {
-        log('[TaskProductService] deleteLine error: $e');
 
-        // Line may have been auto-removed by qty=0 write or order is locked — that's fine
+        /// Line may have been auto-removed by qty=0 write or order is locked — that's fine
       }
       return true;
     } catch (e) {
-      log('[TaskProductService] deleteLine error: $e');
       return false;
     }
   }

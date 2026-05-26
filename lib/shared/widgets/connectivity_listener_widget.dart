@@ -18,7 +18,7 @@ class _ConnectivityListenerWidgetState
   @override
   void initState() {
     super.initState();
-    // Initialize the offline error handler with context
+    /// Initialize the offline error handler with context
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         OfflineErrorHandler.instance.initialize(context);
@@ -29,14 +29,14 @@ class _ConnectivityListenerWidgetState
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    // Update context when dependencies change (e.g., navigation)
+    /// Update context when dependencies change (e.g., navigation)
     OfflineErrorHandler.instance.updateContext(context);
   }
 
   @override
   void dispose() {
-    // Note: We don't dispose the singleton here as it's used app-wide
-    // It will be disposed when the app is closed
+    /// Note: We don't dispose the singleton here as it's used app-wide
+    /// It will be disposed when the app is closed
     super.dispose();
   }
 

@@ -41,7 +41,7 @@ class ListShimmer {
         ),
         child: Row(
           children: [
-            // Avatar/Icon shimmer
+            /// Avatar/Icon shimmer
             Container(
               width: 56,
               height: 56,
@@ -51,7 +51,7 @@ class ListShimmer {
               ),
             ),
             const SizedBox(width: 16),
-            // Content shimmer
+            /// Content shimmer
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -86,7 +86,7 @@ class ListShimmer {
               ),
             ),
             const SizedBox(width: 16),
-            // Status/Amount shimmer
+            /// Status/Amount shimmer
             Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
@@ -294,7 +294,7 @@ class ListShimmer {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Group header shimmer
+            /// Group header shimmer
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Shimmer.fromColors(
@@ -332,7 +332,7 @@ class ListShimmer {
                 ),
               ),
             ),
-            // Group items shimmer
+            /// Group items shimmer
             ...List.generate(itemsPerGroup, (itemIndex) {
               switch (type) {
                 case ShimmerType.product:

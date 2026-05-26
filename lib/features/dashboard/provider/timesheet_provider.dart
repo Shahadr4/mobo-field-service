@@ -4,9 +4,12 @@ import '../model/project_item_model.dart';
 import '../services/timesheet_service.dart';
 
 class TimesheetProvider extends ChangeNotifier {
-  final TimesheetService _service = TimesheetService();
+  final TimesheetService _service;
 
-  // ── Task list ─────────────────────────────────────────────────────────────
+  TimesheetProvider({TimesheetService? service})
+      : _service = service ?? TimesheetService();
+
+  ///  Task list
 
   List<ProjectItem> _tasks = [];
   bool _isLoading = false;
@@ -17,6 +20,9 @@ class TimesheetProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
   String get query => _query;
+
+
+  ///  Filtered Task list
 
   List<ProjectItem> get filtered {
     if (_query.isEmpty) return _tasks;
@@ -48,7 +54,7 @@ class TimesheetProvider extends ChangeNotifier {
     }
   }
 
-  // ── Global Active Timer State ──────────────────────────────────────────────
+  /// ── Global Active Timer State
   int? _activeTaskId;
   int? _activeTimesheetId;
   Duration _activeElapsed = Duration.zero;
@@ -63,6 +69,7 @@ class TimesheetProvider extends ChangeNotifier {
   bool get isTimerRunning => _isTimerRunning;
   bool get isTimerPaused => _isTimerPaused;
   ProjectItem? get activeTask => _activeTask;
+  /// ── Global Active Timer State
 
   void startGlobalTimer(ProjectItem task, int timesheetId) {
     _globalTicker?.cancel();
@@ -80,6 +87,7 @@ class TimesheetProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  ///Timer operations
   void pauseGlobalTimer() {
     _globalTicker?.cancel();
     _isTimerPaused = true;
@@ -107,6 +115,7 @@ class TimesheetProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  ///Timer operations
   Future<void> autoStopAndSaveRunningTimer() async {
     if (_activeTaskId == null || _activeTimesheetId == null) return;
 
@@ -125,13 +134,9 @@ class TimesheetProvider extends ChangeNotifier {
         description: 'Completed: $taskName',
       );
     } catch (e) {
-      if (kDebugMode) {
-        print('Error in autoStopAndSaveRunningTimer: $e');
-      }
     }
   }
 
-  // ── Timer operations ──────────────────────────────────────────────────────
 
   bool _isSubmitting = false;
   bool get isSubmitting => _isSubmitting;

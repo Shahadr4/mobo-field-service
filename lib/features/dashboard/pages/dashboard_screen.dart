@@ -64,22 +64,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
           padding: const EdgeInsets.all(15),
           child: Column(
             children: [
+              /// Greeting card
               isProfileLoading
                   ? const GreetingCardShimmer()
                   : GreetingCardWidget(profileProvider: profileProvider),
               const SizedBox(height: 18),
+              /// Check-in widget
               const CheckInWidget(),
+              /// Timer widget
               if (isTimerRunning) ...[
                 const SizedBox(height: 18),
+
                 const TimerWidget(),
               ],
+
               const SizedBox(height: 18),
+              /// Dashboard tasks
               const DashboardTaskTabs(),
               const SizedBox(height: 10),
+              /// Task stats
               isProfileLoading
                   ? const TaskStatsShimmer()
                   : const TaskStatsGrid(),
               const SizedBox(height: 16),
+              /// Timer widget
               if (!isTimerRunning) ...[
                 const TimerWidget(),
                 const SizedBox(height: 20),

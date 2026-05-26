@@ -149,7 +149,7 @@ class CompanySelectorWidget extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 4),
-            // Show subtle loading spinner while provider is fetching from server
+            /// Show subtle loading spinner while provider is fetching from server
             if (provider.isLoading || provider.isSwitching) ...[
               SizedBox(
                 width: 14,
@@ -173,16 +173,16 @@ class CompanySelectorWidget extends StatelessWidget {
   
 
   void _showDropdownMenu(BuildContext context, CompanyProvider provider) async {
-    // Always refetch on open to ensure we display up-to-date companies
-    // Fire-and-forget so the UI opens immediately but shows a spinner while loading
-    // This will set provider.isLoading = true and the compact button shows spinner
-    // The dropdown content will rebuild via Provider/Consumer if used inside
-    // broader widgets; here we keep it simple and rely on provider state
-    // management to refresh the entries.
-    // ignore: unawaited_futures
+    /// Always refetch on open to ensure we display up-to-date companies
+    /// Fire-and-forget so the UI opens immediately but shows a spinner while loading
+    /// This will set provider.isLoading = true and the compact button shows spinner
+    /// The dropdown content will rebuild via Provider/Consumer if used inside
+    /// broader widgets; here we keep it simple and rely on provider state
+    /// management to refresh the entries.
+    /// ignore: unawaited_futures
     provider.initialize();
     final screenSize = MediaQuery.of(context).size;
-    // Use bottom sheet on very narrow screens
+    /// Use bottom sheet on very narrow screens
     if (screenSize.width < 1000) {
       await showModalBottomSheet(
         context: context,
@@ -200,7 +200,7 @@ class CompanySelectorWidget extends StatelessWidget {
             child: _CompanyDropdownContent(
               provider: provider,
               onCompanyChanged: onCompanyChanged,
-              width: screenSize.width, // take full width inside sheet
+              width: screenSize.width, /// take full width inside sheet
             ),
           );
         },
@@ -208,7 +208,7 @@ class CompanySelectorWidget extends StatelessWidget {
       return;
     }
 
-    // Popover for wider screens; clamp within viewport and set responsive width
+    /// Popover for wider screens; clamp within viewport and set responsive width
     final RenderBox button = context.findRenderObject() as RenderBox;
     final RenderBox overlay =
         Navigator.of(context).overlay!.context.findRenderObject() as RenderBox;
@@ -223,7 +223,7 @@ class CompanySelectorWidget extends StatelessWidget {
     );
     final double top = math.min(
       buttonPosition.dy + buttonSize.height + 4,
-      screenSize.height - 16 - 300, // leave room at bottom
+      screenSize.height - 16 - 300, /// leave room at bottom
     );
 
     await showGeneralDialog(
@@ -299,7 +299,7 @@ class _CompanyDropdownContentState extends State<_CompanyDropdownContent> {
   }
 
   void _onConfirm() async {
-    // If nothing changed, just close
+    /// If nothing changed, just close
     final noActiveChange = _tempSelectedCompanyId == widget.provider.selectedCompanyId;
     final noAllowedChange = _setEquals(
       _tempAllowedCompanyIds,
@@ -314,13 +314,13 @@ class _CompanyDropdownContentState extends State<_CompanyDropdownContent> {
     bool changed = false;
 
     try {
-      // 1. Switch active company if changed
+      /// 1. Switch active company if changed
       if (!noActiveChange) {
         await widget.provider.switchCompany(_tempSelectedCompanyId);
         changed = true;
       }
 
-      // 2. Update allowed companies if changed (do AFTER switching)
+      /// 2. Update allowed companies if changed (do AFTER switching)
       if (!noAllowedChange) {
         await widget.provider.setAllowedCompanies(
           _tempAllowedCompanyIds.toList(),
@@ -371,7 +371,7 @@ class _CompanyDropdownContentState extends State<_CompanyDropdownContent> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Error banner (if any)
+          /// Error banner (if any)
           if (widget.provider.error != null)
             Container(
               margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
@@ -399,7 +399,7 @@ class _CompanyDropdownContentState extends State<_CompanyDropdownContent> {
                 ],
               ),
             ),
-          // Company list
+          /// Company list
           Flexible(
             child: ListView.builder(
               key: Key("listview"),
@@ -424,7 +424,7 @@ class _CompanyDropdownContentState extends State<_CompanyDropdownContent> {
                       onTap: _applying ? null : () {
                         setState(() {
                           _tempSelectedCompanyId = companyId;
-                          // Odoo behavior: When you switch active company, it must be in allowed list
+                          /// Odoo behavior: When you switch active company, it must be in allowed list
                           _tempAllowedCompanyIds.add(companyId);
                         });
                       },
@@ -435,10 +435,10 @@ class _CompanyDropdownContentState extends State<_CompanyDropdownContent> {
                         ),
                         child: Row(
                           children: [
-                            // Checkbox
+                            /// Checkbox
 
 
-                            // Company Name
+                            /// Company Name
                             Expanded(
                               child: Text(
                                 companyName,
@@ -460,7 +460,7 @@ class _CompanyDropdownContentState extends State<_CompanyDropdownContent> {
                                 onChanged: _applying
                                     ? null
                                     : (companyId == _tempSelectedCompanyId)
-                                    ? null // active company cannot be unchecked
+                                    ? null /// active company cannot be unchecked
                                     : (val) {
                                   setState(() {
                                     if (val == true) {
@@ -473,30 +473,10 @@ class _CompanyDropdownContentState extends State<_CompanyDropdownContent> {
                                   });
                                 },
                                 size: 18,
-                                // semanticsLabel: 'Allowed company: $companyName',
-                              ),
+                                 ),
                             ),
                             const SizedBox(width: 8),
-                            // if (isActive)
-                            //   Container(
-                            //     padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            //     decoration: BoxDecoration(
-                            //       color: primaryColor.withOpacity(0.12),
-                            //       borderRadius: BorderRadius.circular(999),
-                            //       border: Border.all(color: primaryColor.withOpacity(0.3)),
-                            //     ),
-                            //     child: Row(
-                            //       mainAxisSize: MainAxisSize.min,
-                            //       children: [
-                            //         Icon(Icons.check_circle, size: 14, color: primaryColor),
-                            //         const SizedBox(width: 4),
-                            //         Text(
-                            //           'Active',
-                            //           style: TextStyle(fontSize: 11, color: isDark ? Colors.white70 : Colors.black87),
-                            //         ),
-                            //       ],
-                            //     ),
-                            //   ),
+
                           ],
                         ),
                       ),
@@ -506,7 +486,7 @@ class _CompanyDropdownContentState extends State<_CompanyDropdownContent> {
               },
             ),
           ),
-          // Action Buttons
+          /// Action Buttons
           Container(
             padding: const EdgeInsets.symmetric(
               horizontal: 16,

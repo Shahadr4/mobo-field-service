@@ -52,7 +52,6 @@ class WarehouseService {
       }
       return null;
     } catch (e) {
-      debugPrint('[WarehouseService] Error getting default warehouse main location: $e');
       return null;
     }
   }

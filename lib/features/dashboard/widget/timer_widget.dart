@@ -196,7 +196,7 @@ class _TimerWidgetState extends State<TimerWidget>
   }
 }
 
-// ─── Work Management Card ───────────────────────────────────────────────────
+/// ─── Work Management Card ───────────────────────────────────────────────────
 
 class _WorkManagementCard extends StatelessWidget {
   final bool isDark;
@@ -288,7 +288,7 @@ class _WorkManagementCard extends StatelessWidget {
   }
 }
 
-// ─── Project Overview card ───────────────────────
+/// ─── Project Overview card ───────────────────────
 
 class _ProjectOverviewCard extends StatelessWidget {
   final bool isDark;

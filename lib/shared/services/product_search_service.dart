@@ -18,19 +18,13 @@ class ProductSearchService {
 
       final server= client!.sessionId!.serverVersion;
 
-      log("server version ===> ${server}");
 
-      // Build domain for filtering
+      /// Build domain for filtering
       List<dynamic> domain = [];
 
-      // Filter for storable products (type = 'product' or 'consu')
-      // if (storableOnly) {
-      //   domain.add('|');
-      //   domain.add(['type', '=', 'product']);
-      //   domain.add(['type', '=', 'consu']);
-      // }
 
-      // Add search filter if provided
+
+      /// Add search filter if provided
       if (searchQuery != null && searchQuery.isNotEmpty) {
         domain.add('|');
         domain.add(['name', 'ilike', searchQuery]);
@@ -40,11 +34,6 @@ class ProductSearchService {
       }
     if(!server.contains("17"))  domain.add(['is_storable', '=', true]);
     if(server.contains("17"))  domain.add(['type', 'in', ['product']]);
-      if (kDebugMode) {
-        debugPrint(
-          '[ProductSearchService] Fetching products: query="$searchQuery", limit=$limit, offset=$offset',
-        );
-      }
 
       final result = await client.callKw({
         'model': 'product.product',
@@ -73,19 +62,12 @@ class ProductSearchService {
         },
       });
 
-      log("result ======> ${result.toString()}");
 
       final products = (result as List).cast<Map<String, dynamic>>();
 
-      if (kDebugMode) {
-        debugPrint(
-          '[ProductSearchService] Fetched ${products.length} products',
-        );
-      }
 
       return products;
     } catch (e) {
-      debugPrint('[ProductSearchService] Error fetching products: $e');
       rethrow;
     }
   }
@@ -98,17 +80,17 @@ class ProductSearchService {
     try {
       final client = await OdooSessionManager.getClientEnsured();
 
-      // Build domain for filtering
+      /// Build domain for filtering
       List<dynamic> domain = [];
 
-      // Filter for storable products
+      /// Filter for storable products
       if (storableOnly) {
         domain.add('|');
         domain.add(['type', '=', 'product']);
         domain.add(['type', '=', 'consu']);
       }
 
-      // Add search filter if provided
+      /// Add search filter if provided
       if (searchQuery != null && searchQuery.isNotEmpty) {
         domain.add('|');
         domain.add(['name', 'ilike', searchQuery]);
@@ -126,7 +108,6 @@ class ProductSearchService {
 
       return result as int;
     } catch (e) {
-      debugPrint('[ProductSearchService] Error getting product count: $e');
       return 0;
     }
   }

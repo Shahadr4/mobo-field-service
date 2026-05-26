@@ -2,14 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:hugeicons/hugeicons.dart';
 import 'package:mobo_feild_service/core/const/app_colors.dart';
 
 import '../services/task_service.dart';
 import 'package:mobo_feild_service/shared/widgets/snackbars/custom_snackbar.dart';
-
-// ─────────────────────────────────────────────────────────────────────────────
-// CreateTaskScreen
-// ─────────────────────────────────────────────────────────────────────────────
 
 class CreateTaskScreen extends StatefulWidget {
   const CreateTaskScreen({super.key});
@@ -22,20 +19,20 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
   final _formKey    = GlobalKey<FormState>();
   final _scrollCtrl = ScrollController();
 
-  // Plain text fields
+  /// Plain text fields
   final _titleCtrl = TextEditingController();
   final _hoursCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
   final _descriptionCtrl = TextEditingController();
 
-  // Meta lists loaded once
+  /// Meta lists loaded once
   List<Map<String, dynamic>> _projects   = [];
   List<Map<String, dynamic>> _stages     = [];
   List<Map<String, dynamic>> _worksheets = [];
   List<Map<String, dynamic>> _users      = [];
   List<Map<String, dynamic>> _tags       = [];
 
-  // Selections
+  /// Selections
   Map<String, dynamic>? _selectedProject;
   Map<String, dynamic>? _selectedStage;
   Map<String, dynamic>? _selectedWorksheet;
@@ -47,7 +44,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
   DateTime? _plannedEnd;
   bool      _underWarranty = false;
 
-  // FSM feature flags — false until confirmed by Odoo settings fetch
+  /// FSM feature flags — false until confirmed by Odoo settings fetch
   bool _showWorksheetSection = false;
   bool _showWarrantySection  = false;
 
@@ -60,31 +57,31 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
       _selectedCustomer != null &&
       _assigneeIds.isNotEmpty;
 
-  // ── Typeahead controllers / focus / links ─────────────────────────────────
+  /// ── Typeahead controllers / focus / links ─────────────────────────────────
 
-  // Project
+  /// Project
   final _projectCtrl  = TextEditingController();
   final _projectFocus = FocusNode();
   final _projectLink  = LayerLink();
   OverlayEntry? _projectOverlay;
 
-  // Stage
+  /// Stage
   final _stageCtrl  = TextEditingController();
   final _stageFocus = FocusNode();
   final _stageLink  = LayerLink();
   OverlayEntry? _stageOverlay;
 
-  // Worksheet
+  /// Worksheet
   final _worksheetCtrl  = TextEditingController();
   final _worksheetFocus = FocusNode();
   final _worksheetLink  = LayerLink();
   OverlayEntry? _worksheetOverlay;
 
-  // Assignees (checkbox overlay — same pattern as tags)
+  /// Assignees (checkbox overlay — same pattern as tags)
   final _assigneeLink  = LayerLink();
   OverlayEntry? _assigneeOverlay;
 
-  // Customer
+  /// Customer
   final _customerCtrl  = TextEditingController();
   final _customerFocus = FocusNode();
   final _customerLink  = LayerLink();
@@ -92,7 +89,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
   bool   _searchingCustomer = false;
   Timer? _customerDebounce;
 
-  // Tags (checkbox overlay, no text search needed)
+  /// Tags (checkbox overlay, no text search needed)
   final _tagFocus = FocusNode();
   final _tagLink  = LayerLink();
   OverlayEntry? _tagOverlay;
@@ -233,7 +230,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     setter(null);
   }
 
-  // ── Load meta ──────────────────────────────────────────────────────────────
+  /// ── Load meta ──────────────────────────────────────────────────────────────
 
   Future<void> _loadMeta() async {
     final results = await Future.wait([
@@ -283,7 +280,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     });
   }
 
-  // ── Filter helpers ─────────────────────────────────────────────────────────
+  /// ── Filter helpers
 
   List<Map<String, dynamic>> _filterList(
       List<Map<String, dynamic>> list, String q) {
@@ -296,7 +293,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
   }
 
 
-  // ── Simple overlay (single-select: project / stage / worksheet / assignee) ─
+  /// ── Simple overlay (single-select: project / stage / worksheet / assignee) ─
 
   void _showSimpleOverlay({
     required LayerLink link,
@@ -380,7 +377,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     Overlay.of(context).insert(entry);
   }
 
-  // ── Assignee checkbox overlay (same pattern as tags) ──────────────────────
+  /// ── Assignee checkbox overlay (same pattern as tags) ──────────────────────
 
   void _openAssigneeOverlay() {
     _assigneeOverlay?.remove();
@@ -428,7 +425,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     Overlay.of(context).insert(_assigneeOverlay!);
   }
 
-  // ── Customer typeahead ─────────────────────────────────────────────────────
+  /// ── Customer typeahead
 
   void _showCustomerOverlay(List<Map<String, dynamic>> res) {
     _customerOverlay?.remove();
@@ -547,7 +544,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     });
   }
 
-  // ── Tag checkbox overlay ───────────────────────────────────────────────────
+  /// ── Tag checkbox overlay
 
   void _openTagOverlay() {
     _tagOverlay?.remove();
@@ -597,8 +594,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     Overlay.of(context).insert(_tagOverlay!);
   }
 
-  // ── Date picker ────────────────────────────────────────────────────────────
-
+  /// ── Date picker
   Future<void> _pickDateTime({required bool isStart}) async {
     final init = (isStart ? _plannedStart : _plannedEnd) ?? DateTime.now();
     final date = await showDatePicker(
@@ -716,8 +712,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
         : hours.toStringAsFixed(2);
   }
 
-  // ── Submit ─────────────────────────────────────────────────────────────────
-
+  /// ── Submit
   Future<void> _submit() async {
     if (!_canSubmit || _saving) return;
     if (!_formKey.currentState!.validate()) return;
@@ -754,7 +749,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     }
   }
 
-  // ── Build ──────────────────────────────────────────────────────────────────
+  /// ── Build
 
   @override
   Widget build(BuildContext context) {
@@ -773,16 +768,18 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
           backgroundColor: bg,
           surfaceTintColor: Colors.transparent,
           leading: IconButton(
-            icon: Icon(Icons.arrow_back_ios_new_rounded,
-                size: 18,
-                color: isDark ? Colors.white : Colors.black87),
+            icon: HugeIcon(
+              icon: HugeIcons.strokeRoundedArrowLeft01,
+              color: isDark ? Colors.white : Colors.black87,
+            ),
             onPressed: () => Navigator.pop(context),
           ),
           title: Text('Create Task',
               style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w700,
-                  color: isDark ? Colors.white : Colors.black87)),
+                  color: isDark ? Colors.white : Colors.black87)
+          ),
         ),
         body: _loadingMeta
             ? const Center(
@@ -794,7 +791,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                   controller: _scrollCtrl,
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
                   children: [
-                    // ── Main card ──────────────────────────────────────
+                    /// ── Main card
                     _card(
                       isDark: isDark,
                       title: 'General',
@@ -886,7 +883,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                     ]),
                     const SizedBox(height: 16),
 
-                    // ── Information ────────────────────────────────────
+                    /// ── Information
                     _card(
                       isDark: isDark,
                       title: 'Information',
@@ -940,7 +937,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                     ]),
                     const SizedBox(height: 16),
 
-                    // ── Description ────────────────────────────────────
+                    /// ── Description
                     _card(
                       isDark: isDark,
                       title: 'Description',
@@ -956,7 +953,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    // ── Schedule ───────────────────────────────────────
+                    /// ── Schedule
                     _card(
                       isDark: isDark,
                       title: 'Schedule',
@@ -993,9 +990,9 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     );
   }
 
-  // ── Field widgets ──────────────────────────────────────────────────────────
+  /// ── Field widgets
 
-  // Generic typeahead field (project / status / worksheet)
+  /// Generic typeahead field (project / status / worksheet)
   Widget _typeaheadField({
     required bool isDark,
     required TextEditingController ctrl,
@@ -1050,7 +1047,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     );
   }
 
-  // Assignees multi-select (checkbox overlay — same pattern as tags)
+  /// Assignees multi-select (checkbox overlay — same pattern as tags)
   Widget _assigneeField(bool isDark) {
     final selected = _users
         .where((u) => _assigneeIds.contains((u['id'] as num).toInt()))
@@ -1108,7 +1105,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     );
   }
 
-  // Customer single-select typeahead
+  /// Customer single-select typeahead
   Widget _customerField(bool isDark) {
     return CompositedTransformTarget(
       link: _customerLink,
@@ -1169,7 +1166,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     );
   }
 
-  // Tags field — shows selected chips + tap to open checkbox overlay
+  /// Tags field — shows selected chips + tap to open checkbox overlay
   Widget _tagsField(bool isDark) {
     final selected =
         _tags.where((t) => _tagIds.contains((t['id'] as num).toInt())).toList();
@@ -1233,7 +1230,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     );
   }
 
-  // ── Shared small widgets ───────────────────────────────────────────────────
+  /// ── Shared small widgets
 
   Widget _plainInput(
     bool isDark,
@@ -1469,7 +1466,7 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     );
   }
 
-  // ── Layout helpers ─────────────────────────────────────────────────────────
+  /// ── Layout helpers ─────────────────────────────────────────────────────────
 
   Widget _card({required bool isDark, String? title, required List<Widget> children}) {
     return Container(
@@ -1547,10 +1544,6 @@ class _CreateTaskScreenState extends State<CreateTaskScreen> {
     return primaryColor;
   }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Tag checkbox panel (rendered inside overlay)
-// ─────────────────────────────────────────────────────────────────────────────
 
 class _TagCheckboxPanel extends StatefulWidget {
   final bool isDark;
@@ -1640,7 +1633,7 @@ class _TagCheckboxPanelState extends State<_TagCheckboxPanel> {
           ),
           Divider(height: 1, thickness: 1, color: divClr),
 
-          // Fixed-height scrollable list
+          /// Fixed-height scrollable list
           SizedBox(
             height: 210,
             child: _filtered.isEmpty
@@ -1702,7 +1695,7 @@ class _TagCheckboxPanelState extends State<_TagCheckboxPanel> {
 
           Divider(height: 1, thickness: 1, color: divClr),
 
-          // Cancel / Add buttons
+          /// Cancel / Add buttons
           Container(
             color: cardBg,
             child: Row(
@@ -1748,10 +1741,6 @@ class _TagCheckboxPanelState extends State<_TagCheckboxPanel> {
     );
   }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Assignee checkbox panel (rendered inside overlay)
-// ─────────────────────────────────────────────────────────────────────────────
 
 class _AssigneeCheckboxPanel extends StatefulWidget {
   final bool isDark;
@@ -1840,7 +1829,7 @@ class _AssigneeCheckboxPanelState extends State<_AssigneeCheckboxPanel> {
           ),
           Divider(height: 1, thickness: 1, color: divClr),
 
-          // Fixed-height scrollable list
+          /// Fixed-height scrollable list
           SizedBox(
             height: 210,
             child: _filtered.isEmpty
@@ -1916,7 +1905,7 @@ class _AssigneeCheckboxPanelState extends State<_AssigneeCheckboxPanel> {
 
           Divider(height: 1, thickness: 1, color: divClr),
 
-          // Cancel / Add buttons
+          /// Cancel / Add buttons
           Container(
             color: cardBg,
             child: Row(

@@ -147,7 +147,6 @@ class MapProvider extends ChangeNotifier {
     }
   }
 
-  // ── Navigation (follow-me) mode ──────────────────────────────────────────
 
   /// Result of attempting to start in-app navigation.
   /// - [ok]: nav started.
@@ -197,7 +196,7 @@ class MapProvider extends ChangeNotifier {
     _selectedCluster = null;
     await fetchRoute(_navDestination!);
     if (_routePoints.isEmpty) {
-      // Route fetch failed — roll back nav state.
+      /// Route fetch failed — roll back nav state.
       _isNavigating = false;
       _navTask = null;
       _navDestination = null;
@@ -240,7 +239,7 @@ class MapProvider extends ChangeNotifier {
     if (_isNavigating && _navDestination != null) {
       final user = LatLng(pos.latitude, pos.longitude);
 
-      // Arrival check
+      /// Arrival check
       final distToDest = _distance.as(LengthUnit.Meter, user, _navDestination!);
       if (distToDest <= _arrivalThresholdMeters && !_arrived) {
         _arrived = true;
@@ -248,7 +247,7 @@ class MapProvider extends ChangeNotifier {
         return;
       }
 
-      // Off-route check + cooldown-guarded reroute
+      /// Off-route check + cooldown-guarded reroute
       if (_routePoints.isNotEmpty) {
         final offBy = _distanceFromRoute(user);
         final now = DateTime.now();
@@ -257,7 +256,7 @@ class MapProvider extends ChangeNotifier {
           _lastReroute = now;
           fetchRoute(_navDestination!);
         } else {
-          // Update remaining distance/ETA from current position
+          /// Update remaining distance/ETA from current position
           _updateRemaining(user);
         }
       }
@@ -276,7 +275,7 @@ class MapProvider extends ChangeNotifier {
 
   void _updateRemaining(LatLng user) {
     if (_routePoints.length < 2) return;
-    // Find closest segment index, then sum remaining segment lengths.
+    /// Find closest segment index, then sum remaining segment lengths.
     int closest = 0;
     double bestD = double.infinity;
     for (var i = 0; i < _routePoints.length; i++) {
@@ -294,7 +293,7 @@ class MapProvider extends ChangeNotifier {
         _routePoints[i + 1],
       );
     }
-    // Preserve ETA pace using original speed ratio.
+    /// Preserve ETA pace using original speed ratio.
     if (_routeDistanceMeters > 0) {
       final speed = _routeDistanceMeters /
           (_routeDurationSeconds == 0 ? 1 : _routeDurationSeconds);
@@ -312,10 +311,10 @@ class MapProvider extends ChangeNotifier {
   List<DashboardTask> _tasks = [];
   List<DashboardTask> get tasks => _tasks;
 
-  // Clusters: tasks grouped by identical coordinates
+  /// Clusters: tasks grouped by identical coordinates
   List<TaskCluster> get clusters => _buildClusters(_tasks);
 
-  // Selected cluster (shown in bottom sheet)
+  /// Selected cluster (shown in bottom sheet)
   TaskCluster? _selectedCluster;
   TaskCluster? get selectedCluster => _selectedCluster;
 
@@ -336,7 +335,7 @@ class MapProvider extends ChangeNotifier {
     final Map<String, List<DashboardTask>> map = {};
     for (final t in tasks) {
       if (!_isValidLatLng(t.partnerLat, t.partnerLng)) continue;
-      // Round to 5 decimal places (~1m precision) to group truly co-located tasks
+      /// Round to 5 decimal places (~1m precision) to group truly co-located tasks
       final key = '${t.partnerLat.toStringAsFixed(5)},${t.partnerLng.toStringAsFixed(5)}';
       map.putIfAbsent(key, () => []).add(t);
     }

@@ -39,7 +39,7 @@ class _AppEntryState extends State<AppEntry> {
 
 
   }
-
+  ///checking auth status of user
   Future<Map<String, dynamic>> _checkAuthStatus() async {
     await SessionService.instance.initialize();
     final prefs = await SharedPreferences.getInstance();
@@ -59,14 +59,14 @@ class _AppEntryState extends State<AppEntry> {
         try {
           final client = await OdooSessionManager.getClientEnsured();
 
-          // Extra session sanity check
+          /// Extra session sanity check
           await client.callRPC(
             '/web/session/get_session_info',
             'call',
             {},
           );
 
-          // Field Service & HR Attendance modules check
+          /// Field Service & HR Attendance modules check
           final count = await client.callKw({
             'model': 'ir.module.module',
             'method': 'search_count',
@@ -91,9 +91,7 @@ class _AppEntryState extends State<AppEntry> {
             }
           }
 
-          log('[AppEntry] Field Service installed: $fieldServiceInstalled');
         } catch (e) {
-          log('[AppEntry] Startup check failed: $e');
           forceServerSetup = true;
         }
       }
@@ -154,7 +152,7 @@ class _AppEntryState extends State<AppEntry> {
           );
         }
 
-        /// ❌ Field Service module missing
+        /// Field Service module missing
         if (isLoggedIn && !fieldServiceInstalled) {
           if (!_moduleDialogShown) {
             _moduleDialogShown = true;
@@ -169,12 +167,12 @@ class _AppEntryState extends State<AppEntry> {
           return const ServerSetupScreen();
         }
 
-        /// ✅ Logged in → App
+        /// Logged in → App
         if (isLoggedIn) {
           return const HomeScaffold();
         }
 
-        /// 🚪 Not logged in
+        ///  Not logged in
         return const ServerSetupScreen();
       },
     );

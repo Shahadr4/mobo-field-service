@@ -40,7 +40,7 @@ class TimesheetCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Row 1 — task name + hours badge
+              /// Row 1 — task name + hours badge
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -74,7 +74,7 @@ class TimesheetCard extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 6),
-              // Row 2 — project name
+              /// Row 2 — project name
               if (entry.projectName.isNotEmpty) ...[
                 Text(
                   entry.projectName,
@@ -85,7 +85,7 @@ class TimesheetCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
               ],
-              // Row 3 — description
+              /// Row 3 — description
               if (entry.description.isNotEmpty) ...[
                 Text(
                   entry.description,
@@ -98,7 +98,7 @@ class TimesheetCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
               ],
-              // Row 4 — date
+              /// Row 4 — date
               Row(
                 children: [
                   Icon(

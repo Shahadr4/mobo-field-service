@@ -164,21 +164,6 @@ class ProfileHeaderCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ],
-                // if (jobFunction != null && jobFunction!.isNotEmpty) ...[
-                //   const SizedBox(height: 2),
-                //   Text(
-                //     jobFunction!,
-                //     style: GoogleFonts.manrope(
-                //       color: Colors.white,
-                //       fontSize: 12,
-                //       fontWeight: FontWeight.w500,
-                //       letterSpacing: 0.7,
-                //       height: 1.2,
-                //     ),
-                //     maxLines: 1,
-                //     overflow: TextOverflow.ellipsis,
-                //   ),
-                // ],
               ],
             ),
           ),

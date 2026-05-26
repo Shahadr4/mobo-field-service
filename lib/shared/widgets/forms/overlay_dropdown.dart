@@ -60,7 +60,7 @@ class _OverlayDropdownFieldState<T> extends State<OverlayDropdownField<T>> {
     final isDark = widget.isDark;
 
     const double itemHeight = 44.0;
-    const double listPadding = 16.0; // 8 + 8
+    const double listPadding = 16.0;
 
     _overlayEntry = OverlayEntry(
       builder: (overlayContext) => Stack(
@@ -176,7 +176,7 @@ class _OverlayDropdownFieldState<T> extends State<OverlayDropdownField<T>> {
             initialValue: widget.value,
             validator: widget.validator,
             builder: (field) {
-              // Keep FormField in sync with external value
+              /// Keep FormField in sync with external value
               if (field.value != widget.value) {
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   field.didChange(widget.value);

@@ -5,16 +5,19 @@ import '../services/check_in_service.dart';
 enum CheckInStatus { checkedIn, checkedOut }
 
 class CheckInProvider extends ChangeNotifier {
-  final CheckInService _service = CheckInService();
+  final CheckInService _service;
+
+  CheckInProvider({CheckInService? service})
+      : _service = service ?? CheckInService();
 
   CheckInStatus _status = CheckInStatus.checkedOut;
   DateTime? _checkInTime;
   int? _attendanceId;
 
-  bool _isInitialized = false; // true after first successful fetch
-  bool _isInitializing = false; // true only during the very first load
-  bool _isRefreshing = false;  // true during pull-to-refresh reload
-  bool _isLoading = false;     // true during check-in / check-out action
+  bool _isInitialized = false; /// true after first successful fetch
+  bool _isInitializing = false; /// true only during the very first load
+  bool _isRefreshing = false;  /// true during pull-to-refresh reload
+  bool _isLoading = false;     /// true during check-in / check-out action
   String? _error;
 
   bool get isCheckedIn => _status == CheckInStatus.checkedIn;
@@ -55,12 +58,10 @@ class CheckInProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      debugPrint('[CheckInProvider] ▶ init() — first load');
       final status = await _service.fetchCurrentStatus();
       _applyStatus(status);
       _isInitialized = true;
     } catch (e, st) {
-      debugPrint('[CheckInProvider] ❌ init error: $e\n$st');
     } finally {
       _isInitializing = false;
       notifyListeners();
@@ -75,29 +76,20 @@ class CheckInProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      debugPrint('[CheckInProvider] ▶ refresh()');
       final status = await _service.fetchCurrentStatus();
       _applyStatus(status);
     } catch (e, st) {
-      debugPrint('[CheckInProvider] ❌ refresh error: $e\n$st');
     } finally {
       _isRefreshing = false;
       notifyListeners();
     }
   }
-
   void _applyStatus(AttendanceStatus status) {
     _status = status.isCheckedIn
         ? CheckInStatus.checkedIn
         : CheckInStatus.checkedOut;
     _checkInTime = status.checkInTime;
     _attendanceId = status.attendanceId;
-    debugPrint(
-      '[CheckInProvider] ✅ status applied — '
-      'isCheckedIn=${status.isCheckedIn}, '
-      'attendanceId=$_attendanceId, '
-      'checkInTime=$_checkInTime',
-    );
   }
 
   /// Toggle check-in / check-out.
@@ -109,30 +101,24 @@ class CheckInProvider extends ChangeNotifier {
 
     try {
       if (_status == CheckInStatus.checkedOut) {
-        debugPrint('[CheckInProvider] ▶ toggle() — CHECK IN');
         final result = await _service.checkIn();
         _status = CheckInStatus.checkedIn;
         _checkInTime = result.checkInTime;
         _attendanceId = result.attendanceId;
-        debugPrint('[CheckInProvider] ✅ Checked in — id=$_attendanceId, time=$_checkInTime');
       } else {
         if (_attendanceId == null) {
-          debugPrint('[CheckInProvider] ⚠️ No attendanceId — refetching');
           final current = await _service.fetchCurrentStatus();
           _attendanceId = current.attendanceId;
         }
         if (_attendanceId == null) {
           throw Exception('Could not find open attendance record to check out.');
         }
-        debugPrint('[CheckInProvider] ▶ toggle() — CHECK OUT id=$_attendanceId');
         await _service.checkOut(_attendanceId!);
         _status = CheckInStatus.checkedOut;
         _checkInTime = null;
         _attendanceId = null;
-        debugPrint('[CheckInProvider] ✅ Checked out');
       }
     } catch (e, st) {
-      debugPrint('[CheckInProvider] ❌ toggle error: $e\n$st');
       _error = _friendlyError(e.toString());
     } finally {
       _isLoading = false;

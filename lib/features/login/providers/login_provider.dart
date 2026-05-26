@@ -30,7 +30,7 @@ class LoginProvider with ChangeNotifier {
   List<String> _previousUrls = [];
   List<String> get previousUrls => _previousUrls;
   final Map<String, String> _serverDatabaseMap =
-  {}; // Maps server URL to last used database
+  {}; /// Maps server URL to last used database
   bool _disposed = false;
   String _selectedProtocol = 'https://';
   String get selectedProtocol => _selectedProtocol;
@@ -45,21 +45,21 @@ class LoginProvider with ChangeNotifier {
     _loadSavedCredentials();
   }
 
-  // Try to find a saved database for the current URL, handling protocol differences
+  /// Try to find a saved database for the current URL, handling protocol differences
   String? _resolveSavedDatabaseForUrl(String fullUrl) {
-    // Exact match first
+    /// Exact match first
     if (_serverDatabaseMap.containsKey(fullUrl)) {
       return _serverDatabaseMap[fullUrl];
     }
 
-    // Try alternate protocol (http <-> https)
+    /// Try alternate protocol (http <-> https)
     String alt;
     if (fullUrl.startsWith('https://')) {
       alt = 'http://${fullUrl.substring(8)}';
     } else if (fullUrl.startsWith('http://')) {
       alt = 'https://${fullUrl.substring(7)}';
     } else {
-      // If somehow no protocol, check both
+      /// If somehow no protocol, check both
       alt = 'https://$fullUrl';
       if (_serverDatabaseMap.containsKey(alt)) return _serverDatabaseMap[alt];
       alt = 'http://$fullUrl';
@@ -70,7 +70,7 @@ class LoginProvider with ChangeNotifier {
       return _serverDatabaseMap[alt];
     }
 
-    // Normalize trailing slash differences
+    /// Normalize trailing slash differences
     String stripSlash(String u) => u.endsWith('/') ? u.substring(0, u.length - 1) : u;
     final noSlash = stripSlash(fullUrl);
     if (_serverDatabaseMap.containsKey(noSlash)) {
@@ -114,9 +114,9 @@ class LoginProvider with ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       if (fullUrl.isEmpty) return;
       List<String> urls = prefs.getStringList('previous_server_urls') ?? [];
-      // Normalize trailing slash
+      /// Normalize trailing slash
       String u = fullUrl.endsWith('/') ? fullUrl.substring(0, fullUrl.length - 1) : fullUrl;
-      // Move to front if already exists
+      /// Move to front if already exists
       urls.removeWhere((e) => e == u);
       urls.insert(0, u);
       if (urls.length > 10) {
@@ -124,7 +124,6 @@ class LoginProvider with ChangeNotifier {
       }
       await prefs.setStringList('previous_server_urls', urls);
       _previousUrls = urls;
-      debugPrint('[LoginProvider] Seeded URL to history explicitly: $u');
       _safeNotifyListeners();
     } catch (_) {}
   }
@@ -133,17 +132,17 @@ class LoginProvider with ChangeNotifier {
     try {
       final prefs = await SharedPreferences.getInstance();
 
-      // 1) Start with any explicitly saved history from previous logins
+      /// 1) Start with any explicitly saved history from previous logins
       final historyUrls = prefs.getStringList('previous_server_urls') ?? [];
 
-      // We'll maintain insertion order and uniqueness
+      /// We'll maintain insertion order and uniqueness
       final Set<String> orderedUnique = <String>{};
 
-      // Helper to add if non-empty and normalized
+      /// Helper to add if non-empty and normalized
       String _normalize(String url) {
         String u = url.trim();
         if (u.isEmpty) return u;
-        // Ensure protocol prefix for consistency in display/saving
+        /// Ensure protocol prefix for consistency in display/saving
         if (!u.startsWith('http://') && !u.startsWith('https://')) {
           u = '$_selectedProtocol$u';
         }
@@ -158,7 +157,7 @@ class LoginProvider with ChangeNotifier {
         orderedUnique.add(normalized);
       }
 
-      // 2) Last used server info (persists across logout) - prefer to show first
+      /// 2) Last used server info (persists across logout) - prefer to show first
       try {
         final lastFromPrefs = prefs.getString('lastServerUrl');
         // If missing in prefs directly, also try through manager API
@@ -170,13 +169,13 @@ class LoginProvider with ChangeNotifier {
         }
       } catch (_) {}
 
-      // 3) Add current session server (if any)
+      /// 3) Add current session server (if any)
       try {
         final current = await OdooSessionManager.getCurrentSession();
         addUrl(current?.serverUrl);
       } catch (_) {}
 
-      // 4) Add any stored account URLs from SessionService (initialized in AppEntry)
+      /// 4) Add any stored account URLs from SessionService (initialized in AppEntry)
       try {
         final accounts = SessionService.instance.storedAccounts;
         for (final acc in accounts) {
@@ -186,15 +185,15 @@ class LoginProvider with ChangeNotifier {
         }
       } catch (_) {}
 
-      // 5) Finally, append historyUrls (keeps their order, deduped by set)
+      /// 5) Finally, append historyUrls (keeps their order, deduped by set)
       for (final u in historyUrls) {
         addUrl(u);
       }
 
       _previousUrls = orderedUnique.toList();
 
-      // Load server-database mappings
-      // 4.a) Preferred: consolidated JSON map
+      /// Load server-database mappings
+      /// 4.a) Preferred: consolidated JSON map
       try {
         final rawMap = prefs.getString('server_db_map');
         if (rawMap != null && rawMap.isNotEmpty) {
@@ -209,7 +208,7 @@ class LoginProvider with ChangeNotifier {
         }
       } catch (_) {}
 
-      // 4.b) Backward-compat: scan individual keys if any
+      /// 4.b) Backward-compat: scan individual keys if any
       try {
         final mappingKeys = prefs.getKeys().where(
               (key) => key.startsWith('server_db_'),
@@ -223,7 +222,7 @@ class LoginProvider with ChangeNotifier {
         }
       } catch (_) {}
 
-      // Also seed mapping from lastServerUrl/lastDatabase if present
+      /// Also seed mapping from lastServerUrl/lastDatabase if present
       final lastServer = prefs.getString('lastServerUrl');
       final lastDb = prefs.getString('lastDatabase');
       if ((lastServer != null && lastServer.isNotEmpty) &&
@@ -231,19 +230,12 @@ class LoginProvider with ChangeNotifier {
         _serverDatabaseMap[lastServer] = lastDb;
       }
 
-      debugPrint('[LoginProvider] Loaded ${_previousUrls.length} previous URLs: $_previousUrls');
-      debugPrint(
-        '[LoginProvider] Loaded ${_serverDatabaseMap.length} server-database mappings',
-      );
       if (_previousUrls.isNotEmpty && urlController.text.isEmpty) {
         final fullUrl = _previousUrls.first;
 
         _selectedProtocol = extractProtocol(fullUrl);
         urlController.text = extractDomain(fullUrl);
 
-        debugPrint(
-          '[LoginProvider] Auto-filled URL controller with previous URL: $fullUrl',
-        );
 
         Future.microtask(() {
           if (isValidUrl(urlController.text)) {
@@ -255,7 +247,6 @@ class LoginProvider with ChangeNotifier {
       _isInitialized = true;
       _safeNotifyListeners();
     } catch (e) {
-      debugPrint('[LoginProvider] Error loading saved credentials: $e');
       _isInitialized = true;
       _safeNotifyListeners();
     }
@@ -266,7 +257,7 @@ class LoginProvider with ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       final fullUrl = getFullUrl();
 
-      // Save server URL to history
+      /// Save server URL to history
       List<String> urls = prefs.getStringList('previous_server_urls') ?? [];
       if (fullUrl.isNotEmpty && !urls.contains(fullUrl)) {
         urls.insert(0, fullUrl);
@@ -275,16 +266,15 @@ class LoginProvider with ChangeNotifier {
         }
         await prefs.setStringList('previous_server_urls', urls);
         _previousUrls = urls;
-        debugPrint('[LoginProvider] Saved URL to history: $fullUrl');
       }
 
-      // Save server-database mapping
+      /// Save server-database mapping
       if (fullUrl.isNotEmpty && database != null && database!.isNotEmpty) {
-        // Backward-compat per-key storage
+        /// Backward-compat per-key storage
         await prefs.setString('server_db_$fullUrl', database!);
         _serverDatabaseMap[fullUrl] = database!;
 
-        // Consolidated JSON map for reliable retrieval
+        /// Consolidated JSON map for reliable retrieval
         try {
           final existing = prefs.getString('server_db_map');
           final Map<String, dynamic> map = existing != null && existing.isNotEmpty
@@ -293,12 +283,8 @@ class LoginProvider with ChangeNotifier {
           map[fullUrl] = database!;
           await prefs.setString('server_db_map', jsonEncode(map));
         } catch (_) {}
-        debugPrint(
-          '[LoginProvider] Saved database mapping: $fullUrl -> $database',
-        );
       }
     } catch (e) {
-      debugPrint('[LoginProvider] Error saving credentials: $e');
     }
   }
 
@@ -341,8 +327,6 @@ class LoginProvider with ChangeNotifier {
     _selectedProtocol = protocol;
     urlController.text = domain;
 
-    debugPrint('[LoginProvider] Set URL from full URL: $fullUrl');
-    debugPrint('[LoginProvider] Protocol: $protocol, Domain: $domain');
   }
 
   void clearForm() {
@@ -374,13 +358,13 @@ class LoginProvider with ChangeNotifier {
       return;
     }
 
-    // Preserve the current selection while reloading
+    /// Preserve the current selection while reloading
     final String? previousSelection = database;
 
     isLoadingDatabases = true;
     urlCheck = false;
     errorMessage = null;
-    // Do not nullify the current database here; keep it until new list arrives
+    /// Do not nullify the current database here; keep it until new list arrives
     dropdownItems.clear();
     _safeNotifyListeners();
 
@@ -407,7 +391,7 @@ class LoginProvider with ChangeNotifier {
       httpClient.close();
       final jsonResponse = jsonDecode(responseBody);
 
-      // Odoo returns a JSON-RPC error object when DB listing is disabled
+      /// Odoo returns a JSON-RPC error object when DB listing is disabled
       if (jsonResponse['error'] != null) {
         final serverError = jsonResponse['error']?['data']?['message']
             ?? jsonResponse['error']?['message']
@@ -441,7 +425,7 @@ class LoginProvider with ChangeNotifier {
         dropdownItems = uniqueDbList.map((e) => e.toString()).toList();
         urlCheck = true;
 
-        // Persist the validated URL to history immediately so suggestions work before the first login
+        /// Persist the validated URL to history immediately so suggestions work before the first login
         try {
           final prefs = await SharedPreferences.getInstance();
           final fullUrl = getFullUrl();
@@ -454,31 +438,24 @@ class LoginProvider with ChangeNotifier {
               }
               await prefs.setStringList('previous_server_urls', urls);
               _previousUrls = urls;
-              debugPrint('[LoginProvider] Seeded URL to history from DB fetch: $fullUrl');
             }
           }
         } catch (_) {}
 
-        // Smart database selection logic:
-        // 1. Check if there's a saved database for this server URL
+        /// Smart database selection logic:
+        /// 1. Check if there's a saved database for this server URL
         final fullUrl = getFullUrl();
         final savedDatabase = _resolveSavedDatabaseForUrl(fullUrl);
 
         if (savedDatabase != null && dropdownItems.contains(savedDatabase)) {
-          // Auto-select the previously used database for this server
+          /// Auto-select the previously used database for this server
           database = savedDatabase;
-          debugPrint(
-            '[LoginProvider] Auto-selected saved database: $savedDatabase for server: $fullUrl',
-          );
         } else if (previousSelection != null &&
             dropdownItems.contains(previousSelection)) {
-          // Restore previous selection if still available
+          /// Restore previous selection if still available
           database = previousSelection;
-          debugPrint(
-            '[LoginProvider] Restored previous selection: $previousSelection',
-          );
         } else {
-          // 2. Fallback: check lastServerUrl/lastDatabase from prefs via manager
+          /// 2. Fallback: check lastServerUrl/lastDatabase from prefs via manager
           try {
             final lastUrl = await OdooSessionManager.getLastServerUrl();
             final lastDb = await OdooSessionManager.getLastDatabase();
@@ -493,7 +470,7 @@ class LoginProvider with ChangeNotifier {
               if (a == null || b == null) return false;
               final A = normalize(a);
               final B = normalize(b);
-              // Compare ignoring protocol
+              /// Compare ignoring protocol
               String stripProto(String s) => s
                   .replaceFirst(RegExp('^https?://'), '');
               return stripProto(A) == stripProto(B);
@@ -503,19 +480,16 @@ class LoginProvider with ChangeNotifier {
                 dropdownItems.contains(lastDb) &&
                 urlsMatch(lastUrl, fullUrl)) {
               database = lastDb;
-              debugPrint('[LoginProvider] Auto-selected lastDatabase "$lastDb" for server: $fullUrl');
             }
           } catch (_) {}
 
-          // 3. As a final fallback, default to first database
+          /// 3. As a final fallback, default to first database
           if (database == null && uniqueDbList.isNotEmpty) {
             database = uniqueDbList.first.toString();
-            debugPrint('[LoginProvider] Selected first database: $database');
           }
         }
       }
     } on HandshakeException catch (e) {
-      debugPrint('[LoginProvider] HandshakeException: $e');
       final msg = e.toString().toLowerCase();
       if (msg.contains('tls') || msg.contains('ssl') || msg.contains('handshake')) {
         errorMessage =
@@ -528,7 +502,6 @@ class LoginProvider with ChangeNotifier {
       }
       _resetDatabaseState();
     } on SocketException catch (e) {
-      debugPrint('[LoginProvider] SocketException: $e');
       final msg = e.toString().toLowerCase();
       if (msg.contains('network is unreachable') || msg.contains('no route to host')) {
         errorMessage =
@@ -553,23 +526,19 @@ class LoginProvider with ChangeNotifier {
       }
       _resetDatabaseState();
     } on TimeoutException catch (_) {
-      debugPrint('[LoginProvider] TimeoutException fetching databases');
       errorMessage =
           'Connection timed out. The server may be slow or unreachable. '
           'Try switching between HTTP and HTTPS, then try again.';
       _resetDatabaseState();
     } on TlsException catch (e) {
-      debugPrint('[LoginProvider] TlsException: $e');
       errorMessage =
           'TLS/SSL error. The server certificate may be invalid or the server '
           'does not support HTTPS. Try switching to HTTP.';
       _resetDatabaseState();
     } on OdooException catch (e) {
-      debugPrint('[LoginProvider] OdooException: $e');
       errorMessage = _formatOdooError(e);
       _resetDatabaseState();
     } on FormatException catch (e) {
-      debugPrint('[LoginProvider] FormatException: $e');
       final msg = e.toString().toLowerCase();
       if (msg.contains('html') || msg.contains('<!doctype') || msg.contains('<html')) {
         errorMessage =
@@ -582,7 +551,6 @@ class LoginProvider with ChangeNotifier {
       }
       _resetDatabaseState();
     } on HttpException catch (e) {
-      debugPrint('[LoginProvider] HttpException: $e');
       final msg = e.message.toLowerCase();
       if (msg.contains('301') || msg.contains('302') || msg.contains('redirect')) {
         errorMessage =
@@ -593,7 +561,6 @@ class LoginProvider with ChangeNotifier {
       }
       _resetDatabaseState();
     } catch (e) {
-      debugPrint('[LoginProvider] Unexpected error fetching databases: $e');
       final msg = e.toString().toLowerCase();
       if (msg.contains('ssl') || msg.contains('certificate') || msg.contains('tls') || msg.contains('handshake')) {
         errorMessage =
@@ -686,19 +653,14 @@ class LoginProvider with ChangeNotifier {
         await _saveCredentials();
         await _setAuthenticationTimestamp();
 
-        // Store account in SessionService for account switching
+        /// Store account in SessionService for account switching
         try {
           final sessionService = SessionService.instance;
           final currentSession = await OdooSessionManager.getCurrentSession();
 
           if (currentSession != null) {
-            //await sessionService.storeAccount(currentSession, password);
-            debugPrint('[LoginProvider] Stored account in SessionService');
-          }
+           }
         } catch (e) {
-          debugPrint(
-            '[LoginProvider] Error storing account in SessionService: $e',
-          );
         }
 
         return  LoginResult.success;
@@ -711,7 +673,6 @@ class LoginProvider with ChangeNotifier {
         return  LoginResult.invalidCredentials;
       }
     } on SocketException catch (e) {
-      debugPrint('[LoginProvider] SocketException during login: $e');
       if (e.toString().contains('Network is unreachable')) {
         errorMessage =
         'No internet connection. Please check your network settings.';
@@ -724,12 +685,10 @@ class LoginProvider with ChangeNotifier {
       }
       return  LoginResult.networkError;
     } on TimeoutException catch (e) {
-      debugPrint('[LoginProvider] TimeoutException during login: $e');
       errorMessage =
       'Connection timed out. The server may be slow or unreachable. Please try again.';
       return  LoginResult.networkError;
     } on OdooException catch (e) {
-      debugPrint('[LoginProvider] OdooException during login: $e');
       final message = e.message.toLowerCase();
       if (message.contains('invalid login') ||
           message.contains('access denied')) {
@@ -743,7 +702,6 @@ class LoginProvider with ChangeNotifier {
       }
       return  LoginResult.invalidCredentials;
     } catch (e) {
-      debugPrint('[LoginProvider] Unexpected error during login: $e');
       errorMessage =
       'Login failed. Please check your credentials and server settings.';
       return  LoginResult.invalidCredentials;
@@ -799,12 +757,6 @@ class LoginProvider with ChangeNotifier {
 
       ) async {
     try {
-      log('[LoginProvider] Login success via existing session');
-      log(serverUrls);
-      log(login);
-      log(databses);
-      log(password2);
-      log("+++++++++++++++++++++++++++++++++++++++++++>>>>>>");
       final Map<String, dynamic> userCompanies =
       sessionInfo['user_companies'] as Map<String, dynamic>;
 
@@ -832,11 +784,9 @@ class LoginProvider with ChangeNotifier {
         userName: sessionInfo['username'],
         serverVersion: sessionInfo['server_version'],
       );
-      log("===========");
 
-      log(odooSession.toString());
 
-      // Persist last used server + database
+      /// Persist last used server + database
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(
         'lastServerUrl',
@@ -847,18 +797,13 @@ class LoginProvider with ChangeNotifier {
         sessionInfo['db'] ?? '',
       );
 
-      // Mark logged in
+      /// Mark logged in
       await prefs.setBool('isLoggedIn', true);
 
       final  clientnew = OdooClient(serverUrls,sessionId: odooSession);
 
 
 
-      log(serverUrls);
-      log(login);
-      log(databses);
-      log(password2);
-      log("++++++++++++++++++");
 
 
       client = clientnew;
@@ -871,11 +816,9 @@ class LoginProvider with ChangeNotifier {
       );
 
 
-      log("+++++++++gooog +++++++");
 
       notifyListeners();
     } catch (e) {
-      log('[LoginProvider] Failed to restore session: $e');
       rethrow;
     }
   }

@@ -172,7 +172,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       backgroundColor: isDark ? Colors.grey[900] : Colors.white,
       body: Consumer<ProfileProvider>(
         builder: (context, provider, child) {
-          // Do not show shimmer when offline
+          /// Do not show shimmer when offline
           if (provider.isLoading && provider.hasInternet) {
             return _buildLoadingShimmer(isDark);
           }
@@ -204,7 +204,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     avatar: provider.userAvatar,
                     onCameraPressed: _showImageSourceActionSheet,
-                    showCameraButton: false, // Hide camera button for now
+                    showCameraButton: false, ///Hide camera button for now
                     onTap: () {
                       Navigator.of(context).push(
                         MaterialPageRoute(
@@ -215,7 +215,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   const SizedBox(height: 12),
 
-                  // const SizedBox(height: 12),
                   _buildQuickActionsSection(context),
                   const SizedBox(height: 20),
                 ],
@@ -277,7 +276,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             height: 1,
             color: isDark ? Colors.grey[800] : Colors.grey[200],
           ),
-          // Scope a local provider to guarantee availability even after hot-reload
+          /// Scope a local provider to guarantee availability even after hot-reload
           Builder(
             builder: (outerCtx) => ChangeNotifierProvider<LogoutViewModel>(
               create: (_) => LogoutViewModel(),
@@ -312,7 +311,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header card shimmer
+            /// Header card shimmer
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(12),
@@ -381,7 +380,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
             const SizedBox(height: 20),
-            // Quick actions shimmer
+            /// Quick actions shimmer
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(

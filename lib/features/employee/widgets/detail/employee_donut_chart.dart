@@ -221,7 +221,7 @@ class _DonutPainter extends CustomPainter {
     final strokeW = radius * 0.30;
     final rect = Rect.fromCircle(center: center, radius: radius - strokeW / 2);
 
-    // Background track
+    /// Background track
     canvas.drawCircle(
       center,
       radius - strokeW / 2,

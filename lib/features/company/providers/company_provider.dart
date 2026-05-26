@@ -1,16 +1,16 @@
-import 'dart:developer';
+
 
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../core/services/odoo_session_manager.dart';
 
-// Using raw maps for companies to avoid model dependency and ensure UI compatibility
+/// Using raw maps for companies to avoid model dependency and ensure UI compatibility
 
 class CompanyProvider extends ChangeNotifier {
   List<Map<String, dynamic>> _companies = [];
   int? _selectedCompanyId;
-  // Multi-company selection for request context (allowed_company_ids)
+  /// Multi-company selection for request context (allowed_company_ids)
   List<int> _selectedAllowedCompanyIds = [];
   bool _loading = false;
   bool _switching = false;
@@ -37,12 +37,12 @@ class CompanyProvider extends ChangeNotifier {
   /// Update the selected allowed companies for RPC context injection.
   /// This does not change the active company; it controls allowed_company_ids.
   Future<void> setAllowedCompanies(List<int> allowedIds) async {
-    // Filter to companies available to the user
+    /// Filter to companies available to the user
     final availableIds = _companies.map((c) => c['id'] as int).toSet();
     final filtered = allowedIds
         .where((id) => availableIds.contains(id))
         .toList();
-    // Ensure active company is present
+    /// Ensure active company is present
     if (_selectedCompanyId != null && !filtered.contains(_selectedCompanyId)) {
       filtered.add(_selectedCompanyId!);
     }
@@ -53,7 +53,7 @@ class CompanyProvider extends ChangeNotifier {
       _selectedAllowedCompanyIds.map((e) => e.toString()).toList(),
     );
 
-    // Update session context
+    /// Update session context
     if (_selectedCompanyId != null) {
       await OdooSessionManager.updateCompanySelection(
         companyId: _selectedCompanyId!,
@@ -70,7 +70,7 @@ class CompanyProvider extends ChangeNotifier {
     try {
       final session = await OdooSessionManager.getCurrentSession();
       if (session == null || session.userId == null) {
-        // No session -> show local cache if available
+        /// No session -> show local cache if available
         _companies = [];
         _selectedCompanyId = null;
         _loading = false;
@@ -78,7 +78,7 @@ class CompanyProvider extends ChangeNotifier {
         return;
       }
 
-      // 1) Load companies from backend (network-first)
+      /// 1) Load companies from backend (network-first)
       final userRes = await OdooSessionManager.safeCallKwWithoutCompany({
         'model': 'res.users',
         'method': 'read',
@@ -105,7 +105,7 @@ class CompanyProvider extends ChangeNotifier {
       if (companyIds.isEmpty) {
         _companies = [];
         _selectedCompanyId = currentCompanyId;
-        // Clear local cache because server says none
+        /// Clear local cache because server says none
         _loading = false;
         notifyListeners();
         return;
@@ -131,13 +131,13 @@ class CompanyProvider extends ChangeNotifier {
 
       if (serverCompanies.isNotEmpty) {
         _companies = serverCompanies;
-        // Save to local DB on success
+        /// Save to local DB on success
       } else {
-        // If server returned empty (unexpected), fallback to local cache
+        /// If server returned empty (unexpected), fallback to local cache
         _companies = [];
       }
 
-      // Restore selection from SharedPreferences and ensure invariants
+      /// Restore selection from SharedPreferences and ensure invariants
       final prefs = await SharedPreferences.getInstance();
       final restoredId = prefs.getInt('selected_company_id');
       final pendingId = prefs.getInt('pending_company_id');
@@ -149,12 +149,12 @@ class CompanyProvider extends ChangeNotifier {
               .toList() ??
           [];
 
-      // Selected company precedence: pending -> restored -> server current -> first
+      /// Selected company precedence: pending -> restored -> server current -> first
       int? desiredId =
           pendingId ?? restoredId ?? currentCompanyId ?? (companyIds.isNotEmpty ? companyIds.first : null);
       _selectedCompanyId = desiredId;
 
-      // Allowed companies: restored subset or all
+      /// Allowed companies: restored subset or all
       List<int> defaultAllowed = companyIds;
       final restoredValid = restoredAllowed.where((id) => companyIds.contains(id)).toList();
       _selectedAllowedCompanyIds = restoredValid.isNotEmpty ? restoredValid : defaultAllowed;
@@ -162,19 +162,19 @@ class CompanyProvider extends ChangeNotifier {
         _selectedAllowedCompanyIds = [..._selectedAllowedCompanyIds, _selectedCompanyId!];
       }
 
-      // Enforce invariants: ensure we always have a valid selected company.
+      /// Enforce invariants: ensure we always have a valid selected company.
       if (_selectedCompanyId == null || !companyIds.contains(_selectedCompanyId)) {
         if (companyIds.isNotEmpty) {
           _selectedCompanyId = companyIds.first;
         }
       }
 
-      // Ensure allowed list includes the active company and persist immediately
+      /// Ensure allowed list includes the active company and persist immediately
       if (_selectedCompanyId != null && !_selectedAllowedCompanyIds.contains(_selectedCompanyId)) {
         _selectedAllowedCompanyIds = [..._selectedAllowedCompanyIds, _selectedCompanyId!];
       }
 
-      // Persist selection and allowed ids for stability across app launches
+      /// Persist selection and allowed ids for stability across app launches
       final prefs2 = await SharedPreferences.getInstance();
       if (_selectedCompanyId != null) {
         await prefs2.setInt('selected_company_id', _selectedCompanyId!);
@@ -184,7 +184,7 @@ class CompanyProvider extends ChangeNotifier {
         _selectedAllowedCompanyIds.map((e) => e.toString()).toList(),
       );
 
-      // Update session company context immediately (best-effort)
+      /// Update session company context immediately (best-effort)
       if (_selectedCompanyId != null) {
         await OdooSessionManager.updateCompanySelection(
           companyId: _selectedCompanyId!,
@@ -192,7 +192,7 @@ class CompanyProvider extends ChangeNotifier {
         );
       }
 
-      // Try to apply pending switch online (best effort)
+      /// Try to apply pending switch online (best effort)
       if (pendingId != null && companyIds.contains(pendingId)) {
         try {
           await _applyCompanyOnServer(session.userId!, pendingId);
@@ -208,7 +208,7 @@ class CompanyProvider extends ChangeNotifier {
         } catch (_) {}
       }
     } catch (e) {
-      // Network/API failed -> fallback to local DB
+      /// Network/API failed -> fallback to local DB
       try {
         if (_companies.isEmpty) {
           _error = e.toString();
@@ -230,17 +230,17 @@ class CompanyProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      // Try server first
+      /// Try server first
       final list = await OdooSessionManager.getAllowedCompaniesList();
       if (list.isNotEmpty) {
         _companies = list;
 
       } else {
-        // Fallback to local cache
+        /// Fallback to local cache
 
       }
     } catch (_) {
-      // Fallback to local cache on any error
+      /// Fallback to local cache on any error
       try {
       } catch (_) {}
     } finally {
@@ -250,7 +250,7 @@ class CompanyProvider extends ChangeNotifier {
   }
 
   Future<bool> switchCompany(int companyId) async {
-    log("switching company");
+
     if (_selectedCompanyId == companyId) return true;
     bool appliedImmediately = false;
     try {
@@ -259,12 +259,12 @@ class CompanyProvider extends ChangeNotifier {
       notifyListeners();
       final session = await OdooSessionManager.getCurrentSession();
       if (session == null || session.userId == null) {
-        // Persist as pending and as selected for local context injection
+        /// Persist as pending and as selected for local context injection
         final prefs = await SharedPreferences.getInstance();
         await prefs.setInt('selected_company_id', companyId);
         await prefs.setInt('pending_company_id', companyId);
         _selectedCompanyId = companyId;
-        // Ensure active company is part of allowed selection
+        /// Ensure active company is part of allowed selection
         if (!_selectedAllowedCompanyIds.contains(companyId)) {
           _selectedAllowedCompanyIds = [
             ..._selectedAllowedCompanyIds,
@@ -281,20 +281,20 @@ class CompanyProvider extends ChangeNotifier {
 
       try {
         await _applyCompanyOnServer(session.userId!, companyId);
-        // After server write, refresh and restore the session to bind company context
+        /// After server write, refresh and restore the session to bind company context
         await OdooSessionManager.refreshSession();
         await OdooSessionManager.restoreSession(companyId: companyId);
         appliedImmediately = true;
-        // Clear any previous pending
+        /// Clear any previous pending
         final prefs = await SharedPreferences.getInstance();
         await prefs.remove('pending_company_id');
       } catch (_) {
-        // Queue as pending if failed (likely offline)
+        /// Queue as pending if failed (likely offline)
         final prefs = await SharedPreferences.getInstance();
         await prefs.setInt('pending_company_id', companyId);
         appliedImmediately = false;
-        // Update local session selection for offline context injection
-        // Ensure active company is part of allowed selection
+        /// Update local session selection for offline context injection
+        /// Ensure active company is part of allowed selection
         List<int> allowed = _selectedAllowedCompanyIds;
         if (!allowed.contains(companyId)) {
           allowed = [...allowed, companyId];
@@ -305,10 +305,10 @@ class CompanyProvider extends ChangeNotifier {
         );
       }
 
-      // Persist selection for context injection regardless of server status
+      /// Persist selection for context injection regardless of server status
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt('selected_company_id', companyId);
-      // Ensure active company is included in allowed selection
+      /// Ensure active company is included in allowed selection
       if (!_selectedAllowedCompanyIds.contains(companyId)) {
         _selectedAllowedCompanyIds = [..._selectedAllowedCompanyIds, companyId];
       }
@@ -317,11 +317,11 @@ class CompanyProvider extends ChangeNotifier {
         _selectedAllowedCompanyIds.map((e) => e.toString()).toList(),
       );
 
-      // Update local selection and notify
+      /// Update local selection and notify
       _selectedCompanyId = companyId;
       notifyListeners();
 
-      // Refresh companies list without touching current selection
+      /// Refresh companies list without touching current selection
       await refreshCompaniesList();
       return appliedImmediately;
     } catch (e) {
@@ -350,7 +350,7 @@ class CompanyProvider extends ChangeNotifier {
   /// The active company cannot be removed from allowed companies
   Future<void> toggleAllowedCompany(int companyId) async {
     if (_selectedAllowedCompanyIds.contains(companyId)) {
-      // Cannot remove active company from allowed companies
+      /// Cannot remove active company from allowed companies
       if (companyId == _selectedCompanyId) {
         return;
       }
@@ -366,7 +366,7 @@ class CompanyProvider extends ChangeNotifier {
       'selected_allowed_company_ids',
       _selectedAllowedCompanyIds.map((e) => e.toString()).toList(),
     );
-    // Update session context
+    /// Update session context
     if (_selectedCompanyId != null) {
       await OdooSessionManager.updateCompanySelection(
         companyId: _selectedCompanyId!,

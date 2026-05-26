@@ -1,4 +1,4 @@
-import 'dart:developer';
+
 import '../../../core/services/odoo_session_manager.dart';
 
 class AttendanceStatus {
@@ -24,10 +24,8 @@ class CheckInService {
       final normalized = raw.toString().replaceAll(' ', 'T');
       final utcDt = DateTime.parse('${normalized}Z');
       final local = utcDt.toLocal();
-      log('[CheckInService] UTC "$raw" → local "$local"');
       return local;
     } catch (e) {
-      log('[CheckInService] ⚠️ Failed to parse date "$raw": $e');
       return null;
     }
   }
@@ -42,13 +40,11 @@ class CheckInService {
     final mi = utc.minute.toString().padLeft(2, '0');
     final s  = utc.second.toString().padLeft(2, '0');
     final result = '$y-$mo-$d $h:$mi:$s';
-    log('[CheckInService] local now → Odoo UTC: $result');
     return result;
   }
 
   /// Finds the linked employee id for the current user.
   Future<int?> _getEmployeeId(int userId) async {
-    log('[CheckInService] Looking up employee for user $userId');
     final res = await OdooSessionManager.safeCallKw({
       'model': 'hr.employee',
       'method': 'search_read',
@@ -64,16 +60,13 @@ class CheckInService {
     });
     if (res is List && res.isNotEmpty) {
       final id = res.first['id'] as int;
-      log('[CheckInService] Found employee id: $id (${res.first['name']})');
       return id;
     }
-    log('[CheckInService] ❌ No employee linked to user $userId');
     return null;
   }
 
   /// Returns the open attendance record (no check_out) for the employee.
   Future<Map<String, dynamic>?> _getOpenAttendance(int employeeId) async {
-    log('[CheckInService] Searching open attendance for employee $employeeId');
     final res = await OdooSessionManager.safeCallKw({
       'model': 'hr.attendance',
       'method': 'search_read',
@@ -90,7 +83,6 @@ class CheckInService {
       },
     });
     if (res is List && res.isNotEmpty) {
-      log('[CheckInService] Open record: ${res.first}');
       return Map<String, dynamic>.from(res.first);
     }
     return null;
@@ -98,10 +90,8 @@ class CheckInService {
 
   /// Fetches the current check-in state for the logged-in user.
   Future<AttendanceStatus> fetchCurrentStatus() async {
-    log('[CheckInService] ▶ fetchCurrentStatus()');
     final session = await OdooSessionManager.getCurrentSession();
     if (session == null) {
-      log('[CheckInService] ❌ No session');
       return const AttendanceStatus(isCheckedIn: false);
     }
 
@@ -111,7 +101,6 @@ class CheckInService {
     final open = await _getOpenAttendance(employeeId);
     if (open != null) {
       final checkInLocal = _odooUtcToLocal(open['check_in']);
-      log('[CheckInService] ✅ Checked in — local checkInTime: $checkInLocal');
       return AttendanceStatus(
         isCheckedIn: true,
         checkInTime: checkInLocal,
@@ -119,13 +108,11 @@ class CheckInService {
       );
     }
 
-    log('[CheckInService] ✅ Checked out');
     return const AttendanceStatus(isCheckedIn: false);
   }
 
   /// Check in: creates a new hr.attendance record with check_in = now UTC.
   Future<AttendanceStatus> checkIn() async {
-    log('[CheckInService] ▶ checkIn()');
     final session = await OdooSessionManager.getCurrentSession();
     if (session == null) throw Exception('No active session.');
 
@@ -138,7 +125,6 @@ class CheckInService {
 
     final nowLocal = DateTime.now();
     final nowUtc = _nowToOdooUtc();
-    log('[CheckInService] Creating attendance check_in=$nowUtc');
 
     final result = await OdooSessionManager.safeCallKw({
       'model': 'hr.attendance',
@@ -149,7 +135,6 @@ class CheckInService {
       'kwargs': {},
     });
 
-    log('[CheckInService] ✅ Created id=$result, local time=$nowLocal');
     return AttendanceStatus(
       isCheckedIn: true,
       checkInTime: nowLocal,
@@ -159,9 +144,7 @@ class CheckInService {
 
   /// Check out: writes check_out = now UTC on the open attendance record.
   Future<AttendanceStatus> checkOut(int attendanceId) async {
-    log('[CheckInService] ▶ checkOut(id=$attendanceId)');
     final nowUtc = _nowToOdooUtc();
-    log('[CheckInService] Writing check_out=$nowUtc');
 
     await OdooSessionManager.safeCallKw({
       'model': 'hr.attendance',
@@ -173,7 +156,6 @@ class CheckInService {
       'kwargs': {},
     });
 
-    log('[CheckInService] ✅ Checked out');
     return const AttendanceStatus(isCheckedIn: false);
   }
 }

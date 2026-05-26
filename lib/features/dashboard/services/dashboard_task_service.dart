@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:developer';
 import 'dart:math' as math;
 
 import 'package:geolocator/geolocator.dart';
@@ -20,7 +19,8 @@ class DashboardTaskService {
     final base = <dynamic>[
       ['is_fsm', '=', true],
       ['project_id', '!=', false],
-      ['has_template_ancestor', '=', false],
+      if (session.version?.contains('19') == true)
+        ['has_template_ancestor', '=', false],
       ['display_in_project', '=', true],
     ];
 
@@ -74,15 +74,7 @@ class DashboardTaskService {
         'args': [domain],
         'kwargs': {
           'fields': [
-            'id',
-            'name',
-            'project_id',
-            'stage_id',
-            'user_ids',
-            'partner_id',
-            'date_deadline',
-            'planned_date_begin',
-            'priority',
+
           ],
           'order': 'name asc',
         },
@@ -92,7 +84,7 @@ class DashboardTaskService {
 
       final tasks = result.whereType<Map<String, dynamic>>().toList();
 
-      // Collect unique partner IDs
+      /// Collect unique partner IDs
       final partnerIds = tasks
           .map((t) => t['partner_id'])
           .where((v) => v is List && v.isNotEmpty)
@@ -100,7 +92,7 @@ class DashboardTaskService {
           .toSet()
           .toList();
 
-      // Fetch partner address + lat/lon fields
+      /// Fetch partner address + lat/lon fields
       final Map<int, Map<String, dynamic>> partnerMap = {};
       if (partnerIds.isNotEmpty) {
         final partners = await OdooSessionManager.callKwWithCompany({
@@ -131,7 +123,7 @@ class DashboardTaskService {
         }
       }
 
-      // Inject address fields
+      /// Inject address fields
       var parsed = tasks.map((t) {
         final partnerRaw = t['partner_id'];
         if (partnerRaw is List && partnerRaw.isNotEmpty) {
@@ -148,14 +140,13 @@ class DashboardTaskService {
         return DashboardTask.fromMap(t);
       }).toList();
 
-      // For Nearby tab: get device location and filter within radius
+      /// For Nearby tab: get device location and filter within radius
       if (tab == 'Nearby') {
         parsed = await _filterNearby(parsed);
       }
 
       return parsed;
     } catch (e) {
-      log('[DashboardTaskService] ⚠️ fetchByTab($tab) error: $e');
       return [];
     }
   }
@@ -169,7 +160,8 @@ class DashboardTaskService {
     final base = <dynamic>[
       ['is_fsm', '=', true],
       ['project_id', '!=', false],
-      ['has_template_ancestor', '=', false],
+      if (session.version?.contains('19') == true)
+        ['has_template_ancestor', '=', false],
       ['display_in_project', '=', true],
       ['partner_id', '!=', false],
     ];
@@ -243,15 +235,16 @@ class DashboardTaskService {
         return DashboardTask.fromMap(t);
       }).toList();
 
-      // Filter using the provided position — no extra GPS call
+      /// Filter using the provided position — no extra GPS call
       parsed = await _filterNearbyWithPos(parsed, pos);
       return parsed;
     } catch (e) {
-      log('[DashboardTaskService] ⚠️ fetchNearbyWithPosition error: $e');
       return [];
     }
   }
 
+
+  /// Same as fetchByTab('Assigned') but accepts an already-fetched [pos]
   Future<List<DashboardTask>> fetchMyTasksWithPosition(Position pos) async {
     final session = await OdooSessionManager.getCurrentSession();
     if (session == null) return [];
@@ -260,7 +253,8 @@ class DashboardTaskService {
     final base = <dynamic>[
       ['is_fsm', '=', true],
       ['project_id', '!=', false],
-      ['has_template_ancestor', '=', false],
+      if (session.version?.contains('19') == true)
+        ['has_template_ancestor', '=', false],
       ['display_in_project', '=', true],
       ['partner_id', '!=', false],
       ['user_ids', 'in', [userId]],
@@ -356,15 +350,12 @@ class DashboardTaskService {
 
       return resolvedTasks;
     } catch (e) {
-      log('[DashboardTaskService] ⚠️ fetchMyTasksWithPosition error: $e');
       return [];
     }
   }
 
   Future<List<DashboardTask>> _filterNearbyWithPos(
       List<DashboardTask> tasks, Position pos) async {
-    log('[Nearby] Total tasks with partner: ${tasks.length}');
-    log('[Nearby] Device position: lat=${pos.latitude}, lng=${pos.longitude}');
 
     final nearby = <DashboardTask>[];
 
@@ -374,56 +365,45 @@ class DashboardTaskService {
 
       if (lat == 0.0 && lng == 0.0) {
         if (task.partnerAddress.trim().isEmpty) {
-          log('[Nearby] SKIP "${task.name}" — no coords and no address');
           continue;
         }
         final geo = await _geocodeAddress(task.partnerAddress);
         if (geo == null) {
-          log('[Nearby] SKIP "${task.name}" — geocode failed for "${task.partnerAddress}"');
           continue;
         }
         lat = geo.$1;
         lng = geo.$2;
-        log('[Nearby] Geocoded "${task.partnerAddress}" → $lat,$lng');
       }
 
       final distKm = _haversineKm(pos.latitude, pos.longitude, lat, lng);
       final within = distKm <= _nearbyRadiusKm;
-      log('[Nearby] "${task.name}" — dist=${distKm.toStringAsFixed(2)}km '
-          '— ${within ? "✅ INCLUDE" : "❌ too far"}');
-      // Always store resolved coords so the map can pin the task
+      /// Always store resolved coords so the map can pin the task
       if (within) nearby.add(task.withCoords(lat, lng));
     }
 
-    log('[Nearby] Result: ${nearby.length} within ${_nearbyRadiusKm}km');
     return nearby;
   }
 
+
   Future<List<DashboardTask>> _filterNearby(List<DashboardTask> tasks) async {
     try {
-      log('[Nearby] Total tasks with partner: ${tasks.length}');
 
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      log('[Nearby] Location service enabled: $serviceEnabled');
       if (!serviceEnabled) return [];
 
       LocationPermission perm = await Geolocator.checkPermission();
-      log('[Nearby] Permission before request: $perm');
       if (perm == LocationPermission.denied) {
         perm = await Geolocator.requestPermission();
-        log('[Nearby] Permission after request: $perm');
       }
       if (perm == LocationPermission.denied || perm == LocationPermission.deniedForever) {
-        log('[Nearby] ⚠️ Permission denied — cannot get location');
         return [];
       }
 
       final pos = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
       );
-      log('[Nearby] Device position: lat=${pos.latitude}, lng=${pos.longitude}, accuracy=${pos.accuracy}m');
 
-      // Reverse geocode to get human-readable location name
+      /// Reverse geocode to get human-readable location name
       try {
         final uri = Uri.parse(
           'https://nominatim.openstreetmap.org/reverse?lat=${pos.latitude}&lon=${pos.longitude}&format=json',
@@ -440,7 +420,6 @@ class DashboardTaskService {
             address?['state'],
             address?['country'],
           ].whereType<String>().join(', ');
-          log('[Nearby] 📍 Device location name: $name');
         }
       } catch (_) {}
 
@@ -450,40 +429,33 @@ class DashboardTaskService {
         double lat = task.partnerLat;
         double lng = task.partnerLng;
 
-        // No stored coords — geocode the address string
+        /// No stored coords — geocode the address string
         if (lat == 0.0 && lng == 0.0) {
           if (task.partnerAddress.trim().isEmpty) {
-            log('[Nearby] SKIP "${task.name}" — no coords and no address');
             continue;
           }
           final geo = await _geocodeAddress(task.partnerAddress);
           if (geo == null) {
-            log('[Nearby] SKIP "${task.name}" — geocode failed for "${task.partnerAddress}"');
             continue;
           }
           lat = geo.$1;
           lng = geo.$2;
-          log('[Nearby] Geocoded "${task.partnerAddress}" → $lat,$lng');
         }
 
         final distKm = _haversineKm(pos.latitude, pos.longitude, lat, lng);
         final within = distKm <= _nearbyRadiusKm;
-        log('[Nearby] "${task.name}" — dist=${distKm.toStringAsFixed(2)}km '
-            '— ${within ? "✅ INCLUDE" : "❌ too far"}');
         if (within) nearby.add(task);
       }
 
-      log('[Nearby] Result: ${nearby.length} within ${_nearbyRadiusKm}km');
       return nearby;
     } catch (e) {
-      log('[Nearby] ⚠️ error: $e');
       return [];
     }
   }
 
   /// Geocode an address via Nominatim with progressive fallback.
   Future<(double, double)?> _geocodeAddress(String address) async {
-    // Build fallback attempts: full → city+country → country only
+    /// Build fallback attempts: full → city+country → country only
     final parts = address.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty).toList();
     final attempts = <String>{};
     attempts.add(address.trim());
@@ -493,10 +465,8 @@ class DashboardTaskService {
     for (final query in attempts) {
       final result = await _nominatimSearch(query);
       if (result != null) {
-        log('[Nearby] Geocoded "$query" → ${result.$1},${result.$2}');
         return result;
       }
-      log('[Nearby] Nominatim no result for "$query"');
     }
     return null;
   }
@@ -518,7 +488,6 @@ class DashboardTaskService {
       if (lat == null || lon == null) return null;
       return (lat, lon);
     } catch (e) {
-      log('[Nearby] _nominatimSearch error: $e');
       return null;
     }
   }

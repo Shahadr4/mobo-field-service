@@ -10,12 +10,12 @@ class ErrorManager {
   static ErrorInfo analyzeError(Object error) {
     final errorString = error.toString();
 
-    // Check for module/model not found errors (PRIORITY CHECK)
+    /// Check for module/model not found errors (PRIORITY CHECK)
     if (_isModuleError(errorString)) {
       return _createModuleError(errorString);
     }
 
-    // Check for connectivity errors
+    /// Check for connectivity errors
     if (error is NoInternetException) {
       return ErrorInfo(
         type: ErrorType.network,
@@ -37,7 +37,7 @@ class ErrorManager {
       );
     }
 
-    // Check for authentication errors
+    /// Check for authentication errors
     if (_isAuthError(errorString)) {
       return ErrorInfo(
         type: ErrorType.authentication,
@@ -49,7 +49,7 @@ class ErrorManager {
       );
     }
 
-    // Check for permission/access errors
+    /// Check for permission/access errors
     if (_isAccessError(errorString)) {
       return ErrorInfo(
         type: ErrorType.permission,
@@ -61,7 +61,7 @@ class ErrorManager {
       );
     }
 
-    // Default to server error
+    /// Default to server error
     return ErrorInfo(
       type: ErrorType.server,
       title: 'Server Error',
@@ -74,25 +74,25 @@ class ErrorManager {
   static bool _isModuleError(String error) {
     final lowerError = error.toLowerCase();
 
-    // Check for various module error patterns
+    /// Check for various module error patterns
     return error.contains('KeyError') ||
         lowerError.contains('data model') &&
             lowerError.contains('not available') ||
         lowerError.contains('missing module') ||
         lowerError.contains('model') && lowerError.contains('not found') ||
         lowerError.contains('model') && lowerError.contains('does not exist') ||
-        // Specific stock/inventory patterns
+        /// Specific stock/inventory patterns
         lowerError.contains('stock.') &&
             (lowerError.contains('not') || lowerError.contains('error')) ||
         lowerError.contains('product.') &&
             (lowerError.contains('not') || lowerError.contains('error')) ||
-        // Odoo module patterns
+        /// Odoo module patterns
         lowerError.contains('module') && lowerError.contains('not installed') ||
         lowerError.contains('app') && lowerError.contains('not installed') ||
-        // werkzeug 404 with model reference
+        /// werkzeug 404 with model reference
         lowerError.contains('404') &&
             (lowerError.contains('stock') || lowerError.contains('product')) ||
-        // Required app patterns
+        /// Required app patterns
         lowerError.contains('required app') ||
         lowerError.contains('required module');
   }
@@ -112,11 +112,11 @@ class ErrorManager {
   }
 
   static ErrorInfo _createModuleError(String errorString) {
-    // Extract model name if present
+    /// Extract model name if present
     String? modelName;
     String? moduleName;
 
-    // Try to extract from KeyError pattern
+    /// Try to extract from KeyError pattern
     final keyErrorMatch = RegExp(
       r"KeyError: '([a-zA-Z0-9_.]+)'",
     ).firstMatch(errorString);
@@ -124,7 +124,7 @@ class ErrorManager {
       modelName = keyErrorMatch.group(1);
     }
 
-    // Try to extract from "data model" pattern
+    /// Try to extract from "data model" pattern
     if (modelName == null) {
       final modelMatch = RegExp(
         r'"([a-zA-Z0-9_.]+)" data model',
@@ -134,7 +134,7 @@ class ErrorManager {
       }
     }
 
-    // Try to extract from error string containing model names
+    /// Try to extract from error string containing model names
     if (modelName == null) {
       final stockMatch = RegExp(
         r'(stock\.[a-zA-Z0-9_.]+)',
@@ -153,11 +153,11 @@ class ErrorManager {
       }
     }
 
-    // Map model to module name
+    /// Map model to module name
     if (modelName != null) {
       moduleName = _getModuleNameFromModel(modelName);
     } else {
-      // Try to infer from error message
+      /// Try to infer from error message
       final lowerError = errorString.toLowerCase();
       if (lowerError.contains('stock') ||
           lowerError.contains('inventory') ||
@@ -191,42 +191,42 @@ class ErrorManager {
   static String _getModuleNameFromModel(String model) {
     final lowerModel = model.toLowerCase();
 
-    // Inventory/Stock models
+    /// Inventory/Stock models
     if (lowerModel.startsWith('stock.') || lowerModel == 'stock') {
       return 'Inventory';
     }
 
-    // Product models
+    /// Product models
     if (lowerModel.startsWith('product.') || lowerModel == 'product') {
       return 'Product';
     }
 
-    // Manufacturing models
+    /// Manufacturing models
     if (lowerModel.startsWith('mrp.')) {
       return 'Manufacturing';
     }
 
-    // Sales models
+    /// Sales models
     if (lowerModel.startsWith('sale.')) {
       return 'Sales';
     }
 
-    // Purchase models
+    /// Purchase models
     if (lowerModel.startsWith('purchase.')) {
       return 'Purchase';
     }
 
-    // Accounting models
+    /// Accounting models
     if (lowerModel.startsWith('account.')) {
       return 'Accounting';
     }
 
-    // HR models
+    /// HR models
     if (lowerModel.startsWith('hr.')) {
       return 'HR';
     }
 
-    // Partners/Contacts
+    /// Partners/Contacts
     if (lowerModel == 'res.partner') {
       return 'Contacts';
     }

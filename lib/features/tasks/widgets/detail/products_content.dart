@@ -107,7 +107,7 @@ class _ProductsContentState extends State<ProductsContent> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ── Header row ──────────────────────────────────────────────
+        /// ── Header row ──────────────────────────────────────────────
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
           child: SizedBox(
@@ -128,7 +128,7 @@ class _ProductsContentState extends State<ProductsContent> {
           ),
         ),
 
-        // ── Empty state ─────────────────────────────────────────────
+        /// ── Empty state ─────────────────────────────────────────────
         if (lines.isEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 24),
@@ -163,7 +163,7 @@ class _ProductsContentState extends State<ProductsContent> {
             ),
           )
         else ...[
-          // ── Table ──────────────────────────────────────────────────
+          /// ── Table ──────────────────────────────────────────────────
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
             child: _ProductTable(
@@ -188,7 +188,7 @@ class _ProductsContentState extends State<ProductsContent> {
   String _fmtPrice(double v) => v.toStringAsFixed(2);
 }
 
-// ── Table ──────────────────────────────────────────────────────────────────────
+/// ── Table ──────────────────────────────────────────────────────────────────────
 
 class _ProductTable extends StatelessWidget {
   final List<TaskProductLine> lines;
@@ -222,7 +222,7 @@ class _ProductTable extends StatelessWidget {
         ),
         child: Column(
           children: [
-            // Header
+            /// Header
             Container(
               color: headerBg,
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -288,12 +288,12 @@ class _ProductRowState extends State<_ProductRow> {
 
   Future<void> _changeQty(double delta) async {
     final newQty = _qty + delta;
-    if (newQty < 1) return; // minimum qty is 1
+    if (newQty < 1) return; /// minimum qty is 1
     setState(() { _qty = newQty; _updating = true; });
     final ok = await widget.onQtyChanged(newQty);
     if (mounted) setState(() => _updating = false);
     if (!ok && mounted) {
-      setState(() => _qty = widget.line.qty); // revert on failure
+      setState(() => _qty = widget.line.qty); /// revert on failure
     }
   }
 
@@ -308,7 +308,7 @@ class _ProductRowState extends State<_ProductRow> {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       child: Row(
         children: [
-          // Product name + uom
+          /// Product name + uom
           Expanded(
             flex: 5,
             child: Column(
@@ -378,7 +378,7 @@ class _ProductRowState extends State<_ProductRow> {
                     ],
                   ),
           ),
-          // Subtotal
+          /// Subtotal
           Expanded(
             flex: 3,
             child: Text(
@@ -391,7 +391,7 @@ class _ProductRowState extends State<_ProductRow> {
               textAlign: TextAlign.center,
             ),
           ),
-          // Delete
+          /// Delete
           GestureDetector(
             onTap: widget.onDelete,
             child: Container(
@@ -452,7 +452,7 @@ class _StepBtn extends StatelessWidget {
   }
 }
 
-// ── Add / Edit bottom sheet ────────────────────────────────────────────────────
+/// ── Add / Edit bottom sheet ────────────────────────────────────────────────────
 
 class _ProductBottomSheet extends StatefulWidget {
   final bool isDark;
@@ -570,7 +570,7 @@ class _ProductBottomSheetState extends State<_ProductBottomSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Handle
+            /// Handle
             Center(
               child: Container(
                 width: 36,
@@ -593,7 +593,7 @@ class _ProductBottomSheetState extends State<_ProductBottomSheet> {
             ),
             const SizedBox(height: 18),
 
-            // Product search (disabled when editing)
+            /// Product search (disabled when editing)
             _FieldLabel('Product', labelColor),
             const SizedBox(height: 6),
             Container(
@@ -626,7 +626,7 @@ class _ProductBottomSheetState extends State<_ProductBottomSheet> {
               ),
             ),
 
-            // Suggestions dropdown
+            /// Suggestions dropdown
             if (_suggestions.isNotEmpty)
               Container(
                 constraints: const BoxConstraints(maxHeight: 180),
@@ -693,7 +693,7 @@ class _ProductBottomSheetState extends State<_ProductBottomSheet> {
 
             const SizedBox(height: 14),
 
-            // Qty + Price row
+            /// Qty + Price row
             Row(
               children: [
                 Expanded(
@@ -719,7 +719,7 @@ class _ProductBottomSheetState extends State<_ProductBottomSheet> {
 
             const SizedBox(height: 22),
 
-            // Save button
+            /// Save button
             SizedBox(
               width: double.infinity,
               height: 48,
@@ -753,7 +753,7 @@ class _ProductBottomSheetState extends State<_ProductBottomSheet> {
   }
 }
 
-// ── Small helpers ──────────────────────────────────────────────────────────────
+/// ── Small helpers ──────────────────────────────────────────────────────────────
 
 class _FieldLabel extends StatelessWidget {
   final String text;
@@ -816,7 +816,7 @@ class _NumField extends StatelessWidget {
   }
 }
 
-// ── Shimmer ────────────────────────────────────────────────────────────────────
+/// ── Shimmer ────────────────────────────────────────────────────────────────────
 
 class _ProductsShimmer extends StatelessWidget {
   final bool isDark;

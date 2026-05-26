@@ -41,24 +41,17 @@ class _SplashScreenState extends State<SplashScreen> {
   Future<void> _goNext() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-     // final hasSeen = prefs.getBool('hasSeenGetStarted') ?? false;
+     /// final hasSeen = prefs.getBool('hasSeenGetStarted') ?? false;
       if (!mounted) return;
 
-      // if (!hasSeen) {
-      //   Navigator.pushAndRemoveUntil(
-      //     context,
-      //     MaterialPageRoute(builder: (_) => const GetStartedScreen()),
-      //     (route) => false,
-      //   );
-      // } else {
+
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (_) => const AppEntry()),
           (route) => false,
         );
-     // }
+
     } catch (e) {
-      log("erroor ocoourer ==>${e.toString()}");
 
       if (!mounted) return;
       Navigator.pushAndRemoveUntil(
@@ -78,21 +71,6 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-     // backgroundColor: Colors.black,
-      // body: SizedBox.expand(
-      //   child: FittedBox(
-      //     fit: BoxFit.cover,
-      //     child: SizedBox(
-      //       width: _controller.value.isInitialized
-      //           ? _controller.value.size.width
-      //           : 1,
-      //       height: _controller.value.isInitialized
-      //           ? _controller.value.size.height
-      //           : 1,
-      //       child: VideoPlayer(_controller),
-      //     ),
-      //   ),
-      // ),
       body: Center(child: Text("Splash screen"),),
     );
   }

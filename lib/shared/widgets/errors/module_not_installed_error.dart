@@ -63,15 +63,6 @@ class ModuleMissingDialog extends StatelessWidget {
                 onPressed: () {
                   Navigator.of(context, rootNavigator: true).pop();
 
-                  // // Navigate AFTER dialog is fully closed
-                  // Future.microtask(() {
-                  //   Navigator.of(context).pushAndRemoveUntil(
-                  //     MaterialPageRoute(
-                  //       builder: (_) => const ServerSetupScreen(),
-                  //     ),
-                  //         (route) => false,
-                  //   );
-                  // });
                 },
                 child: const Text(
                   "Back to Login",

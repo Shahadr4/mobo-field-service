@@ -24,7 +24,7 @@ class _AppLockScreenState extends State<AppLockScreen> {
   @override
   void initState() {
     super.initState();
-    // Authenticate immediately when screen loads
+    /// Authenticate immediately when screen loads
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _performAuthentication();
     });
@@ -39,7 +39,7 @@ class _AppLockScreenState extends State<AppLockScreen> {
     });
 
     try {
-      // Check if biometric is available first
+      /// Check if biometric is available first
       final isAvailable = await BiometricService.isBiometricAvailable();
       if (!isAvailable) {
         if (mounted) {
@@ -68,7 +68,7 @@ class _AppLockScreenState extends State<AppLockScreen> {
             _errorMessage = null;
           });
 
-          // Call the callback to notify parent widget
+          /// Call the callback to notify parent widget
           widget.onAuthenticationSuccess?.call();
         } else {
           setState(() {
@@ -96,21 +96,14 @@ class _AppLockScreenState extends State<AppLockScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // Background
+          /// Background
           Positioned.fill(
             child: Container(
               decoration: BoxDecoration(
-              //  color: isDark ? Colors.grey[950] : Colors.grey[50],
                 image: DecorationImage(
                   ///set your login image
                   image: const AssetImage('assets/images/loginbg.png'),
                   fit: BoxFit.cover,
-                  // colorFilter: ColorFilter.mode(
-                  //   isDark
-                  //       ? Colors.black.withOpacity(0.7)
-                  //       : Colors.white.withOpacity(0.7),
-                  //   BlendMode.dstATop,
-                  // ),
                 ),
               ),
             ),
@@ -121,7 +114,7 @@ class _AppLockScreenState extends State<AppLockScreen> {
             builder: (context, viewportConstraints) {
               return Column(
                 children: [
-                  // App name and logo at the top
+                  /// App name and logo at the top
                   SafeArea(
                     child: Padding(
                       padding: const EdgeInsets.only(top: 68),
@@ -129,7 +122,7 @@ class _AppLockScreenState extends State<AppLockScreen> {
                     ),
                   ),
 
-                  // Scrollable content area for authentication
+                  /// Scrollable content area for authentication
                   Expanded(
                     child: SingleChildScrollView(
                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -148,11 +141,11 @@ class _AppLockScreenState extends State<AppLockScreen> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  // Authentication header
+                                  /// Authentication header
                                   _buildAuthHeader(),
                                   const SizedBox(height: 24),
 
-                                  // Authentication content
+                                  /// Authentication content
                                   if (_isAuthenticating)
                                     _buildAuthenticatingDisplay()
                                   else if (_authenticationFailed)
@@ -176,7 +169,7 @@ class _AppLockScreenState extends State<AppLockScreen> {
     );
   }
 
-  // Build app header (Inventory App + logo at top)
+  /// Build app header (Inventory App + logo at top)
   Widget _buildAppHeader() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -190,7 +183,7 @@ class _AppLockScreenState extends State<AppLockScreen> {
         ),
         const SizedBox(width: 8),
         Text(
-          'mobo expenses',
+          'mobo field service',
           style: const TextStyle(
             fontFamily: 'MyFont',
             color: Colors.white,
@@ -202,11 +195,11 @@ class _AppLockScreenState extends State<AppLockScreen> {
     );
   }
 
-  // Build authentication header (centered)
+  /// Build authentication header (centered)
   Widget _buildAuthHeader() {
     return Column(
       children: [
-        // "App Locked" text
+        /// "App Locked" text
         Text(
           'App Locked',
           style: GoogleFonts.poppins(
@@ -218,7 +211,7 @@ class _AppLockScreenState extends State<AppLockScreen> {
         ),
         const SizedBox(height: 8),
 
-        // Subtitle text
+        /// Subtitle text
         Text(
           'Please authenticate to continue',
           style: GoogleFonts.poppins(
